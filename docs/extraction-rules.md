@@ -26,3 +26,12 @@ Never add an inferred edge by name similarity alone. Never equate repeated call 
 - `json-toml-parse/v1`: static configuration tree; file-level provenance only.
 
 These rules are conservative but **not** an exhaustive semantic interpretation of Python.
+
+## Conditional forward rules (v0.6)
+
+`conditional-forward-values/v2` records condition guards, branch-local calls,
+conditional value joins, and uncertain augmented assignments without executing
+target code. `STATIC_CONDITIONAL_DEPENDENCY` edges connect each alternative to
+a static merge; `STATIC_GUARDED_CALL` names control dependence, not value flow.
+`STATIC_GUARD_DEPENDENCY` connects a known guard input to its guard/join.
+Unverified alias effects and unpacking arity are explicit unresolved records.

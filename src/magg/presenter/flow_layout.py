@@ -27,6 +27,7 @@ def make_flow_scene(graph: dict[str, Any], *, status: str, entrypoint: str | Non
         edges = [e for e in graph['links'] if e['source'] in local and e['target'] in local]
         src_order = lambda n: (n['source_refs'][0]['path'], n['source_refs'][0]['start_byte'], n['id'])
         members.sort(key=src_order)
+        # Kahn ranks: every proven edge pushes the consumer to the right.
         indeg = {n['id']: 0 for n in members}
         adj: dict[str, list[str]] = defaultdict(list)
         for e in edges:
@@ -38,14 +39,15 @@ def make_flow_scene(graph: dict[str, Any], *, status: str, entrypoint: str | Non
         rank = {n['id']: 0 for n in members}
         used = 0
         while q:
-            current = q.popleft()
-            used += 1
+            current = q.popleft(); used += 1
             for target in sorted(adj[current], key=lambda x: src_order(local[x])):
                 rank[target] = max(rank[target], rank[current] + 1)
                 indeg[target] -= 1
                 if indeg[target] == 0:
                     q.append(target)
         if used != len(members):
+            # SSA-free source analysis must never produce cycles as verified
+            # execution flow; fall back to source order with a visible warning.
             graph['issues'].append({'code': 'STATIC_FLOW_CYCLE', 'severity': 'warning',
                                     'message': f'Unexpected dependency cycle in {lane["label"]}',
                                     'related_ir_ids': lane['ir_node_ids'],
@@ -81,17 +83,22 @@ def make_flow_scene(graph: dict[str, Any], *, status: str, entrypoint: str | Non
                 texts.append({'x': pos['x']+10, 'y': pos['y']+44, 'text':
                               'conditional' if node['evidence']=='conditional' else node['kind'].replace('flow-', '').replace('forward_', ''),
                               'size': 9, 'bold': False})
+        # Value-dependency arrows are directed only by proven source relations.
         for e in edges:
             if e['source'] not in positions or e['target'] not in positions:
                 continue
             a, b = positions[e['source']], positions[e['target']]
             x1, y1 = a['x']+a['w'], a['y']+a['h']/2
             x2, y2 = b['x'], b['y']+b['h']/2
+            p_kind = e['style']
             curve = {'id': e['id'], 'ir_edge_ids': e['ir_edge_ids'],
-                     'kind': 'static-value', 'label': 'static value dependency',
+                     'kind': e['style'], 'label': e['relation_kind'],
                      'x1': x1, 'y1': y1, 'x2': x2, 'y2': y2}
             if rank[e['target']] > rank[e['source']]+1:
-                top = curr_y+48 - 15*(rank[e['target']]-rank[e['source']]-2)
+                # A skip path is routed above the blocks to avoid masquerading
+                # as an intermediate linear connection.
+                top = (curr_y+lane_h-23 if p_kind != 'static-value' else
+                       curr_y+48 - 15*(rank[e['target']]-rank[e['source']]-2))
                 curve.update({'cx1': x1+35, 'cy1': top, 'cx2': x2-35, 'cy2': top})
             else:
                 curve.update({'cx1': x1+34, 'cy1': y1, 'cx2': x2-34, 'cy2': y2})
@@ -100,13 +107,13 @@ def make_flow_scene(graph: dict[str, Any], *, status: str, entrypoint: str | Non
         max_x = max(max_x, MARGIN+lane_w+35)
     height = int(curr_y+50)
     texts.append({'x':MARGIN,'y':height-43,'text':
-                  'Solid arrows = statically proven value dependency, not verified runtime tensor execution',
+                  'Solid = source value dependency; dashed = conditional value; dotted = conditional call',
                   'size':10,'bold':False})
     if status == 'partial':
         texts.append({'x':MARGIN,'y':height-25,'text':'PARTIAL / NOT FULLY VERIFIED: see presentation-health.json',
                       'size':10,'bold':True})
     else:
-        texts.append({'x':MARGIN,'y':height-25,'text':'Scope: straight-line forward expressions only',
+        texts.append({'x':MARGIN,'y':height-25,'text':'Scope: static forward expressions and conditional alternatives only',
                       'size':10,'bold':False})
     paths.sort(key=lambda p: (p['y1'],p['x1'],p['y2'],p['x2'],p['id']))
     return {'width':int(max_x),'height':height,'rects':rects,'texts':texts,
