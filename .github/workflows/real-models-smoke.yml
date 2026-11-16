@@ -50,9 +50,10 @@ jobs:
           magg extract selected/chess --entrypoint maia3.models_cf_act:MAIA3ActModel --output outputs/chess/sae
           magg validate outputs/chess/sae
           magg present outputs/chess/sae --view flow --level block --mode exploration --format all --output outputs/chess/figure
+          magg present outputs/chess/sae --view flow --focus MAIA3ActModel --level block --mode exploration --format all --output outputs/chess/focused
           magg extract selected/awn --entrypoint resnet:BasicBlock --output outputs/awn/sae
           magg validate outputs/awn/sae
-          magg present outputs/awn/sae --view flow --level block --mode exploration --format all --output outputs/awn/figure
+          magg present outputs/awn/sae --view flow --focus BasicBlock --level block --mode exploration --format all --output outputs/awn/figure
 
       - name: Assert evidence and print health
         run: |
@@ -74,10 +75,14 @@ jobs:
                   assert v['source_refs']
               for v in manifest['visual_links'].values():
                   assert v['ir_edge_ids'] and set(v['ir_edge_ids']) <= edge_ids
-                  assert v['relation_kind'] in {'STATIC_VALUE_DEPENDENCY', 'STATIC_FORWARD_RETURN'}
+                  assert v['relation_kind'] in {'STATIC_VALUE_DEPENDENCY', 'STATIC_FORWARD_RETURN', 'STATIC_CONDITIONAL_DEPENDENCY', 'STATIC_GUARD_DEPENDENCY', 'STATIC_GUARDED_CALL'}
                   assert v['source_refs']
               print(model, health['status'], 'nodes=',len(ir['nodes']), 'edges=',len(ir['edges']),
                     'visible links=',len(manifest['visual_links']), 'issues=',len(health['issues']))
+              if model == 'awn':
+                  assert any(n['kind'] == 'forward_choice' for n in ir['nodes'])
+                  assert any(n['kind'] == 'forward_augassign' for n in ir['nodes'])
+                  assert any(e['relation'] == 'STATIC_CONDITIONAL_DEPENDENCY' for e in ir['edges'])
           PY
 
       - name: Upload diagrams and health reports
@@ -87,6 +92,7 @@ jobs:
           name: real-model-diagrams-and-reports
           path: |
             outputs/*/figure/
+            outputs/*/focused/
             outputs/*/sae/coverage.json
             outputs/*/sae/diagnostics.json
           if-no-files-found: warn
