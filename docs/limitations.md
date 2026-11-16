@@ -1,28 +1,33 @@
-# Implementation status and analysis limitations
+# SAE v0.2.0 — verified capabilities and remaining limitations
 
-## Available in v0.1.0
+## Implemented
 
-- Deterministic source inventory with excludes, size/file limits and symlink refusal.
-- Byte-exact source snapshots; original bytes and SHA-256 in manifests.
-- Python tokenizer, comments, every AST node, exact/enclosing source spans.
-- Definitions, imports, method scopes, assignments, calls and their arguments, operators, returns, guards, branches and loops.
-- Static hints for `torch.nn` constructor sites, `self.<attribute>` bindings, repeated module call sites, symbolic arguments and unresolvable module references.
-- Canonical JSON, referential integrity validation, checksums, `validate` and `inspect` commands.
+- Non-executing, deterministic file inventory and byte-exact source snapshots.
+- Every Python AST node and lexical token in included, parsable `.py` files.
+- Direct syntax facts for declarations, imports, assignments, calls, operators, returns and control constructs.
+- Local project import/call and class-method resolution where a unique static declaration exists.
+- Direct and transitive local `nn.Module` inheritance hints, custom module constructor sites and reuse links.
+- Intraprocedural source-level reaching-definition edges with conditional/loop ambiguity preserved.
+- Symbolic PyTorch shape templates and nested constructor containment; static JSON/TOML data trees.
+- Source evidence, stable identifiers, integrity validation, explicit unresolved evidence and checksums.
+- Entrypoint resolution to a top-level module symbol when unique.
 
-## Not yet available
+## Not yet complete
 
-- Complete cross-file symbol resolution and shadow-sensitive lexical scope analysis.
-- Precise SSA/data-flow reaching definitions, alias analysis, nontrivial symbolic shape inference, all Python metaprogramming patterns.
-- Configuration semantic evaluation (config files are copied without execution).
-- PyTorch third-party extension constructor recognition beyond `torch.nn.*` import-resolution hints.
-- Presenter or paper-style drawing.
+- General Python imports and re-exports, closures and name lookup with arbitrary dynamic scope behavior.
+- Full alias and parameter-sharing analysis, descriptor and property resolution, dynamic `setattr`, metaclasses.
+- True static SSA for all control constructs, interprocedural reaching definitions, pointer/dataflow or runtime tensor graph.
+- Nontrivial symbolic shape propagation through all PyTorch/functional operations.
+- Full YAML/Hydra/OmegaConf semantics and user-defined factories.
+- Systematic measurement of recall/completeness on real-world models such as Chessformer and AWN.
+- Presenter, paper-quality architecture figures or graphical export.
 
-**Accuracy boundary:** a syntax graph is comprehensive for parsable Python files within scope; semantic extraction is *not* complete or proven to capture all runtime relationships. `EXPRESSION_DEPENDS_ON` is syntactic operand nesting, not a claim about runtime tensor flow. An unresolved relation stays explicitly unresolved.
+All shape templates are conditional type-level formulas, not observed tensor shapes.
+Source-dependency edges are **not** runtime tensor-flow proof. Python runtime
+semantics are not generally decidable from static source. SAE records unknowns
+rather than claiming false certainty.
 
-## Safety
+## Security
 
-Target Python is never imported or executed. The extractor does not use `eval`, `exec`, `torch.load`, or pickle. Files are read as untrusted data. The inventory does not follow symlinks. Large or unsupported files are reported as exclusions.
-
-## Next milestones
-
-M2: true lexical scopes and cross-file imports. M3: conservative def-use and alias analysis. M4: versioned symbolic shape rules. M5: full verification coverage and Presenter contract tests.
+Analyzed Python is not imported or executed; no `eval`, `exec`, `torch.load`
+or pickle is used. Symlinks are rejected and file-count/byte limits are enforced.

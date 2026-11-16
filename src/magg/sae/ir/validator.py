@@ -32,6 +32,20 @@ def validate_ir(ir: dict, source_sizes: dict[str, int] | None = None) -> dict:
                 size = source_sizes.get(path)
                 if size is None or not (0 <= span.get("start_byte", -1) <= span.get("end_byte", -1) <= size):
                     errors.append(f"Invalid source span: {node.get('id')}")
+    if ir.get('entrypoint_target_id') is not None and ir['entrypoint_target_id'] not in node_set:
+        errors.append('Entrypoint target not present in nodes')
+    for record in ir.get('unresolved', []):
+        if not isinstance(record, dict) or not record.get('kind') or 'reason' not in record:
+            errors.append('Malformed unresolved record')
+            continue
+        for candidate in record.get('candidate_ids', []):
+            if candidate not in node_set:
+                errors.append(f'Unresolved candidate not in graph: {candidate}')
+        for ref in record.get('source_refs', []):
+            if source_sizes is not None:
+                size = source_sizes.get(ref.get('path'))
+                if size is None or not (0 <= ref.get('start_byte', -1) <= ref.get('end_byte', -1) <= size):
+                    errors.append('Invalid unresolved source span')
     for edge in edges:
         if edge.get("source") not in node_set or edge.get("target") not in node_set:
             errors.append(f"Dangling graph edge: {edge.get('id')}")

@@ -7,7 +7,7 @@ MAGG is designed as **two independent components**:
 
 > **Extract at maximum fidelity. Abstract only when presenting.**
 
-## SAE v0.1.0 — working first implementation
+## SAE v0.2.0 — source-only semantic analysis increment
 
 Supports Python 3.11+. PyTorch is **not** required: models are never imported, initialized, trained or traced.
 
@@ -36,9 +36,11 @@ magg-output/
 
 ### Scope and accuracy
 
-SAE captures every AST node and lexical token of every parsable included `.py` file; it also records supported definitions, `torch.nn` construction sites, argument expressions, operations, conditional syntax and module-use links. Every fact has a source position. Unresolved symbolic constructor arguments and ambiguous module-use links remain explicit. The analyzer makes **no claim** of complete Python semantic inference or runtime behavior. Only `.py` and common text configurations are included by default; everything else is recorded as excluded. See [implemented features and limitations](docs/limitations.md).
+SAE captures every AST node and lexical token of every parsable included `.py` file; it also records supported definitions, `torch.nn` construction sites, argument expressions, operations, conditional syntax and module-use links. Every extracted semantic fact has a source reference; configuration trees currently have file-level provenance. Unresolved symbolic constructor arguments and ambiguous module-use links remain explicit. The v0.2 pass additionally links local imports/functions/custom subclasses of `nn.Module`, resolves conservative intraprocedural lexical reaching definitions, emits symbolic templates for recognized PyTorch layers, and parses JSON/TOML configuration without evaluation. Branch/loop ambiguity is preserved explicitly.
 
-The `--entrypoint` is a metadata selector in v0.1.0; it does not filter the syntax graph. All included Python sources are analyzed.
+The analyzer makes **no claim** of complete Python semantic inference or runtime behavior. Only `.py` and common text configurations are included by default; everything else is recorded as excluded. See [implemented features and limitations](docs/limitations.md).
+
+The `--entrypoint` selects a unique top-level module symbol where statically resolvable; `entrypoint_target_id` references its IR node. An unresolved entrypoint is recorded rather than guessed. It does not filter the complete syntax graph.
 
 ### Project hierarchy
 
@@ -74,3 +76,5 @@ A future `presenter/` remains deliberately unimplemented: the output is data, no
 - [Implemented coverage and limitations](docs/limitations.md)
 
 See the technical specification for the intended expanded package hierarchy, rules, milestones and acceptance criteria. Modules that are still planned have not been represented by fake empty implementations.
+
+- [Implementation phases and evidence](docs/implementation-phases.md)

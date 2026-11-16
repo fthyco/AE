@@ -2,11 +2,16 @@
 from __future__ import annotations
 
 import json
+import ast
 from pathlib import Path
 from typing import Any
 
 from magg import __version__
 from .analysis.analyzer import Analyzer
+from .analysis.dataflow import analyze_dataflow
+from .analysis.pytorch_static import analyze_pytorch
+from .analysis.configuration import analyze_configuration
+from .linking.project import Unit, link_project, syntax_ids, unresolved
 from .inventory.walker import inventory
 from .ir.canonical import sha256, canonical_bytes, stable_id
 from .ir.models import Graph
@@ -34,6 +39,7 @@ def extract(source_root: str | Path, output: str | Path, *, entrypoint: str | No
     graph = Graph()
     source_index: dict[str, Any] = {"schema_version": "1.0", "files": []}
     parsed = 0
+    parsed_units: list[Unit] = []
     python_total = 0
     for file in sources:
         source_id = stable_id(file.path, "source-file")
@@ -53,6 +59,7 @@ def extract(source_root: str | Path, output: str | Path, *, entrypoint: str | No
             if source is not None and tree is not None:
                 try:
                     Analyzer(graph, source, tree, source_id).run()
+                    parsed_units.append(Unit(source, tree, source_id))
                     parsed += 1
                 except (RecursionError, ValueError) as exc:
                     # A parser/analysis failure must not erase original source.
@@ -65,19 +72,50 @@ def extract(source_root: str | Path, output: str | Path, *, entrypoint: str | No
             entry["parsed"] = False
             entry["encoding"] = None
             source_index["files"].append(entry)
+    link_project(graph, parsed_units)
+    analyze_dataflow(graph, parsed_units)
+    analyze_pytorch(graph, parsed_units)
+    analyze_configuration(graph, sources)
+    entrypoint_id = None
+    if entrypoint:
+        # Entrypoint is a project-relative module and a top-level declaration.
+        # No imports or Python execution are needed to select a source node.
+        module, separator, name = entrypoint.partition(':')
+        candidates = []
+        if separator and module and name and name.isidentifier():
+            for unit in parsed_units:
+                if unit.module != module:
+                    continue
+                ids = syntax_ids(unit)
+                for statement in unit.tree.body:
+                    if isinstance(statement, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)) and statement.name == name:
+                        kind = 'class_definition' if isinstance(statement, ast.ClassDef) else 'function_definition'
+                        candidates.append(stable_id(unit.path, 'semantic', kind, ids[statement], ''))
+        if len(candidates) == 1:
+            entrypoint_id = candidates[0]
+        else:
+            graph.unresolved.append({'kind': 'entrypoint_resolution', 'path': '',
+                                    'reason': f'Expected unique module:symbol for {entrypoint}; found {len(candidates)}',
+                                    'candidate_ids': candidates, 'source_refs': []})
     graph.nodes.sort(key=lambda n: n["id"])
     graph.edges.sort(key=lambda e: e["id"])
     graph.unresolved.sort(key=lambda u: (u["path"], u.get("site_id", ""), u["kind"], u.get("expression", "")))
     graph.diagnostics.sort(key=lambda d: (d["path"], d["kind"], d["message"]))
     source_index["files"].sort(key=lambda f: f["path"])
     ir = {"schema_version": "1.0", "extractor_version": __version__,
-          "entrypoint": entrypoint, "nodes": graph.nodes,
+          "entrypoint": entrypoint, "entrypoint_target_id": entrypoint_id, "nodes": graph.nodes,
           "edges": graph.edges, "unresolved": graph.unresolved}
     check = validate_ir(ir, {f.path: len(f.data) for f in sources})
     coverage = {"schema_version": "1.0", "included_files": len(sources),
                 "python_files": python_total, "parsed_python_files": parsed,
                 "unparsed_python_files": python_total - parsed,
-                "semantic_resolution": {"unresolved": len(graph.unresolved)},
+                "semantic_resolution": {
+                    "unresolved": len(graph.unresolved),
+                    "by_kind": {k: sum(u['kind'] == k for u in graph.unresolved)
+                                for k in sorted({u['kind'] for u in graph.unresolved})},
+                    "relations_by_kind": {k: sum(e['relation'] == k for e in graph.edges)
+                                          for k in sorted({e['relation'] for e in graph.edges})},
+                    "entrypoint_resolved": entrypoint_id is not None if entrypoint else None},
                 "notes": ["Runtime behavior is not analyzed", "No complete dynamic-path coverage is claimed",
                           "Configuration source bytes are preserved, not evaluated",
                           "Static recognition is limited to known PyTorch import patterns"]}

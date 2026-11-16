@@ -10,6 +10,7 @@ import ast
 from collections import defaultdict
 from typing import Any
 
+from .scopes import alias_is_shadowed
 from ..ir.canonical import stable_id
 from ..ir.models import Graph
 from ..parsing.source_spans import SourceMap
@@ -159,6 +160,11 @@ class Analyzer(ast.NodeVisitor):
         return expression(node)
 
     def pytorch_constructor(self, call: ast.Call) -> str | None:
+        callee = call.func
+        while isinstance(callee, ast.Attribute):
+            callee = callee.value
+        if isinstance(callee, ast.Name) and alias_is_shadowed(call, callee.id, self.parents):
+            return None
         name = self.qualified(call.func)
         if name.startswith("torch.nn.") and len(name.split(".")) == 3:
             return name

@@ -22,3 +22,12 @@ Source offsets are zero-based byte offsets into the original file. For AST nodes
 ## Consumer contract
 
 A presenter can read `architecture.ir.json`, select subgraphs, and maintain a list of contributing IR IDs for each visual block. It must never assume node traversal order is execution order or infer runtime paths from static links.
+
+## SAE v0.2.0 additions
+
+- Optional `entrypoint_target_id` points to a unique source-resolved top-level definition or `null`.
+- `lexical_definition` nodes and `READS_LEXICAL_DEFINITION` edges record intraprocedural source-level reaching definitions, never runtime tensor flow.
+- `pytorch_layer_spec` and `pytorch_module_definition` nodes distinguish versioned type-level signatures from constructed instances.
+- `configuration_entry` trees preserve parsed JSON/TOML value relationships; provenance is file-level for parsed config entries.
+- Cross-file call/import, inheritance and custom module construction relations are explicitly named and source-backed.
+- `coverage.json` includes relation counts and unresolved types, but they are not semantic recall/precision scores.

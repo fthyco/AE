@@ -13,3 +13,16 @@ The output records every derived fact with a rule identifier. Rules operate only
 Source-fact edges (`CONTAINS`, `HAS_ARGUMENT`, `HAS_BRANCH_STATEMENT` etc.) directly describe AST composition. They do not require a derived inference rule. `resolution: conditional` is deliberately used for derived semantic identification; dynamic imports, decorators, monkey-patching, assignment order, custom dispatch, and closure shadowing are outside the proven domain.
 
 Never add an inferred edge by name similarity alone. Never equate repeated call sites with repeated module definitions.
+
+## Added in SAE v0.2.0
+
+- `local-project-import-resolution/v1`: unique local import symbol/module resolution.
+- `unique-local-call-resolution/v1`: local callable declarations with conservative shadow checking.
+- `static-nn-module-inheritance/v1`: source-visible direct and transitive `nn.Module` subclass hints.
+- `local-module-construction/v1`, `unique-local-module-reference/v1`: local class construction assigned to `self.<attr>` and linked reuse.
+- `lexical-definition/v1`, `unique-reaching-definition/v1`: intraprocedural source-level def-use; ambiguous candidates remain unresolved.
+- `pytorch-constructor-syntax/v1`, `nested-pytorch-constructor/v1`: recognized `torch.nn` layer signatures and constructor nesting.
+- `linear-last-dimension/v1`, `embedding-append-dimension/v1`, `conv-channel-signature/v1`, `mha-default-shape-template/v1`, `shape-preserving-module/v1`: conditional type-level shape templates; not executed tensor dimensions.
+- `json-toml-parse/v1`: static configuration tree; file-level provenance only.
+
+These rules are conservative but **not** an exhaustive semantic interpretation of Python.
