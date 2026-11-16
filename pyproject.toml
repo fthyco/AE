@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "magg-sae"
+version = "0.1.0"
+description = "Deterministic, non-executing static architecture extractor for Python/PyTorch source"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{name = "MAGG contributors"}]
+license = {text = "MIT"}
+keywords = ["pytorch", "static-analysis", "architecture", "intermediate-representation"]
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "jsonschema>=4"]
+
+[project.scripts]
+magg = "magg.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
