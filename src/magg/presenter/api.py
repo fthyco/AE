@@ -91,7 +91,9 @@ def present(bundle_path: str | Path, output: str | Path, *, level: str = 'block'
     if allowed:
         scene=(make_flow_scene if view=='flow' else make_scene)(
             graph, status=health['status'],
-            entrypoint=(f"{health['entrypoint']} / {focus}" if focus else health['entrypoint']))
+            entrypoint=(f"{health['entrypoint']} / {focus}"
+                        if focus and focus != (health['entrypoint'] or '').split(':')[-1]
+                        else health['entrypoint']))
         exporters={'svg':svg,'pdf':pdf,'tex':tikz}
         for extension in FORMATS[format]:
             content=exporters[extension](scene)
