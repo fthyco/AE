@@ -54,6 +54,10 @@ def project_flow(bundle: Bundle, level: str = 'block', focus: str | None = None)
         if n['kind'] in FLOW_VALUES:
             flow_by_forward[n['attributes'].get('forward_id')].append(n)
     flow_edges = [e for e in bundle.ir['edges'] if e['relation'] in FLOW_EDGES]
+    shape_facts = {n['attributes']['value_id']: n for n in bundle.ir['nodes']
+                   if n['kind'] == 'symbolic_shape_fact'}
+    shape_edges = {e['source']:e['id'] for e in bundle.ir['edges']
+                   if e['relation'] == 'HAS_SYMBOLIC_SHAPE'}
     guarded = {e['target'] for e in bundle.ir['edges'] if e['relation'] == 'STATIC_GUARDED_CALL'}
     for module in modules:
         fid = module.get('forward_method_id')
@@ -100,9 +104,13 @@ def project_flow(bundle: Bundle, level: str = 'block', focus: str | None = None)
                 continue
             mapped[source_id] = vid
             source = bundle.nodes[source_id]
+            fact = shape_facts.get(source_id)
+            shape = '[' + ', '.join(fact['attributes']['dimensions']) + ']' if fact else None
             graph['nodes'].append({'id': vid, 'kind': kind, 'parent_id': root_id,
                                    'label': label, 'details': source.get('attributes', {}).get('name', ''),
-                                   'ir_node_ids': [source_id], 'ir_edge_ids': [],
+                                   'shape': shape,
+                                   'ir_node_ids': [source_id] + ([fact['id']] if fact else []),
+                                   'ir_edge_ids': [shape_edges[source_id]] if fact and source_id in shape_edges else [],
                                    'source_refs': source['source_refs'],
                                    'evidence': 'conditional' if state == 'conditional' else
                                                'unresolved' if state == 'unresolved' else 'explicit'})
@@ -117,6 +125,13 @@ def project_flow(bundle: Bundle, level: str = 'block', focus: str | None = None)
         for record in bundle.ir['unresolved']:
             if record.get('kind') == 'forward_flow_incomplete' and record.get('function_id') == fid:
                 graph['issues'].append(issue('STATIC_FLOW_INCOMPLETE', record.get('reason', 'Unknown flow'),
+                                            refs=record.get('source_refs', [])))
+        for record in bundle.ir['unresolved']:
+            if record.get('function_id') != fid:
+                continue
+            if record.get('kind') in ('interprocedural_flow_incomplete', 'symbolic_shape_conflict'):
+                graph['issues'].append(issue(record['kind'].upper(), record.get('reason', 'Unresolved semantic relationship'),
+                                            ids=[record['site_id']] if record.get('site_id') else [],
                                             refs=record.get('source_refs', [])))
         if not any(n['kind'] == 'forward_output' and n['parent_id'] == root_id for n in graph['nodes']):
             graph['issues'].append(issue('STATIC_FLOW_INCOMPLETE',

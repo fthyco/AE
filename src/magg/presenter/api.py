@@ -55,7 +55,7 @@ def present(bundle_path: str | Path, output: str | Path, *, level: str = 'block'
         problem=f'{type(exc).__name__}: {exc}'
     health=evaluate(bundle,graph,mode=mode,level=level,input_error=problem)
     if view == 'flow':
-        health['scope']='Source-backed static forward dependencies and guarded alternatives; runtime tensor flow not verified'
+        health['scope']='Source-backed static forward dependencies, supported call summaries and conditional type-level shapes; runtime behavior unverified'
     health['view']=view
     health['focus']=focus
     allowed=health['status'] != 'blocked' and (mode=='exploration' or

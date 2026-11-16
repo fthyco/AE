@@ -104,7 +104,9 @@ def make_flow_scene(graph: dict[str, Any], *, status: str, entrypoint: str | Non
                 texts.append({'x': box['x']+9, 'y': box['y']+23,
                               'text': label, 'size': 10.5,
                               'bold': node['kind'] in ('forward_input', 'forward_output')})
-                sub = 'conditional' if node['evidence']=='conditional' else node['kind'].replace('flow-', '').replace('forward_', '')
+                sub = (node.get('shape') + '  (symbolic)' if node.get('shape') else
+                       'conditional' if node['evidence']=='conditional' else
+                       node['kind'].replace('flow-', '').replace('forward_', ''))
                 texts.append({'x': box['x']+9, 'y': box['y']+43,
                               'text': sub, 'size': 8.5, 'bold': False})
 
