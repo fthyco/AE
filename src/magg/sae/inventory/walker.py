@@ -27,6 +27,14 @@ def inventory(settings: Settings) -> tuple[list[SourceFile], list[dict]]:
     output = settings.output.resolve()
     sources: list[SourceFile] = []
     manifest: list[dict] = []
+    # Predeclare the generated-output exclusion so first and subsequent runs
+    # have identical manifests, even when --output is inside the source root.
+    try:
+        relative_output = output.relative_to(root).as_posix()
+    except ValueError:
+        relative_output = None
+    if relative_output and relative_output != ".":
+        manifest.append({"path": relative_output, "status": "excluded", "reason": "output_directory"})
     seen = 0
     for current, dirs, files in os.walk(root, followlinks=False):
         base = Path(current)
@@ -36,7 +44,9 @@ def inventory(settings: Settings) -> tuple[list[SourceFile], list[dict]]:
             rel = path.relative_to(root).as_posix()
             if path.is_symlink():
                 manifest.append({"path": rel, "status": "excluded", "reason": "symlink_directory"})
-            elif dirname in SKIP_DIRS or path == output or output in path.parents and path == output:
+            elif path == output:
+                pass  # output_directory was recorded before traversing
+            elif dirname in SKIP_DIRS:
                 manifest.append({"path": rel, "status": "excluded", "reason": "excluded_directory"})
             else:
                 accepted.append(dirname)
@@ -48,8 +58,7 @@ def inventory(settings: Settings) -> tuple[list[SourceFile], list[dict]]:
                 manifest.append({"path": rel, "status": "excluded", "reason": "symlink_file"})
                 continue
             if output == full or output in full.parents:
-                manifest.append({"path": rel, "status": "excluded", "reason": "output_directory"})
-                continue
+                continue  # deterministic predeclared exclusion
             if full.suffix.lower() not in IN_SCOPE:
                 manifest.append({"path": rel, "status": "excluded", "reason": "unsupported_extension"})
                 continue

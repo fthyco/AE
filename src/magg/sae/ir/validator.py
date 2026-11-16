@@ -35,6 +35,11 @@ def validate_ir(ir: dict, source_sizes: dict[str, int] | None = None) -> dict:
     for edge in edges:
         if edge.get("source") not in node_set or edge.get("target") not in node_set:
             errors.append(f"Dangling graph edge: {edge.get('id')}")
+        for span in edge.get("source_refs", []):
+            if source_sizes is not None:
+                size = source_sizes.get(span.get("path"))
+                if size is None or not (0 <= span.get("start_byte", -1) <= span.get("end_byte", -1) <= size):
+                    errors.append(f"Invalid edge source span: {edge.get('id')}")
         if not edge.get("source_refs"):
             errors.append(f"Missing edge provenance: {edge.get('id')}")
         if edge.get("evidence_class") == "derived" and not edge.get("analysis_rule"):

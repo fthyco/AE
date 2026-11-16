@@ -200,6 +200,8 @@ def test_output_dir_inside_repo_is_not_ingested(tmp_path: Path) -> None:
     root = setup(tmp_path, b"x = 1\n")
     output = root / "magg-output"
     extract(root, output)
+    first = {p.name: p.read_bytes() for p in output.glob("*.json")}
     extract(root, output)
+    assert first == {p.name: p.read_bytes() for p in output.glob("*.json")}
     manifest = json.loads((output / "source-manifest.json").read_bytes())
     assert not any(e.get("status") == "included" and "magg-output" in e["path"] for e in manifest["files"])
