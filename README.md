@@ -111,3 +111,16 @@ magg present sae-output --view flow --focus ResidualBlock --format all --output 
 ambiguous names block rendering. Conditional connections are dashed; guarded
 calls are dotted. Export manifests retain all source IR mappings. See
 [static conditional flow acceptance](docs/forward-flow-v0.6-acceptance.md).
+
+## Presenter v0.7 — `scientific-latex` paper theme
+
+The default Presenter style follows the attached Chessformer architecture-report visual language: Latin Modern serif, white/gray fills, thin near-black borders and **orthogonal** arrows. No source evidence is added or changed by styling. SVG, PDF and TikZ share the same scene; PDF embeds Latin Modern Type1 locally when available and falls back to standard PDF serif fonts otherwise.
+
+```bash
+magg present sae-output --view flow --focus ResidualBlock \
+  --theme scientific-latex --format all --output paper-figure
+# Optional prior style for A/B comparison:
+magg present sae-output --view flow --theme legacy --format svg --output prior-figure
+```
+
+For narrow paper figures, use `--focus` to export individual modules; long pipelines may still produce wide vector canvases. Details and acceptance checks: [scientific-latex theme](docs/scientific-latex-theme.md).

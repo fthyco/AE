@@ -1,86 +1,141 @@
-"""Monochrome publication-style renderers sharing one geometric scene."""
+"""One geometrical scene, three vector exports, shared scientific visual tokens."""
 from __future__ import annotations
 
+from math import atan2, cos, sin
 from xml.sax.saxutils import escape as xml_escape
+
+from .themes import select_theme
 
 
 def _f(n: float) -> str:
-    return f'{n:.1f}'
+    return f'{n:.2f}'
+
+
+def _style(scene: dict) -> dict:
+    return scene.get('style') or select_theme('scientific-latex')
+
+
+def _polyline(path: dict) -> list[tuple[float,float]]:
+    if 'points' in path:
+        return [tuple(p) for p in path['points']]
+    # This fallback is for the historical Structure view. The old curved
+    # control points are NOT semantic evidence; only endpoints are.
+    return [(path['x1'],path['y1']),
+            ((path['x1']+path['x2'])/2,path['y1']),
+            ((path['x1']+path['x2'])/2,path['y2']),
+            (path['x2'],path['y2'])]
+
+
+def _dash(kind: str) -> tuple[int, ...]:
+    if kind == 'static-value':
+        return ()
+    if kind == 'reference':
+        return (5, 3)
+    return (2, 4)
 
 
 def svg(scene: dict) -> bytes:
-    w,h=scene['width'],scene['height']
-    a=[f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}" role="img">',
-       f'<title>{xml_escape(scene["title"])}</title>',
-       '<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#777"/></marker></defs>',
-       '<rect width="100%" height="100%" fill="white"/>']
+    w,h = scene['width'],scene['height']
+    s = _style(scene)
+    family = xml_escape(s['font_family'])
+    size = s['arrow_size']
+    a = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}" role="img">',
+         f'<title>{xml_escape(scene["title"])}</title>',
+         f'<defs><marker id="arch-arrow" viewBox="0 0 8 8" refX="7.5" refY="4" markerWidth="{_f(size)}" markerHeight="{_f(size)}" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="{s["connection"]}"/></marker></defs>',
+         f'<rect width="100%" height="100%" fill="{s["background"]}"/>']
     for r in scene['rects']:
-        dash='' if r['dash']=='none' else f' stroke-dasharray="{r["dash"]}"'
-        vid=f' id="v-{r["id"]}" data-ir-ids="{",".join(r["ir_ids"])}"' if r.get('id') else ''
-        a.append(f'<rect{vid} x="{_f(r["x"])}" y="{_f(r["y"])}" width="{_f(r["w"])}" height="{_f(r["h"])}" rx="4" fill="{r["fill"]}" stroke="#555" stroke-width="1"{dash}/>')
+        dash = '' if r['dash']=='none' else f' stroke-dasharray="{r["dash"]}"'
+        vid = f' id="v-{r["id"]}" data-ir-ids="{",".join(r["ir_ids"])}"' if r.get('id') else ''
+        color = s['header_fill'] if r['kind']=='header' else s['block_fill'] if r['fill'] not in ('#ffffff', '#e9e9e9') else s['module_fill'] if r['fill']=='#ffffff' else s['header_fill']
+        strength = s['emphasis_width'] if r['kind'] in ('flow-module','model','module') else s['border_width']
+        a.append(f'<rect{vid} x="{_f(r["x"])}" y="{_f(r["y"])}" width="{_f(r["w"])}" height="{_f(r["h"])}" rx="{_f(s["corner_radius"])}" fill="{color}" stroke="{s["stroke"]}" stroke-width="{_f(strength)}"{dash}/>')
     for p in scene['paths']:
-        dash='4,4' if p['kind']=='reference' else 'none' if p['kind']=='static-value' else '2,5'
-        d=(f'M {_f(p["x1"])} {_f(p["y1"])} C {_f(p["cx1"])} {_f(p["cy1"])} '
-           f'{_f(p["cx2"])} {_f(p["cy2"])} {_f(p["x2"])} {_f(p["y2"])}')
-        a.append(f'<path id="l-{p["id"]}" data-ir-edge-ids="{",".join(p["ir_edge_ids"])}" d="{d}" fill="none" stroke="#777" stroke-width="1.15" stroke-dasharray="{dash}" marker-end="url(#arrow)"/>')
+        pts = _polyline(p)
+        if len(pts)<2:
+            continue
+        d='M '+ ' L '.join(f'{_f(x)} {_f(y)}' for x,y in pts)
+        dash=_dash(p['kind'])
+        dash_attr= f' stroke-dasharray="{",".join(map(str,dash))}"' if dash else ''
+        a.append(f'<path id="l-{p["id"]}" data-ir-edge-ids="{",".join(p["ir_edge_ids"])}" d="{d}" fill="none" stroke="{s["connection"]}" stroke-width="{_f(s["edge_width"])}" stroke-linejoin="miter"{dash_attr} marker-end="url(#arch-arrow)"/>')
     for t in scene['texts']:
-        weight='bold' if t['bold'] else 'normal'
-        a.append(f'<text x="{_f(t["x"])}" y="{_f(t["y"])}" fill="#111" font-family="DejaVu Sans, Arial, sans-serif" font-size="{t["size"]}" font-weight="{weight}">{xml_escape(t["text"])}</text>')
+        weight = 'bold' if t['bold'] else 'normal'
+        a.append(f'<text x="{_f(t["x"])}" y="{_f(t["y"])}" fill="{s["ink"]}" font-family="{family}" font-size="{_f(t["size"])}" font-weight="{weight}">{xml_escape(t["text"])}</text>')
     a.append('</svg>')
     return ('\n'.join(a)+'\n').encode('utf-8')
 
 
-def pdf(scene: dict) -> bytes:
-    """Generate deterministic vector PDF from the shared scene.
+def _pdf_font_pair() -> tuple[str,str]:
+    """Embed the actual Latin Modern Type1 faces where TeX is installed."""
+    try:
+        from pathlib import Path
+        from reportlab.pdfbase import pdfmetrics
+        from reportlab.pdfbase.pdfmetrics import EmbeddedType1Face, Font
+        common = Path('/usr/share/texmf/fonts')
+        for logical, stem in (('MAGGLatinModern','lmr10'),('MAGGLatinModernBold','lmbx10')):
+            afm = common/'afm/public/lm'/f'{stem}.afm'
+            pfb = common/'type1/public/lm'/f'{stem}.pfb'
+            if not (afm.is_file() and pfb.is_file()):
+                return ('Times-Roman','Times-Bold')
+            if logical not in pdfmetrics.getRegisteredFontNames():
+                face=EmbeddedType1Face(str(afm),str(pfb))
+                pdfmetrics.registerTypeFace(face)
+                pdfmetrics.registerFont(Font(logical,face.name,'WinAnsiEncoding'))
+        return ('MAGGLatinModern','MAGGLatinModernBold')
+    except (OSError,ValueError):
+        return ('Times-Roman','Times-Bold')
 
-    Invariant mode avoids wall-clock metadata. CairoSVG's font subsets vary
-    across hash seeds on some hosts, so this exporter uses ReportLab.
-    """
+
+def pdf(scene: dict) -> bytes:
+    """Invariant vector PDF, same rectangles, coordinates, and orthogonal paths."""
     try:
         from io import BytesIO
-        from pathlib import Path
-        from math import atan2, cos, sin
         from reportlab.pdfgen import canvas
-        from reportlab.pdfbase import pdfmetrics
-        from reportlab.pdfbase.ttfonts import TTFont
         from reportlab.lib.colors import HexColor
     except ImportError as exc:
         raise ValueError('PDF export requires ReportLab; install magg-sae[render]') from exc
-    font_path = Path('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf')
-    if font_path.exists() and 'MAGGDejaVu' not in pdfmetrics.getRegisteredFontNames():
-        pdfmetrics.registerFont(TTFont('MAGGDejaVu', str(font_path)))
-    font = 'MAGGDejaVu' if font_path.exists() else 'Helvetica'
+    s = _style(scene)
+    font, font_bold = _pdf_font_pair() if s['name']=='scientific-latex/v1' else ('Helvetica','Helvetica-Bold')
     memory = BytesIO()
-    c = canvas.Canvas(memory, pagesize=(scene['width'], scene['height']),
-                      bottomup=0, invariant=1, pageCompression=1)
+    c=canvas.Canvas(memory,pagesize=(scene['width'],scene['height']),bottomup=0,invariant=1,pageCompression=1)
     c.setTitle(scene['title'])
+    c.setFillColor(HexColor(s['background']))
+    c.rect(0,0,scene['width'],scene['height'],stroke=0,fill=1)
     for r in scene['rects']:
-        c.setStrokeColor(HexColor('#555555'))
-        c.setFillColor(HexColor(r['fill']))
-        c.setLineWidth(1)
-        c.setDash([] if r['dash']=='none' else [5, 4])
-        c.roundRect(r['x'],r['y'],r['w'],r['h'],4,stroke=1,fill=1)
+        fill = s['header_fill'] if r['kind']=='header' else s['block_fill'] if r['fill'] not in ('#ffffff','#e9e9e9') else s['module_fill'] if r['fill']=='#ffffff' else s['header_fill']
+        c.setStrokeColor(HexColor(s['stroke']))
+        c.setFillColor(HexColor(fill))
+        c.setLineWidth(s['emphasis_width'] if r['kind'] in ('flow-module','model','module') else s['border_width'])
+        c.setDash([] if r['dash']=='none' else [4,3])
+        c.roundRect(r['x'],r['y'],r['w'],r['h'],s['corner_radius'],stroke=1,fill=1)
     c.setDash([])
     for p in scene['paths']:
-        c.setStrokeColor(HexColor('#777777'))
-        c.setLineWidth(1.15)
-        c.setDash([4,4] if p['kind']=='reference' else [2,5] if p['kind']!='static-value' else [])
-        path = c.beginPath()
-        path.moveTo(p['x1'],p['y1'])
-        path.curveTo(p['cx1'],p['cy1'],p['cx2'],p['cy2'],p['x2'],p['y2'])
+        pts=_polyline(p)
+        if len(pts)<2:
+            continue
+        c.setStrokeColor(HexColor(s['connection']))
+        c.setFillColor(HexColor(s['connection']))
+        c.setLineWidth(s['edge_width'])
+        c.setDash(list(_dash(p['kind'])))
+        path=c.beginPath(); path.moveTo(*pts[0])
+        for point in pts[1:]:
+            path.lineTo(*point)
         c.drawPath(path,stroke=1,fill=0)
-        theta=atan2(p['y2']-p['cy2'],p['x2']-p['cx2'])
-        arrow=c.beginPath()
-        arrow.moveTo(p['x2'],p['y2'])
-        arrow.lineTo(p['x2']-7*cos(theta-0.43),p['y2']-7*sin(theta-0.43))
-        arrow.moveTo(p['x2'],p['y2'])
-        arrow.lineTo(p['x2']-7*cos(theta+0.43),p['y2']-7*sin(theta+0.43))
-        c.drawPath(arrow,stroke=1,fill=0)
+        x2,y2=pts[-1]
+        previous=next((pt for pt in reversed(pts[:-1]) if pt!=(x2,y2)),None)
+        if previous:
+            angle=atan2(y2-previous[1],x2-previous[0])
+            sz=s['arrow_size']
+            triangle=c.beginPath()
+            triangle.moveTo(x2,y2)
+            triangle.lineTo(x2-sz*cos(angle-0.45),y2-sz*sin(angle-0.45))
+            triangle.lineTo(x2-sz*cos(angle+0.45),y2-sz*sin(angle+0.45))
+            triangle.close()
+            c.setDash([]);c.drawPath(triangle,stroke=0,fill=1)
     c.setDash([])
+    c.setFillColor(HexColor(s['ink']))
     for t in scene['texts']:
-        c.setFillColor(HexColor('#111111'))
-        c.setFont(font,t['size'])
-        c.drawString(t['x'],t['y'],t['text'])
+        c.setFont(font_bold if t['bold'] else font,t['size'])
+        c.drawString(t['x'],t['y'],t['text'].replace('…','...'))
     c.save()
     return memory.getvalue()
 
@@ -93,24 +148,26 @@ def _tex_escape(text: str) -> str:
 
 
 def tikz(scene: dict) -> bytes:
-    """Use exact layout coordinates from the same scene; no second graph extraction."""
+    """TikZ uses Latin Modern (lmodern), the source document's LaTeX family."""
+    s=_style(scene)
     a=[r'\documentclass[tikz,border=0pt]{standalone}',
-       r'\usepackage[T1]{fontenc}',r'\usepackage{lmodern}',
+       r'\usepackage[T1]{fontenc}',r'\usepackage{lmodern}',r'\usetikzlibrary{arrows.meta}',
        r'\begin{document}',r'\begin{tikzpicture}[x=1pt,y=-1pt,>=stealth]',
        f'\\path[use as bounding box] (0,0) rectangle ({scene["width"]},{scene["height"]});',
        f'\\fill[white] (0,0) rectangle ({scene["width"]},{scene["height"]});']
     for r in scene['rects']:
-        fill='white' if r['fill']=='#ffffff' else 'black!9' if r['fill']=='#e9e9e9' else 'black!4'
+        shade='white' if r['fill']=='#ffffff' else 'black!9' if r['kind']=='header' or r['fill']=='#e9e9e9' else 'black!4'
         line='dashed' if r['dash']!='none' else 'solid'
         x,y,w,h=(_f(r[z]) for z in ('x','y','w','h'))
-        a.append(f'\\draw[draw=black!65,fill={fill},{line},line width=0.7pt,rounded corners=4pt] ({x},{y}) rectangle ({_f(r["x"]+r["w"])},{_f(r["y"]+r["h"])});')
+        strength=s['emphasis_width'] if r['kind'] in ('flow-module','model','module') else s['border_width']
+        a.append(f'\\draw[draw=black!90,fill={shade},{line},line width={_f(strength)}pt,rounded corners={_f(s["corner_radius"])}pt] ({x},{y}) rectangle ({_f(r["x"]+r["w"])},{_f(r["y"]+r["h"])});')
     for p in scene['paths']:
-        dash='dashed' if p['kind']=='reference' else 'solid' if p['kind']=='static-value' else 'dotted'
-        pts=[f'({_f(p[z])},{_f(p[t])})' for z,t in [('x1','y1'),('cx1','cy1'),('cx2','cy2'),('x2','y2')]]
-        a.append(f'\\draw[->,{dash},draw=black!55,line width=0.8pt] {pts[0]} .. controls {pts[1]} and {pts[2]} .. {pts[3]};')
+        dash='solid' if p['kind']=='static-value' else 'dashed' if p['kind']=='reference' else 'dotted'
+        pts=' -- '.join(f'({_f(x)},{_f(y)})' for x,y in _polyline(p))
+        a.append(f'\\draw[-{{Stealth[length={_f(s["arrow_size"])}pt,width=3.2pt]}},{dash},draw=black!90,line width={_f(s["edge_width"])}pt] {pts};')
     for t in scene['texts']:
         txt=_tex_escape(t['text']).replace('…','...')
-        font='\\bfseries' if t['bold'] else ''
-        a.append(f'\\node[anchor=base west,inner sep=0,outer sep=0,text=black,font=\\fontsize{{{t["size"]}}}{{{t["size"]+2}}}\\selectfont{font}] at ({_f(t["x"])},{_f(t["y"])}) {{{txt}}};')
+        font=r'\bfseries' if t['bold'] else ''
+        a.append(f'\\node[anchor=base west,inner sep=0,outer sep=0,text=black,font=\\fontsize{{{_f(t["size"])}}}{{{_f(t["size"]+2)}}}\\selectfont{font}] at ({_f(t["x"])},{_f(t["y"])}) {{{txt}}};')
     a.extend([r'\end{tikzpicture}',r'\end{document}',''])
     return ('\n'.join(a)).encode('utf-8')

@@ -13,6 +13,7 @@ from .flow_layout import make_flow_scene
 from .health import evaluate
 from .layout import make_scene
 from .render import svg, pdf, tikz
+from .themes import select_theme
 
 
 FORMATS={'svg': ('svg',), 'pdf': ('pdf',), 'tikz': ('tex',),
@@ -22,12 +23,13 @@ FORMATS={'svg': ('svg',), 'pdf': ('pdf',), 'tikz': ('tex',),
 def present(bundle_path: str | Path, output: str | Path, *, level: str = 'block',
             mode: str = 'exploration', format: str = 'svg',
             allow_partial: bool = False, view: str = 'structure',
-            focus: str | None = None) -> dict[str, Any]:
+            focus: str | None = None, theme: str = 'scientific-latex') -> dict[str, Any]:
     """Do not render on invalid bundles or without sufficient evidence.
 
     Always write the health and manifest JSON; diagrams are absent if blocked
     or withheld by publication policy.
     """
+    style = select_theme(theme)
     if view not in ('structure','flow'):
         raise ValueError(f'Invalid view: {view}')
     if focus and view != 'flow':
@@ -64,7 +66,7 @@ def present(bundle_path: str | Path, output: str | Path, *, level: str = 'block'
         input_hashes=bundle.metadata.get('artifact_sha256',{})
     else:
         input_hashes={}
-    manifest={'schema_version':'1.0','style_version':'monochrome-scientific/v1',
+    manifest={'schema_version':'1.0','style_version':style['name'],
               'mode':mode,'level':level,'view':view,'focus':focus,'entrypoint':bundle.ir.get('entrypoint') if bundle else None,
               'input_artifact_hashes':input_hashes,'status':health['status'],
               'rendered':allowed,'visual_elements':{},'visual_links':{},
@@ -94,6 +96,7 @@ def present(bundle_path: str | Path, output: str | Path, *, level: str = 'block'
             entrypoint=(f"{health['entrypoint']} / {focus}"
                         if focus and focus != (health['entrypoint'] or '').split(':')[-1]
                         else health['entrypoint']))
+        scene['style'] = style
         exporters={'svg':svg,'pdf':pdf,'tex':tikz}
         for extension in FORMATS[format]:
             content=exporters[extension](scene)
@@ -101,6 +104,6 @@ def present(bundle_path: str | Path, output: str | Path, *, level: str = 'block'
             manifest['output_sha256'][f'architecture.{extension}']=sha256(content)
     (output_dir/'presentation-health.json').write_bytes(canonical_bytes(health))
     (output_dir/'presentation-manifest.json').write_bytes(canonical_bytes(manifest))
-    return {'status':health['status'],'render_allowed':allowed,'mode':mode,'level':level,'view':view,'focus':focus,
+    return {'status':health['status'],'render_allowed':allowed,'mode':mode,'level':level,'view':view,'focus':focus,'theme':theme,
             'formats':list(FORMATS[format]) if allowed else [],
             'issues':len(health['issues']),'output':str(output_dir)}

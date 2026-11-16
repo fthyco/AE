@@ -111,6 +111,8 @@ def make_scene(graph: dict[str, Any], *, status: str, entrypoint: str | None) ->
         if unresolved:
             scene['texts'].append({'x':p['x']+p['w']-78,'y':p['y']+11,'text':'UNRESOLVED', 'size':8,'bold':True})
 
+    # Hierarchical containment is already drawn by nested rectangles. Draw ONLY
+    # evidence-backed semantic references and syntactic expression dependencies.
     suppress={'DECLARES_COMPONENT','CONSTRUCTS_LOCAL_MODULE','HAS_FORWARD_CALL',
               'HAS_FORWARD_OPERATION','CONTAINS_NESTED_CONSTRUCTOR'}
     for link in graph['links']:
@@ -131,6 +133,14 @@ def make_scene(graph: dict[str, Any], *, status: str, entrypoint: str | None) ->
                    'label':'expr dependency','kind':'syntax-dependency'}
         else:
             continue
+        # Route through a dedicated horizontal/vertical gutter rather than a
+        # decorative Bezier. These arrows remain source-code references, not flow.
+        if link['relation_kind']=='USES_MODULE_REFERENCE':
+            gutter = (x1+x2)/2
+            curve['points']=[(x1,y1),(gutter,y1),(gutter,y2),(x2,y2)]
+        else:
+            outside = max(x1,x2)+20
+            curve['points']=[(x1,y1),(outside,y1),(outside,y2),(x2,y2)]
         curve['id']=link['id'];curve['ir_edge_ids']=link['ir_edge_ids'];scene['paths'].append(curve)
     scene['texts'].append({'x':40,'y':canvas_h-49,
                            'text':'Nesting = declared structure  |  dashed arrows = module references  |  dotted = source-expression dependency',

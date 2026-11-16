@@ -29,6 +29,7 @@ def build_parser() -> argparse.ArgumentParser:
     presenter.add_argument("--mode", choices=["exploration", "publication"], default="exploration")
     presenter.add_argument("--format", choices=["svg", "pdf", "tikz", "all"], default="svg")
     presenter.add_argument("--focus", help="Show a single selected module in the flow view")
+    presenter.add_argument("--theme", choices=["scientific-latex", "legacy"], default="scientific-latex")
     presenter.add_argument("--allow-partial", action="store_true", help="Allow clearly labeled partial publication export")
     return parser
 
@@ -43,7 +44,7 @@ def main(argv: list[str] | None = None) -> int:
             result = validate_bundle(args.bundle)
         elif args.command == "present":
             result = present(args.bundle, args.output, level=args.level, mode=args.mode,
-                             format=args.format, allow_partial=args.allow_partial, view=args.view, focus=args.focus)
+                             format=args.format, allow_partial=args.allow_partial, view=args.view, focus=args.focus, theme=args.theme)
         else:
             result = inspect_bundle(args.bundle)
         print(json.dumps(result, sort_keys=True, indent=2, ensure_ascii=False))
