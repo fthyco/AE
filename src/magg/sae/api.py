@@ -12,6 +12,8 @@ from .analysis.dataflow import analyze_dataflow
 from .analysis.pytorch_static import analyze_pytorch
 from .analysis.configuration import analyze_configuration
 from .analysis.forward_flow import analyze_forward_values
+from .analysis.interprocedural import analyze_interprocedural
+from .analysis.symbolic_shapes import analyze_symbolic_shapes
 from .indexing.model_index import build_model_index, validate_model_index
 from .linking.project import Unit, link_project, syntax_ids, unresolved
 from .inventory.walker import inventory
@@ -101,6 +103,8 @@ def extract(source_root: str | Path, output: str | Path, *, entrypoint: str | No
                                     'reason': f'Expected unique module:symbol for {entrypoint}; found {len(candidates)}',
                                     'candidate_ids': candidates, 'source_refs': []})
     model_index = build_model_index(graph, parsed_units, entrypoint_id, entrypoint)
+    analyze_interprocedural(graph, parsed_units, model_index)
+    analyze_symbolic_shapes(graph, model_index)
     graph.nodes.sort(key=lambda n: n["id"])
     graph.edges.sort(key=lambda e: e["id"])
     graph.unresolved.sort(key=lambda u: (u["path"], u.get("site_id", ""), u["kind"], u.get("expression", "")))
@@ -161,8 +165,8 @@ def validate_bundle(path: str | Path) -> dict:
     if issues:
         raise ValueError("; ".join(issues))
     verification = validate_ir(ir, sources)
-    model_index = json.loads((folder / "model-index.json").read_bytes())
-    validate_model_index(model_index, ir)
+    index = json.loads((folder / "model-index.json").read_bytes())
+    validate_model_index(index, ir)
     for filename, expected in meta["artifact_sha256"].items():
         if sha256((folder / filename).read_bytes()) != expected:
             raise ValueError(f"Artifact checksum mismatch: {filename}")
@@ -175,12 +179,12 @@ def inspect_bundle(path: str | Path) -> dict:
         folder = folder.parent
     ir = json.loads((folder / "architecture.ir.json").read_bytes())
     coverage = json.loads((folder / "coverage.json").read_bytes())
-    model_index = json.loads((folder / "model-index.json").read_bytes())
+    index = json.loads((folder / "model-index.json").read_bytes())
     kind_counts: dict[str, int] = {}
     for node in ir["nodes"]:
         kind = node["kind"]
         kind_counts[kind] = kind_counts.get(kind, 0) + 1
-    return {"entrypoint": ir.get("entrypoint"), "model_index": {"status": model_index['status'],
-            "module_count": len(model_index['modules']), "unresolved": len(model_index['unresolved'])},
+    return {"entrypoint": ir.get("entrypoint"), "model_index": {"status": index["status"],
+            "module_count": len(index["modules"]), "unresolved": len(index["unresolved"])},
             "entities_by_kind": dict(sorted(kind_counts.items())),
             "relations": len(ir["edges"]), "unresolved": len(ir["unresolved"]), "coverage": coverage}
