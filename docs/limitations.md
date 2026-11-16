@@ -1,4 +1,4 @@
-# SAE v0.2.0 — verified capabilities and remaining limitations
+# SAE v0.3.0 — verified capabilities and remaining limitations
 
 ## Implemented
 
@@ -11,6 +11,8 @@
 - Symbolic PyTorch shape templates and nested constructor containment; static JSON/TOML data trees.
 - Source evidence, stable identifiers, integrity validation, explicit unresolved evidence and checksums.
 - Entrypoint resolution to a top-level module symbol when unique.
+- Entrypoint model-centric index with source-backed component and forward references.
+- Safe typed YAML configuration trees with duplicate key, unsafe tag and multiple document diagnostics.
 
 ## Not yet complete
 
@@ -18,7 +20,7 @@
 - Full alias and parameter-sharing analysis, descriptor and property resolution, dynamic `setattr`, metaclasses.
 - True static SSA for all control constructs, interprocedural reaching definitions, pointer/dataflow or runtime tensor graph.
 - Nontrivial symbolic shape propagation through all PyTorch/functional operations.
-- Full YAML/Hydra/OmegaConf semantics and user-defined factories.
+- Hydra/OmegaConf interpolation, runtime config evaluation and user-defined factories.
 - Systematic measurement of recall/completeness on real-world models such as Chessformer and AWN.
 - Presenter, paper-quality architecture figures or graphical export.
 

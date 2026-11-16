@@ -1,0 +1,5 @@
+model:
+  input_dim: 16
+  hidden_dim: 32
+training:
+  batch_size: 8

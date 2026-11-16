@@ -31,3 +31,8 @@ A presenter can read `architecture.ir.json`, select subgraphs, and maintain a li
 - `configuration_entry` trees preserve parsed JSON/TOML value relationships; provenance is file-level for parsed config entries.
 - Cross-file call/import, inheritance and custom module construction relations are explicitly named and source-backed.
 - `coverage.json` includes relation counts and unresolved types, but they are not semantic recall/precision scores.
+
+
+## Model-centric MVP index (v0.3)
+
+model-index.json is an additive index referencing the full IR without filtering it. Its schema is schemas/model-index.v1.schema.json. Unknown component assignments are explicit. Source order is lexical, not a runtime trace.

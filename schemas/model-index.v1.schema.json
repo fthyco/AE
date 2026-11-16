@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SAE Model Index v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "entrypoint",
+    "root_definition_id",
+    "status",
+    "modules",
+    "unresolved",
+    "limitations"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "entrypoint": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "root_definition_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "status": {
+      "enum": [
+        "indexed",
+        "no_entrypoint",
+        "unresolved",
+        "unsupported_entrypoint"
+      ]
+    },
+    "modules": {
+      "type": "array"
+    },
+    "unresolved": {
+      "type": "array"
+    },
+    "limitations": {
+      "type": "array"
+    }
+  }
+}

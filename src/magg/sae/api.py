@@ -11,6 +11,7 @@ from .analysis.analyzer import Analyzer
 from .analysis.dataflow import analyze_dataflow
 from .analysis.pytorch_static import analyze_pytorch
 from .analysis.configuration import analyze_configuration
+from .indexing.model_index import build_model_index, validate_model_index
 from .linking.project import Unit, link_project, syntax_ids, unresolved
 from .inventory.walker import inventory
 from .ir.canonical import sha256, canonical_bytes, stable_id
@@ -97,6 +98,7 @@ def extract(source_root: str | Path, output: str | Path, *, entrypoint: str | No
             graph.unresolved.append({'kind': 'entrypoint_resolution', 'path': '',
                                     'reason': f'Expected unique module:symbol for {entrypoint}; found {len(candidates)}',
                                     'candidate_ids': candidates, 'source_refs': []})
+    model_index = build_model_index(graph, parsed_units, entrypoint_id, entrypoint)
     graph.nodes.sort(key=lambda n: n["id"])
     graph.edges.sort(key=lambda e: e["id"])
     graph.unresolved.sort(key=lambda u: (u["path"], u.get("site_id", ""), u["kind"], u.get("expression", "")))
@@ -106,6 +108,7 @@ def extract(source_root: str | Path, output: str | Path, *, entrypoint: str | No
           "entrypoint": entrypoint, "entrypoint_target_id": entrypoint_id, "nodes": graph.nodes,
           "edges": graph.edges, "unresolved": graph.unresolved}
     check = validate_ir(ir, {f.path: len(f.data) for f in sources})
+    validate_model_index(model_index, ir)
     coverage = {"schema_version": "1.0", "included_files": len(sources),
                 "python_files": python_total, "parsed_python_files": parsed,
                 "unparsed_python_files": python_total - parsed,
@@ -120,6 +123,7 @@ def extract(source_root: str | Path, output: str | Path, *, entrypoint: str | No
                           "Configuration source bytes are preserved, not evaluated",
                           "Static recognition is limited to known PyTorch import patterns"]}
     artifacts = {"architecture.ir.json": ir,
+                 "model-index.json": model_index,
                  "source-index.json": source_index,
                  "source-manifest.json": {"schema_version": "1.0", "files": manifest},
                  "coverage.json": coverage,
@@ -155,6 +159,8 @@ def validate_bundle(path: str | Path) -> dict:
     if issues:
         raise ValueError("; ".join(issues))
     verification = validate_ir(ir, sources)
+    model_index = json.loads((folder / "model-index.json").read_bytes())
+    validate_model_index(model_index, ir)
     for filename, expected in meta["artifact_sha256"].items():
         if sha256((folder / filename).read_bytes()) != expected:
             raise ValueError(f"Artifact checksum mismatch: {filename}")
@@ -167,9 +173,12 @@ def inspect_bundle(path: str | Path) -> dict:
         folder = folder.parent
     ir = json.loads((folder / "architecture.ir.json").read_bytes())
     coverage = json.loads((folder / "coverage.json").read_bytes())
+    model_index = json.loads((folder / "model-index.json").read_bytes())
     kind_counts: dict[str, int] = {}
     for node in ir["nodes"]:
         kind = node["kind"]
         kind_counts[kind] = kind_counts.get(kind, 0) + 1
-    return {"entrypoint": ir.get("entrypoint"), "entities_by_kind": dict(sorted(kind_counts.items())),
+    return {"entrypoint": ir.get("entrypoint"), "model_index": {"status": model_index['status'],
+            "module_count": len(model_index['modules']), "unresolved": len(model_index['unresolved'])},
+            "entities_by_kind": dict(sorted(kind_counts.items())),
             "relations": len(ir["edges"]), "unresolved": len(ir["unresolved"]), "coverage": coverage}

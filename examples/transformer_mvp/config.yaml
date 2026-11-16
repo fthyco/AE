@@ -1,0 +1,6 @@
+architecture:
+  heads: 4
+  dim: 32
+  vocab_size: 64
+metadata:
+  research_model: true
