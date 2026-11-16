@@ -39,3 +39,17 @@ All rendered arrows and blocks were checked against real IR IDs and source evide
 5. Model-by-model review against original source and dimension contracts.
 
 These are future improvements, not features claimed complete in v0.5.
+
+
+## v0.6 — guarded forward alternatives and module focus (verified)
+
+[Successful real-repository smoke run](https://github.com/fthyco/AE/actions/runs/43971554892) at commit `a4bb564` checked out the original Chessformer CF-ACT package and AWN `resnet.py` (not an entire training execution). It passed provenance assertions for every shown node and link, plus explicit AWN conditional-merge and AugAssign assertions.
+
+| Original selected source | IR nodes | IR edges | Visible source-backed links | Status |
+| --- | ---: | ---: | ---: | --- |
+| Chessformer CF-ACT + maia3 package | 14,661 | 19,950 | 98 | partial (30 issues) |
+| AWN BasicBlock | 321 | 469 | 14 | partial (3 issues) |
+
+Changes relative to v0.5 include conditional `forward_choice`, guarded call relationships and `forward_augassign` operand dependencies. The AWN diagram now represents both alternatives to `identity` and the ensuing `out += identity` result dependency, **without** asserting which downsample path executes or whether in-place alias effects are safe. `--view flow --focus <module>` exports one module in its own figure with source mappings; invalid or ambiguous focus blocks rendering.
+
+Status is intentionally `partial` for both real models. Remaining limitations include complex interprocedural paths, some dynamic forms of control flow, unverified tuple arity, and scalable publication layout. A successful workflow is **not** a claim of complete, execution-equivalent paper architecture.
