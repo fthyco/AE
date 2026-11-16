@@ -3,7 +3,7 @@
 MAGG is designed as **two independent components**:
 
 1. **SAE (Static Architecture Extractor):** reads source code *without running it*, captures maximal source-grounded architecture facts into a deterministic intermediate representation (IR), and preserves exact source bytes.
-2. **Presenter (future):** converts the IR into a unified research-paper-style model architecture figure. It may group and simplify, but must retain links to the original facts.
+2. **Presenter:** converts the IR into a unified research-paper-style model architecture figure. It may group and simplify, but must retain links to the original facts.
 
 > **Extract at maximum fidelity. Abstract only when presenting.**
 
@@ -70,7 +70,19 @@ AE/
 └── tests/
 ```
 
-A future `presenter/` remains deliberately unimplemented: the output is data, not a drawing.
+## Presenter v0.4.0 — source-backed research architecture diagrams
+
+Presenter now reads only validated SAE bundles and renders a source-grounded static module/call diagram. It does not invent runtime tensor-flow links.
+
+```bash
+magg present magg-output --level block --mode exploration --format svg --output paper-output
+magg present magg-output --level operation --mode exploration --format all --output detailed-output
+magg present magg-output --level overview --mode publication --format pdf --output publication-output
+```
+
+Install the optional renderer for PDF export: `pip install -e '.[render]'`. Publication mode blocks partial output unless `--allow-partial` is explicitly set; blocked input never renders. Outputs include `presentation-health.json` and `presentation-manifest.json` with per-element source mappings. `complete` describes the supported selected view, not model runtime correctness.
+
+See [Presenter implementation](docs/presenter-implementation.md) and [Presenter design contract](docs/presenter-plan.md).
 
 ### Design documentation
 
