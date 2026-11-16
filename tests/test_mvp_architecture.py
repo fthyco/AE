@@ -98,3 +98,25 @@ def test_deterministic_across_hash_seeds(tmp_path):
     for f in ('architecture.ir.json','model-index.json','coverage.json','source-index.json'):
         assert (paths[0]/f).read_bytes()==(paths[1]/f).read_bytes()
     assert inspect_bundle(paths[0])['model_index']['module_count']==3
+
+def test_no_entrypoint_and_unknown_entrypoint(tmp_path):
+    out=tmp_path/'out'
+    extract(EXAMPLES/'mlp_mvp',out)
+    idx=json.loads((out/'model-index.json').read_text())
+    assert idx['status']=='no_entrypoint' and idx['modules']==[]
+    extract(EXAMPLES/'mlp_mvp',out,entrypoint='model:Missing')
+    idx=json.loads((out/'model-index.json').read_text())
+    assert idx['status']=='unresolved' and idx['unresolved']
+
+def test_mlp_component_relations_not_just_list(tmp_path):
+    ir,idx,_=bundle(tmp_path,'mlp_mvp','model:MLP')
+    calls=idx['modules'][0]['forward_calls']
+    sites={c['construction_site_id'] for c in idx['modules'][0]['components']}
+    assert {x for c in calls for x in c['module_construction_site_ids']}==sites
+    assert any(e['relation']=='DECLARES_FORWARD' for e in ir['edges'])
+
+def test_model_index_schema(tmp_path):
+    jsonschema=pytest.importorskip('jsonschema')
+    _,idx,_=bundle(tmp_path,'transformer_mvp','model:Transformer')
+    schema=json.loads((ROOT/'schemas/model-index.v1.schema.json').read_text())
+    jsonschema.validate(idx,schema)
