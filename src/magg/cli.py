@@ -24,6 +24,7 @@ def build_parser() -> argparse.ArgumentParser:
     presenter = commands.add_parser("present", help="Draw a static architecture from a validated SAE bundle")
     presenter.add_argument("bundle", help="Existing SAE extraction bundle directory")
     presenter.add_argument("--output", "-o", required=True, help="Target diagram directory")
+    presenter.add_argument("--view", choices=["structure", "flow"], default="structure")
     presenter.add_argument("--level", choices=["overview", "block", "operation"], default="block")
     presenter.add_argument("--mode", choices=["exploration", "publication"], default="exploration")
     presenter.add_argument("--format", choices=["svg", "pdf", "tikz", "all"], default="svg")
@@ -41,7 +42,7 @@ def main(argv: list[str] | None = None) -> int:
             result = validate_bundle(args.bundle)
         elif args.command == "present":
             result = present(args.bundle, args.output, level=args.level, mode=args.mode,
-                             format=args.format, allow_partial=args.allow_partial)
+                             format=args.format, allow_partial=args.allow_partial, view=args.view)
         else:
             result = inspect_bundle(args.bundle)
         print(json.dumps(result, sort_keys=True, indent=2, ensure_ascii=False))

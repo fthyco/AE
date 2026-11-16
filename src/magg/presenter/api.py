@@ -8,6 +8,8 @@ from typing import Any
 from magg.sae.ir.canonical import canonical_bytes, sha256
 from .reader import load_bundle
 from .projection import project
+from .flow import project_flow
+from .flow_layout import make_flow_scene
 from .health import evaluate
 from .layout import make_scene
 from .render import svg, pdf, tikz
@@ -19,12 +21,14 @@ FORMATS={'svg': ('svg',), 'pdf': ('pdf',), 'tikz': ('tex',),
 
 def present(bundle_path: str | Path, output: str | Path, *, level: str = 'block',
             mode: str = 'exploration', format: str = 'svg',
-            allow_partial: bool = False) -> dict[str, Any]:
+            allow_partial: bool = False, view: str = 'structure') -> dict[str, Any]:
     """Do not render on invalid bundles or without sufficient evidence.
 
     Always write the health and manifest JSON; diagrams are absent if blocked
     or withheld by publication policy.
     """
+    if view not in ('structure','flow'):
+        raise ValueError(f'Invalid view: {view}')
     if level not in ('overview','block','operation'):
         raise ValueError(f'Invalid level: {level}')
     if mode not in ('exploration','publication'):
@@ -41,10 +45,13 @@ def present(bundle_path: str | Path, output: str | Path, *, level: str = 'block'
     bundle=None; graph=None; problem=None
     try:
         bundle=load_bundle(bundle_path)
-        graph=project(bundle,level)
+        graph=project_flow(bundle,level) if view=='flow' else project(bundle,level)
     except (OSError,ValueError,KeyError,TypeError,json.JSONDecodeError) as exc:
         problem=f'{type(exc).__name__}: {exc}'
     health=evaluate(bundle,graph,mode=mode,level=level,input_error=problem)
+    if view == 'flow':
+        health['scope']='Source-backed straight-line forward value dependencies; runtime tensor flow not verified'
+    health['view']=view
     allowed=health['status'] != 'blocked' and (mode=='exploration' or
            health['status']=='complete' or allow_partial)
     health['render_allowed']=allowed
@@ -54,7 +61,7 @@ def present(bundle_path: str | Path, output: str | Path, *, level: str = 'block'
     else:
         input_hashes={}
     manifest={'schema_version':'1.0','style_version':'monochrome-scientific/v1',
-              'mode':mode,'level':level,'entrypoint':bundle.ir.get('entrypoint') if bundle else None,
+              'mode':mode,'level':level,'view':view,'entrypoint':bundle.ir.get('entrypoint') if bundle else None,
               'input_artifact_hashes':input_hashes,'status':health['status'],
               'rendered':allowed,'visual_elements':{},'visual_links':{},
               'omitted_indexed_ir_ids':[],'output_sha256':{}}
@@ -78,7 +85,7 @@ def present(bundle_path: str | Path, output: str | Path, *, level: str = 'block'
             manifest['omitted_indexed_ir_ids']=[{'id':i,'reason':'hidden_by_selected_view_or_unsupported_projection'}
                                                 for i in sorted(indexed-mapped)]
     if allowed:
-        scene=make_scene(graph,status=health['status'],entrypoint=health['entrypoint'])
+        scene=(make_flow_scene if view=='flow' else make_scene)(graph,status=health['status'],entrypoint=health['entrypoint'])
         exporters={'svg':svg,'pdf':pdf,'tex':tikz}
         for extension in FORMATS[format]:
             content=exporters[extension](scene)
@@ -86,6 +93,6 @@ def present(bundle_path: str | Path, output: str | Path, *, level: str = 'block'
             manifest['output_sha256'][f'architecture.{extension}']=sha256(content)
     (output_dir/'presentation-health.json').write_bytes(canonical_bytes(health))
     (output_dir/'presentation-manifest.json').write_bytes(canonical_bytes(manifest))
-    return {'status':health['status'],'render_allowed':allowed,'mode':mode,'level':level,
+    return {'status':health['status'],'render_allowed':allowed,'mode':mode,'level':level,'view':view,
             'formats':list(FORMATS[format]) if allowed else [],
             'issues':len(health['issues']),'output':str(output_dir)}

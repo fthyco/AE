@@ -33,3 +33,7 @@ rather than claiming false certainty.
 
 Analyzed Python is not imported or executed; no `eval`, `exec`, `torch.load`
 or pickle is used. Symlinks are rejected and file-count/byte limits are enforced.
+
+## v0.5 forward-flow boundary
+
+`--view flow` is now available for straight-line `forward` source expressions and module-local value dependencies. Control-flow branches, loop-carried values, in-place mutations (`+=` etc.), dynamic Python semantics and unknown destructuring remain partial, not false tensor connections. The older structural view stays available. This source-backed projection is not a verified runtime computational graph.

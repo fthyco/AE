@@ -95,3 +95,14 @@ See [Presenter implementation](docs/presenter-implementation.md) and [Presenter 
 See the technical specification for the intended expanded package hierarchy, rules, milestones and acceptance criteria. Modules that are still planned have not been represented by fake empty implementations.
 
 - [Implementation phases and evidence](docs/implementation-phases.md)
+
+## SAE/Presenter v0.5 — source-backed forward-flow view
+
+This release adds a second, evidence-grounded drawing mode. The old `structure` view remains the default. To draw static operand/return relationships instead, use:
+
+```bash
+magg extract examples/cnn_residual_mvp --entrypoint model:CNN --output sae-output
+magg present sae-output --view flow --level block --format all --output flow-output
+```
+
+`--view flow` draws only relationships proven from supported straight-line `forward` expressions. It can show residual additions and nested functional calls. It is **not a runtime tensor-flow tracer**; conditional branches, mutation, dynamic dispatch and unknown unpacking are marked partial rather than invented. All diagram blocks and arrows carry source-backed IR IDs. PDF uses deterministic ReportLab vector output (`pip install -e '.[render]'`).

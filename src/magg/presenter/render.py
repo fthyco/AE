@@ -19,7 +19,7 @@ def svg(scene: dict) -> bytes:
         vid=f' id="v-{r["id"]}" data-ir-ids="{",".join(r["ir_ids"])}"' if r.get('id') else ''
         a.append(f'<rect{vid} x="{_f(r["x"])}" y="{_f(r["y"])}" width="{_f(r["w"])}" height="{_f(r["h"])}" rx="4" fill="{r["fill"]}" stroke="#555" stroke-width="1"{dash}/>')
     for p in scene['paths']:
-        dash='4,4' if p['kind']=='reference' else '2,5'
+        dash='4,4' if p['kind']=='reference' else 'none' if p['kind']=='static-value' else '2,5'
         d=(f'M {_f(p["x1"])} {_f(p["y1"])} C {_f(p["cx1"])} {_f(p["cy1"])} '
            f'{_f(p["cx2"])} {_f(p["cy2"])} {_f(p["x2"])} {_f(p["y2"])}')
         a.append(f'<path id="l-{p["id"]}" data-ir-edge-ids="{",".join(p["ir_edge_ids"])}" d="{d}" fill="none" stroke="#777" stroke-width="1.15" stroke-dasharray="{dash}" marker-end="url(#arrow)"/>')
@@ -31,11 +31,58 @@ def svg(scene: dict) -> bytes:
 
 
 def pdf(scene: dict) -> bytes:
+    """Generate deterministic vector PDF from the shared scene.
+
+    Invariant mode avoids wall-clock metadata. CairoSVG's font subsets vary
+    across hash seeds on some hosts, so this exporter uses ReportLab.
+    """
     try:
-        import cairosvg
+        from io import BytesIO
+        from pathlib import Path
+        from math import atan2, cos, sin
+        from reportlab.pdfgen import canvas
+        from reportlab.pdfbase import pdfmetrics
+        from reportlab.pdfbase.ttfonts import TTFont
+        from reportlab.lib.colors import HexColor
     except ImportError as exc:
-        raise ValueError('PDF export requires CairoSVG; install magg-sae[render]') from exc
-    return cairosvg.svg2pdf(bytestring=svg(scene))
+        raise ValueError('PDF export requires ReportLab; install magg-sae[render]') from exc
+    font_path = Path('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf')
+    if font_path.exists() and 'MAGGDejaVu' not in pdfmetrics.getRegisteredFontNames():
+        pdfmetrics.registerFont(TTFont('MAGGDejaVu', str(font_path)))
+    font = 'MAGGDejaVu' if font_path.exists() else 'Helvetica'
+    memory = BytesIO()
+    c = canvas.Canvas(memory, pagesize=(scene['width'], scene['height']),
+                      bottomup=0, invariant=1, pageCompression=1)
+    c.setTitle(scene['title'])
+    for r in scene['rects']:
+        c.setStrokeColor(HexColor('#555555'))
+        c.setFillColor(HexColor(r['fill']))
+        c.setLineWidth(1)
+        c.setDash([] if r['dash']=='none' else [5, 4])
+        c.roundRect(r['x'],r['y'],r['w'],r['h'],4,stroke=1,fill=1)
+    c.setDash([])
+    for p in scene['paths']:
+        c.setStrokeColor(HexColor('#777777'))
+        c.setLineWidth(1.15)
+        c.setDash([4,4] if p['kind']=='reference' else [2,5] if p['kind']!='static-value' else [])
+        path = c.beginPath()
+        path.moveTo(p['x1'],p['y1'])
+        path.curveTo(p['cx1'],p['cy1'],p['cx2'],p['cy2'],p['x2'],p['y2'])
+        c.drawPath(path,stroke=1,fill=0)
+        theta=atan2(p['y2']-p['cy2'],p['x2']-p['cx2'])
+        arrow=c.beginPath()
+        arrow.moveTo(p['x2'],p['y2'])
+        arrow.lineTo(p['x2']-7*cos(theta-0.43),p['y2']-7*sin(theta-0.43))
+        arrow.moveTo(p['x2'],p['y2'])
+        arrow.lineTo(p['x2']-7*cos(theta+0.43),p['y2']-7*sin(theta+0.43))
+        c.drawPath(arrow,stroke=1,fill=0)
+    c.setDash([])
+    for t in scene['texts']:
+        c.setFillColor(HexColor('#111111'))
+        c.setFont(font,t['size'])
+        c.drawString(t['x'],t['y'],t['text'])
+    c.save()
+    return memory.getvalue()
 
 
 def _tex_escape(text: str) -> str:
@@ -58,7 +105,7 @@ def tikz(scene: dict) -> bytes:
         x,y,w,h=(_f(r[z]) for z in ('x','y','w','h'))
         a.append(f'\\draw[draw=black!65,fill={fill},{line},line width=0.7pt,rounded corners=4pt] ({x},{y}) rectangle ({_f(r["x"]+r["w"])},{_f(r["y"]+r["h"])});')
     for p in scene['paths']:
-        dash='dashed' if p['kind']=='reference' else 'dotted'
+        dash='dashed' if p['kind']=='reference' else 'solid' if p['kind']=='static-value' else 'dotted'
         pts=[f'({_f(p[z])},{_f(p[t])})' for z,t in [('x1','y1'),('cx1','cy1'),('cx2','cy2'),('x2','y2')]]
         a.append(f'\\draw[->,{dash},draw=black!55,line width=0.8pt] {pts[0]} .. controls {pts[1]} and {pts[2]} .. {pts[3]};')
     for t in scene['texts']:

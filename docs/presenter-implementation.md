@@ -55,3 +55,7 @@ Presenter's integration tests cover three real fixtures, source provenance for b
 ## Deliberate MVP boundary
 
 This is a truthful static module-and-call architecture figure, not yet an experimentally verified model forward-dataflow graph. The SAE has not proven all tensor dependencies. Future tensor-flow diagrams require new SAE evidence rules, rather than speculative rendering logic. Interactive editing and architecture diffs remain deferred.
+
+## v0.5 — Evidence-based forward value flow
+
+A separate `--view flow` presenter projection consumes new SAE relations `STATIC_VALUE_DEPENDENCY` and `STATIC_FORWARD_RETURN` plus `forward_input/output/unpack` facts. It never uses lexical call order to invent an arrow. Supported scope: straight-line AST operands, local assignments, nested calls, residual Add and source-backed return. Unsupported control flow, in-place mutation and ambiguous unpacking remain explicit in health diagnostics, and publication mode withholds partial diagrams by default. The flow renderer uses a deterministic left-to-right dependency DAG; SVG, vector PDF (ReportLab invariant mode) and TikZ share the scene. This does not prove tensors' runtime shape, numerical behavior or executed paths.

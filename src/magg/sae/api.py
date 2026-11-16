@@ -11,6 +11,7 @@ from .analysis.analyzer import Analyzer
 from .analysis.dataflow import analyze_dataflow
 from .analysis.pytorch_static import analyze_pytorch
 from .analysis.configuration import analyze_configuration
+from .analysis.forward_flow import analyze_forward_values
 from .indexing.model_index import build_model_index, validate_model_index
 from .linking.project import Unit, link_project, syntax_ids, unresolved
 from .inventory.walker import inventory
@@ -77,6 +78,7 @@ def extract(source_root: str | Path, output: str | Path, *, entrypoint: str | No
     analyze_dataflow(graph, parsed_units)
     analyze_pytorch(graph, parsed_units)
     analyze_configuration(graph, sources)
+    analyze_forward_values(graph, parsed_units)
     entrypoint_id = None
     if entrypoint:
         # Entrypoint is a project-relative module and a top-level declaration.
