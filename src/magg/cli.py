@@ -6,6 +6,7 @@ import json
 import sys
 
 from .sae.api import extract, inspect_bundle, validate_bundle
+from .presenter import present
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -20,6 +21,13 @@ def build_parser() -> argparse.ArgumentParser:
     for command in ("validate", "inspect"):
         p = commands.add_parser(command)
         p.add_argument("bundle", help="IR bundle directory or architecture.ir.json")
+    presenter = commands.add_parser("present", help="Draw a static architecture from a validated SAE bundle")
+    presenter.add_argument("bundle", help="Existing SAE extraction bundle directory")
+    presenter.add_argument("--output", "-o", required=True, help="Target diagram directory")
+    presenter.add_argument("--level", choices=["overview", "block", "operation"], default="block")
+    presenter.add_argument("--mode", choices=["exploration", "publication"], default="exploration")
+    presenter.add_argument("--format", choices=["svg", "pdf", "tikz", "all"], default="svg")
+    presenter.add_argument("--allow-partial", action="store_true", help="Allow clearly labeled partial publication export")
     return parser
 
 
@@ -31,10 +39,13 @@ def main(argv: list[str] | None = None) -> int:
                              max_files=args.max_files, max_file_bytes=args.max_file_bytes)
         elif args.command == "validate":
             result = validate_bundle(args.bundle)
+        elif args.command == "present":
+            result = present(args.bundle, args.output, level=args.level, mode=args.mode,
+                             format=args.format, allow_partial=args.allow_partial)
         else:
             result = inspect_bundle(args.bundle)
         print(json.dumps(result, sort_keys=True, indent=2, ensure_ascii=False))
-        return 0
+        return 0 if args.command != "present" or result["render_allowed"] else 2
     except (ValueError, OSError, json.JSONDecodeError) as exc:
         print(f"magg: {type(exc).__name__}: {exc}", file=sys.stderr)
         return 1
