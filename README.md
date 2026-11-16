@@ -78,6 +78,7 @@ A future `presenter/` remains deliberately unimplemented: the output is data, no
 - [IR data contract](docs/ir-schema.md)
 - [Implemented coverage and limitations](docs/limitations.md)
 - [MVP acceptance and Presenter handoff](docs/mvp-acceptance.md)
+- [Presenter implementation plan and Extraction Health Contract](docs/presenter-plan.md) *(design only)*
 
 See the technical specification for the intended expanded package hierarchy, rules, milestones and acceptance criteria. Modules that are still planned have not been represented by fake empty implementations.
 
