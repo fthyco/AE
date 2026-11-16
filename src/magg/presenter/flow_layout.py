@@ -4,7 +4,7 @@ from __future__ import annotations
 from collections import defaultdict, deque
 from typing import Any
 
-STEP_W, STEP_H, DX, DY = 152, 56, 210, 88
+STEP_W, STEP_H, DX, DY = 152, 56, 210, 72
 MARGIN, TOP = 42, 108
 
 

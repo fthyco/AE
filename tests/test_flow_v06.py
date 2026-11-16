@@ -45,6 +45,7 @@ class M(nn.Module):
     r=present(b.directory,tmp_path/'img',view='flow',focus='M',format='all')
     assert r['status']=='partial' and r['render_allowed']
     svg=(tmp_path/'img/architecture.svg').read_text()
+    assert 'resnet' not in svg and 'net:M / M' in svg
     assert 'identity' in svg and 'forward_augassign' not in svg  # node is displayed by semantic label
     manifest=json.loads((tmp_path/'img/presentation-manifest.json').read_text())
     assert manifest['focus']=='M'

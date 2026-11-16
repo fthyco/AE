@@ -89,7 +89,9 @@ def present(bundle_path: str | Path, output: str | Path, *, level: str = 'block'
             manifest['omitted_indexed_ir_ids']=[{'id':i,'reason':'hidden_by_selected_view_or_unsupported_projection'}
                                                 for i in sorted(indexed-mapped)]
     if allowed:
-        scene=(make_flow_scene if view=='flow' else make_scene)(graph,status=health['status'],entrypoint=health['entrypoint'])
+        scene=(make_flow_scene if view=='flow' else make_scene)(
+            graph, status=health['status'],
+            entrypoint=(f"{health['entrypoint']} / {focus}" if focus else health['entrypoint']))
         exporters={'svg':svg,'pdf':pdf,'tex':tikz}
         for extension in FORMATS[format]:
             content=exporters[extension](scene)
