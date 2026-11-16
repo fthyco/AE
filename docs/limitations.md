@@ -42,3 +42,17 @@ Supported `if/else` branch environments yield conditional join facts; `+=` and
 other augmented assignments yield operand dependencies with mutation caveats.
 Guarded calls remain conditional, and shape/alias/runtime behavior is not
 claimed. `--focus` can scope the diagram to one model definition.
+
+
+## v0.8 static-summary additions and boundaries
+
+- Unique single-use local calls and custom component forwards may have
+  source-backed formal-parameter / caller-argument and return / call-site edges.
+- Only the supported straight-line summaries are used. General polymorphism,
+  aliased module instances, multi-site context sensitivity, recursion, star
+  unpacking, default arguments and runtime dispatch remain unresolved.
+- Symbolic shape facts are **conditional templates**. A `Linear` output
+  template `[..., d]` is not an observation of a tensor. Known numeric
+  last-feature conflicts are surfaced as diagnostics; arbitrary broadcasting,
+  reshaping, convolution spatial formulas and context-sensitive batch axes
+  remain unproved. Presenter shows only existing IR facts.

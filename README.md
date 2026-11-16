@@ -70,6 +70,24 @@ AE/
 └── tests/
 ```
 
+## v0.8 — Conservative interprocedural summaries and symbolic shape facts
+
+SAE adds strictly source-backed bindings for uniquely resolved, single-use,
+nonrecursive local helper and `self.custom_block` forward calls. It matches
+actual arguments to formals and connects a proven local return to the call
+site. Defaulted, unpacked, ambiguous, recursive and multi-use cases are
+recorded as `interprocedural_flow_incomplete`, rather than silently guessed.
+
+Conditional shape facts now annotate known PyTorch `Linear`, `Embedding`, and
+`Conv*` constructor templates, and propagate only along supported return,
+argument-binding, shape-preserving layer and equal-shape merge edges. Facts
+are **conditional type-level templates**, not observed runtime tensor shapes.
+Known numeric Linear last-dimension disagreements are reported without
+pretending the model was executed. The Presenter shows supported shape labels
+with source-backed `symbolic_shape_fact` references; it never infers shapes.
+
+See [v0.8 scope, rules and tests](docs/interprocedural-shapes-v0.8.md).
+
 ## Presenter v0.4.0 — source-backed research architecture diagrams
 
 Presenter now reads only validated SAE bundles and renders a **source-grounded static module/call diagram**. It does not invent runtime tensor-flow links.
