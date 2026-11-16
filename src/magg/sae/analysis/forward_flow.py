@@ -18,10 +18,11 @@ EXTENDED_RULE = 'conditional-forward-values/v2'
 
 
 class ForwardValues:
-    def __init__(self, graph: Graph, unit: Unit, fn: ast.FunctionDef | ast.AsyncFunctionDef):
+    def __init__(self, graph: Graph, unit: Unit, fn: ast.FunctionDef | ast.AsyncFunctionDef,
+                 *, definition_kind: str = 'method_definition'):
         self.graph, self.unit, self.fn = graph, unit, fn
         self.ids = syntax_ids(unit)
-        self.forward_id = stable_id(unit.path, 'semantic', 'method_definition', self.ids[fn], '')
+        self.forward_id = stable_id(unit.path, 'semantic', definition_kind, self.ids[fn], '')
         self.env: dict[str, str] = {}
         self.terminated = False
 
@@ -211,9 +212,22 @@ class ForwardValues:
 
 
 def analyze_forward_values(graph: Graph, units: list[Unit]) -> None:
+    # Functions/methods referenced by an unambiguous local call are eligible
+    # for a conservative summary. Unreachable arbitrary source is not executed.
+    local_targets = {e['target'] for e in graph.edges
+                     if e['relation'] == 'CALLS_LOCAL_DEFINITION'}
     for unit in sorted(units, key=lambda u: u.path):
-        for klass in unit.tree.body:
-            if isinstance(klass, ast.ClassDef):
-                for statement in klass.body:
-                    if isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef)) and statement.name == 'forward':
-                        ForwardValues(graph, unit, statement).run()
+        ids = syntax_ids(unit)
+        for statement in unit.tree.body:
+            if isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                ident = stable_id(unit.path, 'semantic', 'function_definition', ids[statement], '')
+                if ident in local_targets:
+                    ForwardValues(graph, unit, statement, definition_kind='function_definition').run()
+            if isinstance(statement, ast.ClassDef):
+                for method in statement.body:
+                    if not isinstance(method, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                        continue
+                    ident = stable_id(unit.path, 'semantic', 'method_definition', ids[method], '')
+                    if method.name == 'forward' or ident in local_targets:
+                        ForwardValues(graph, unit, method).run()
+
