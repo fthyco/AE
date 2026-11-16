@@ -1,6 +1,6 @@
-"""Project SAE's static value-dependency evidence into a scientific flow view.
+"""Project SAE's *static value-dependency* evidence into a scientific flow view.
 
-No source parsing, execution or inferred runtime tensor flow is done here.
+No source parsing, execution, or inferred runtime tensor-flow is performed here.
 """
 from __future__ import annotations
 
@@ -11,8 +11,9 @@ from magg.sae.ir.canonical import stable_id
 from .health import issue
 from .reader import Bundle
 
-FLOW_EDGES = frozenset({'STATIC_VALUE_DEPENDENCY', 'STATIC_FORWARD_RETURN'})
-FLOW_VALUES = frozenset({'forward_input', 'forward_output', 'forward_unpack'})
+
+FLOW_EDGES = frozenset({'STATIC_VALUE_DEPENDENCY', 'STATIC_FORWARD_RETURN', 'STATIC_CONDITIONAL_DEPENDENCY', 'STATIC_GUARD_DEPENDENCY', 'STATIC_GUARDED_CALL'})
+FLOW_VALUES = frozenset({'forward_input', 'forward_output', 'forward_unpack', 'forward_choice', 'forward_guard', 'forward_augassign'})
 
 
 def _caption(call: dict, components: dict[str, dict]) -> str:
@@ -27,7 +28,7 @@ def _caption(call: dict, components: dict[str, dict]) -> str:
     return callee.replace('torch.nn.functional.', 'F.').replace('torch.', '')
 
 
-def project_flow(bundle: Bundle, level: str = 'block') -> dict[str, Any]:
+def project_flow(bundle: Bundle, level: str = 'block', focus: str | None = None) -> dict[str, Any]:
     if level not in ('overview', 'block', 'operation'):
         raise ValueError(f'Unsupported flow level: {level}')
     index = bundle.model_index
@@ -40,11 +41,20 @@ def project_flow(bundle: Bundle, level: str = 'block') -> dict[str, Any]:
     else:
         modules = sorted(modules, key=lambda m: (m['definition_id'] != index.get('root_definition_id'), m['qualname']))
 
+    if focus is not None:
+        selected = [m for m in modules if m['qualname'] == focus or m['qualname'].split('.')[-1] == focus]
+        if len(selected) != 1:
+            graph['issues'].append(issue('FOCUS_UNRESOLVED',
+                f'Expected exactly one module matching {focus!r}; found {len(selected)}', severity='error'))
+            return graph
+        modules = selected
+
     flow_by_forward: dict[str, list[dict]] = defaultdict(list)
     for n in bundle.ir['nodes']:
         if n['kind'] in FLOW_VALUES:
             flow_by_forward[n['attributes'].get('forward_id')].append(n)
     flow_edges = [e for e in bundle.ir['edges'] if e['relation'] in FLOW_EDGES]
+    guarded = {e['target'] for e in bundle.ir['edges'] if e['relation'] == 'STATIC_GUARDED_CALL'}
     for module in modules:
         fid = module.get('forward_method_id')
         if not fid:
@@ -60,6 +70,7 @@ def project_flow(bundle: Bundle, level: str = 'block') -> dict[str, Any]:
                                'source_refs': module['source_refs'], 'evidence': 'explicit'})
         comps = {c['construction_site_id']: c for c in module['components']}
         steps: list[tuple[str, str, str, str]] = []
+        # tuple: kind, label, source IR ID, resolution
         for value in flow_by_forward.get(fid, []):
             steps.append((value['kind'], value['attributes']['name'], value['id'], value['resolution']))
         for call in module.get('forward_calls', []):
@@ -70,15 +81,20 @@ def project_flow(bundle: Bundle, level: str = 'block') -> dict[str, Any]:
                 graph['issues'].append(issue('UNRESOLVED_FORWARD_CALL',
                     f"Unresolved forward call: {call['callee_expression']}", ids=[sid], refs=call['source_refs']))
             steps.append(('unresolved-call' if unknown else 'flow-call', _caption(call, comps), sid,
-                          'unresolved' if unknown else 'resolved'))
+                          'unresolved' if unknown else 'conditional' if sid in guarded else 'resolved'))
         flow_members = {e['source'] for e in flow_edges} | {e['target'] for e in flow_edges}
         for op in module.get('forward_operations', []):
             if op['operation_site_id'] in flow_members:
                 steps.append(('flow-operation', op['operator'], op['operation_site_id'], 'resolved'))
 
+        # A source-backed visual step always corresponds to an existing SAE IR node.
         mapped: dict[str, str] = {}
         for kind, label, source_id, state in sorted(steps, key=lambda x: (
                 bundle.nodes[x[2]]['source_refs'][0]['start_byte'], x[2])):
+            if kind == 'forward_unpack' and level == 'block':
+                # Unpacking is kept in the flow diagram even in block mode: it
+                # carries the outgoing edges needed to show fan-out accurately.
+                pass
             vid = stable_id('flow-node/v1', definition, source_id)
             if source_id in mapped:
                 continue
@@ -97,7 +113,7 @@ def project_flow(bundle: Bundle, level: str = 'block') -> dict[str, Any]:
             graph['links'].append({'id': visual_id, 'source': mapped[edge['source']],
                                    'target': mapped[edge['target']],
                                    'relation_kind': edge['relation'], 'ir_edge_ids': [edge['id']],
-                                   'source_refs': edge['source_refs'], 'style': 'static-value'})
+                                   'source_refs': edge['source_refs'], 'style': 'control' if edge['relation']=='STATIC_GUARDED_CALL' else 'conditional-value' if edge['relation'] in ('STATIC_CONDITIONAL_DEPENDENCY','STATIC_GUARD_DEPENDENCY') else 'static-value'})
         for record in bundle.ir['unresolved']:
             if record.get('kind') == 'forward_flow_incomplete' and record.get('function_id') == fid:
                 graph['issues'].append(issue('STATIC_FLOW_INCOMPLETE', record.get('reason', 'Unknown flow'),
