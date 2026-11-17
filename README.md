@@ -54,3 +54,7 @@ timm ViT-Tiny (1.0.22): bounded 12-block source-only instance-forward expansion 
 Presenter v0.21: source-backed hierarchical instance views for the exact pinned ViT-Tiny reference. `ae present ae-bundle --view instance --level overview|block|operation` and `--level operation --focus blocks.0`. Overview/block group operation and edge provenance without modifying the underlying instance graph; the detail view remains 1:1. [Scope and evidence policy](docs/instance-hierarchy-v0.21.md).
 
 MobileNetV3 Small: audited TorchVision 0.25.0 default `mobilenet_v3_small(weights=None)` source-only full forward extraction for 64/128/224 square RGB inputs. Independent FX, ShapeProp, runtime hooks, ordered edges and manifest checks; 159 operations / 173 dependencies. Original-source-only `overview`, `block` and `operation` views, with `--focus features.4`. [Scope and limitations](docs/instance-forward-v0.22.md). Arbitrary variants are unsupported.
+
+VGG16 source-only (v0.23) default torchvision 0.25.0: verified 42 operations / 41 ordered dependencies / 39 leaf calls. Two-level source-evidenced overview/block/operation visualizations and stage focus. See docs/instance-forward-v0.23.md.
+
+EfficientNet-B0 source-only (v0.24): audited TorchVision 0.25.0 default model, 251 FX operations / 275 ordered dependencies, 214 leaf modules, 16 SE gates and 9 residual additions. Supports source-proven overview/block/operation/focus views for four audited input shapes. See [scope and independent verification](docs/instance-forward-v0.24.md).
