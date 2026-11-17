@@ -1,0 +1,20 @@
+name: AE v0.19 source audit snapshot
+
+on:
+  push:
+    branches: [feat/full-unet-resnet34-v019]
+
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Package checked-out exact source
+        run: |
+          tar --exclude=.git -czf ae-src.tar.gz .
+      - name: Upload source
+        uses: actions/upload-artifact@v4
+        with:
+          name: ae-v019-source
+          path: ae-src.tar.gz
+          retention-days: 3
