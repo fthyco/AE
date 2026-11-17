@@ -51,7 +51,7 @@ supported input branches. It is not a generic CNN/U-Net/DenseNet block extractor
 The word "Transformer Encoder" names a presentation group of operations already
 present in the verified instance graph; it is not a new computational node.
 
-Status: **draft branch; CI and visual acceptance required before merging**.
+Release gate: exact source-pinned regression, hierarchy provenance conservation, portrait SVG/PDF/TikZ and visual inspection are required for this bounded view. The presenter does not claim general ViT or arbitrary PyTorch hierarchy support.
 
 ## Visual acceptance output
 
