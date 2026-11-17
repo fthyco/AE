@@ -1,0 +1,82 @@
+name: AE v0.26 offline viewer and clean release gate
+
+on:
+  push:
+    branches: [feat/phase3-offline-viewer-release-v026, main]
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'tests/test_phase3_viewer_v026.py'
+      - 'docs/public-release-v026.md'
+      - '.github/workflows/public-release-v026.yml'
+      - 'pyproject.toml'
+  workflow_dispatch:
+
+jobs:
+  offline-viewer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install public runtime + test extras
+        run: python -m pip install -e '.[dev,render]'
+      - name: Verify complete, partial, blocked, deterministic and CLI viewer paths
+        run: python -m pytest -q tests/test_phase3_viewer_v026.py tests/test_presenter.py
+      - name: Build an original example offline viewer
+        run: |
+          ae extract examples/cnn_residual_mvp --entrypoint model:CNN --output benchmark-output/release/bundle
+          ae viewer benchmark-output/release/bundle --view structure --output benchmark-output/release/viewer
+      - name: Upload generated offline viewer (no external scripts)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ae-v026-offline-viewer
+          path: benchmark-output/release/viewer/
+          if-no-files-found: warn
+
+  clean-wheel-and-sdist:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Build checked public distributions
+        run: |
+          python -m pip install build twine
+          python -m build
+          python -m twine check dist/*
+      - name: Create isolated clean environment and install wheel (no dev extras)
+        run: |
+          python -m venv "$RUNNER_TEMP/ae-clean"
+          "$RUNNER_TEMP/ae-clean/bin/python" -m pip install dist/*.whl
+          cd "$RUNNER_TEMP"
+          "$RUNNER_TEMP/ae-clean/bin/ae" extract "$GITHUB_WORKSPACE/examples/cnn_residual_mvp" --entrypoint model:CNN --output "$RUNNER_TEMP/ae-bundle"
+          "$RUNNER_TEMP/ae-clean/bin/ae" validate "$RUNNER_TEMP/ae-bundle" > "$RUNNER_TEMP/validation.json"
+          "$RUNNER_TEMP/ae-clean/bin/ae" viewer "$RUNNER_TEMP/ae-bundle" --view structure --output "$RUNNER_TEMP/ae-viewer" > "$RUNNER_TEMP/viewer-result.json"
+          "$RUNNER_TEMP/ae-clean/bin/python" - <<'PY'
+          import importlib.metadata as m
+          import importlib.util as u
+          import json
+          from pathlib import Path
+          import os
+          root=Path(os.environ['RUNNER_TEMP'])
+          assert m.version('architecture-extractor')=='0.26.0'
+          assert u.find_spec('torch') is None, 'Public AE viewer must not require torch'
+          assert json.loads((root/'validation.json').read_text())['valid']
+          report=json.loads((root/'viewer-result.json').read_text())
+          assert report['rendered_levels']==['overview','block','operation']
+          html=(root/'ae-viewer/index.html').read_text()
+          assert html.count('<svg ') == 3
+          assert 'http://www.w3.org/2000/svg' in html
+          assert (root/'ae-viewer/viewer-manifest.json').is_file()
+          PY
+      - name: Upload distributable source/wheel archives
+        uses: actions/upload-artifact@v4
+        with:
+          name: ae-v026-python-distributions
+          path: dist/
