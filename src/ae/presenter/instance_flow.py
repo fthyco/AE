@@ -6,6 +6,8 @@ import json
 from .health import issue
 from .instance_hierarchy import project_vit_hierarchy
 from .mobilenetv3_hierarchy import project_mobilenet_hierarchy
+from .vgg16_hierarchy import project_vgg16_hierarchy
+from .semantic import semantic_category
 from .themes import select_theme
 
 
@@ -29,7 +31,9 @@ def project_instance_forward(bundle, level='operation', focus=None):
             'parent_id':None,'ir_edge_ids':[],'ir_node_ids':[x['id']] + x['source_ir_ids'] +
                 ([x['factory_instance_id']] if x.get('factory_instance_id') else []),
             'source_refs':x['source_refs'],'instance_node_id':x['id'],
-            'op':x['op'],'target':x['target']}
+            'op':x['op'],'target':x['target'],
+            'semantic_category':semantic_category(x['op'],x['target'],
+                                                   data.get('scope',''))}
            for x in data['nodes']]
     links=[{'id':x['id'],'source':x['source'],'target':x['target'],
             'relation_kind':x.get('relation','STATIC_INSTANCE_TENSOR_DEPENDENCY'),
@@ -41,6 +45,9 @@ def project_instance_forward(bundle, level='operation', focus=None):
             'input_shape':data['input_conditions']['input_shape'],
             'source_path':data['source_path']}
     if level != 'operation' or focus is not None:
+        if data.get('scope') == 'pinned_torchvision_0_25_0_vgg16':
+            return project_vgg16_hierarchy(graph, level=level, focus=focus,
+                                           source_scope=data['scope'])
         if data.get('scope') == 'pinned_torchvision_0_25_0_mobilenet_v3_small':
             return project_mobilenet_hierarchy(
                 graph, level=level, focus=focus, source_scope=data['scope']
@@ -80,7 +87,9 @@ def make_instance_scene(graph, *, status, entrypoint):
         pos={'x':x,'y':y,'w':237,'h':46}
         positions[node['id']]=pos
         rects.append({'id':node['id'],'ir_ids':node['ir_node_ids'],**pos,
-                      'kind':'instance-operation','fill':'#f4f4f4','dash':'none'})
+                      'kind':'instance-operation','fill':'#f4f4f4','dash':'none',
+                      'semantic_category':node.get('semantic_category','unknown')
+                          if node['op']!='presentation_group' else 'unknown'})
         label=tgt if len(tgt)<=37 else tgt[:34]+'...'
         texts.append({'x':x+9,'y':y+19,'text':label,'size':10,'bold':node['op'] in ('placeholder','output')})
         texts.append({'x':x+9,'y':y+37,'text':node['shape'],'size':8.4,'bold':False})
