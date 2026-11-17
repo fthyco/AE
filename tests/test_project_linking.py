@@ -1,7 +1,7 @@
 """Phase 1: unique local project links, conservative scope restrictions."""
 import json
 from pathlib import Path
-from magg.sae import extract
+from ae.sae import extract
 
 
 def run(tmp_path, files):

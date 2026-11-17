@@ -3,7 +3,7 @@
 This is *not* a substitute for validation against unmodified research repositories.
 """
 import json
-from magg.sae import extract, validate_bundle
+from ae.sae import extract, validate_bundle
 
 
 def test_nested_attention_residual_and_shared_custom_module(tmp_path):

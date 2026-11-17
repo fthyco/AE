@@ -7,12 +7,12 @@ from xml.etree import ElementTree as ET
 
 import pytest
 
-from magg.sae.api import extract
-from magg.presenter.api import present
-from magg.presenter.reader import load_bundle
-from magg.presenter.flow import project_flow
-from magg.presenter.flow_layout import make_flow_scene
-from magg.presenter.themes import select_theme
+from ae.sae.api import extract
+from ae.presenter.api import present
+from ae.presenter.reader import load_bundle
+from ae.presenter.flow import project_flow
+from ae.presenter.flow_layout import make_flow_scene
+from ae.presenter.themes import select_theme
 
 ROOT = Path(__file__).resolve().parents[1]
 

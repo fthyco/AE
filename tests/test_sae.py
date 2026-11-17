@@ -9,9 +9,9 @@ from pathlib import Path
 
 import pytest
 
-from magg.sae import extract, inspect_bundle, validate_bundle
-from magg.sae.ir.validator import ValidationError, validate_ir
-from magg.sae.parsing.source_spans import SourceMap
+from ae.sae import extract, inspect_bundle, validate_bundle
+from ae.sae.ir.validator import ValidationError, validate_ir
+from ae.sae.parsing.source_spans import SourceMap
 
 
 def setup(tmp_path: Path, code: bytes, filename: str = "model.py") -> Path:
@@ -189,19 +189,19 @@ def test_cli_end_to_end(tmp_path: Path) -> None:
     root = setup(tmp_path, b"x = 1\n")
     out = tmp_path / "bundle"
     env = {**os.environ, "PYTHONPATH": str(Path(__file__).parents[1] / "src")}
-    cmd = [sys.executable, "-m", "magg.cli", "extract", str(root), "--output", str(out)]
+    cmd = [sys.executable, "-m", "ae.cli", "extract", str(root), "--output", str(out)]
     assert subprocess.run(cmd, env=env, capture_output=True).returncode == 0
-    cmd = [sys.executable, "-m", "magg.cli", "validate", str(out)]
+    cmd = [sys.executable, "-m", "ae.cli", "validate", str(out)]
     assert subprocess.run(cmd, env=env, capture_output=True).returncode == 0
     assert inspect_bundle(out)["coverage"]["parsed_python_files"] == 1
 
 
 def test_output_dir_inside_repo_is_not_ingested(tmp_path: Path) -> None:
     root = setup(tmp_path, b"x = 1\n")
-    output = root / "magg-output"
+    output = root / "ae-output"
     extract(root, output)
     first = {p.name: p.read_bytes() for p in output.glob("*.json")}
     extract(root, output)
     assert first == {p.name: p.read_bytes() for p in output.glob("*.json")}
     manifest = json.loads((output / "source-manifest.json").read_bytes())
-    assert not any(e.get("status") == "included" and "magg-output" in e["path"] for e in manifest["files"])
+    assert not any(e.get("status") == "included" and "ae-output" in e["path"] for e in manifest["files"])

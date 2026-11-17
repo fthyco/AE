@@ -4,8 +4,8 @@ import os
 import subprocess
 import sys
 from pathlib import Path
-from magg.sae import extract, validate_bundle
-from magg.sae.ir.validator import ValidationError, validate_ir
+from ae.sae import extract, validate_bundle
+from ae.sae.ir.validator import ValidationError, validate_ir
 import pytest
 
 
@@ -42,7 +42,7 @@ def test_phase_relations_have_provenance(tmp_path):
 def test_bytes_stable_across_python_hash_seeds(tmp_path):
     root,out,ir=run(tmp_path,{'a.py':'from torch import nn\nclass A:\n    def f(self, x):\n        y = nn.Linear(2, 4)\n        if x:\n            z = 1\n        else:\n            z = 2\n        return z\n'})
     other=tmp_path/'other'
-    code='from magg.sae import extract;import sys;extract(sys.argv[1],sys.argv[2])'
+    code='from ae.sae import extract;import sys;extract(sys.argv[1],sys.argv[2])'
     env={**os.environ,'PYTHONPATH':str(Path(__file__).parents[1]/'src'),'PYTHONHASHSEED':'9876'}
     result=subprocess.run([sys.executable,'-c',code,str(root),str(other)],env=env,capture_output=True,text=True)
     assert result.returncode==0,result.stderr

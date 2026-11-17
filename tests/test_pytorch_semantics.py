@@ -1,6 +1,6 @@
 """Phase 3: PyTorch call signatures and typed static configurations."""
 import json
-from magg.sae import extract
+from ae.sae import extract
 
 
 def run(tmp_path, files):
