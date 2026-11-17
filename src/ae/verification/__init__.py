@@ -1,0 +1,1 @@
+"""Independent architecture verification utilities."""
