@@ -1,0 +1,224 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="2809" viewBox="0 0 1000 2809" role="img">
+<title>torchvision.models.vgg:vgg16</title>
+<defs><marker id="arch-arrow" viewBox="0 0 8 8" refX="7.5" refY="4" markerWidth="5.50" markerHeight="5.50" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#181818"/></marker></defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect id="v-5037fd307917258d9a51a572" data-ir-ids="5037fd307917258d9a51a572,3e4a018d34d8c7400872c454,a68621bf5d739a9d45d5fcc2" x="180.00" y="125.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="127.00" width="3" height="42.00" fill="#B0B0B0" data-operation-category="unknown"/>
+<rect id="v-46e8c42125d022bf5a59d316" data-ir-ids="46e8c42125d022bf5a59d316,4c158154bfd355f7e4d1fb41,6c97a02e4309f8aa86355baf,a7f3a4c159c9992b9d5c63a4" x="180.00" y="187.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="189.00" width="3" height="42.00" fill="#527996" data-operation-category="linear"/>
+<rect id="v-a4fba158894d61d2aab06d03" data-ir-ids="a4fba158894d61d2aab06d03,0436c547d1cf8375d5b80885,21f4418fc2f694315347163a,6da83c5c11aa821476a8bcdc" x="180.00" y="249.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="251.00" width="3" height="42.00" fill="#BC8A4B" data-operation-category="activation"/>
+<rect id="v-bc0283df2a2d25cd71faea69" data-ir-ids="bc0283df2a2d25cd71faea69,4c158154bfd355f7e4d1fb41,6c97a02e4309f8aa86355baf,a7f3a4c159c9992b9d5c63a4" x="180.00" y="311.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="313.00" width="3" height="42.00" fill="#527996" data-operation-category="linear"/>
+<rect id="v-c85c4511f9f726490763bd01" data-ir-ids="c85c4511f9f726490763bd01,0436c547d1cf8375d5b80885,21f4418fc2f694315347163a,6da83c5c11aa821476a8bcdc" x="180.00" y="373.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="375.00" width="3" height="42.00" fill="#BC8A4B" data-operation-category="activation"/>
+<rect id="v-5943fdf78e839d1210de67e5" data-ir-ids="5943fdf78e839d1210de67e5,1853ba1b782cc5fd7e46bbd9,cf5314283aa10b0d67db1465,eb8f9052afe9db8c0e084338" x="180.00" y="435.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="437.00" width="3" height="42.00" fill="#898D93" data-operation-category="pool_or_reshape"/>
+<rect id="v-a82e00344ab0c15c62e85472" data-ir-ids="a82e00344ab0c15c62e85472,4c158154bfd355f7e4d1fb41,6c97a02e4309f8aa86355baf,a7f3a4c159c9992b9d5c63a4" x="180.00" y="497.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="499.00" width="3" height="42.00" fill="#527996" data-operation-category="linear"/>
+<rect id="v-a5577a197042d29da4c342d6" data-ir-ids="a5577a197042d29da4c342d6,0436c547d1cf8375d5b80885,21f4418fc2f694315347163a,6da83c5c11aa821476a8bcdc" x="180.00" y="559.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="561.00" width="3" height="42.00" fill="#BC8A4B" data-operation-category="activation"/>
+<rect id="v-cf48f23b48abab70e9826f75" data-ir-ids="cf48f23b48abab70e9826f75,4c158154bfd355f7e4d1fb41,6c97a02e4309f8aa86355baf,a7f3a4c159c9992b9d5c63a4" x="180.00" y="621.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="623.00" width="3" height="42.00" fill="#527996" data-operation-category="linear"/>
+<rect id="v-24be57b97b0c5ac9830c3170" data-ir-ids="24be57b97b0c5ac9830c3170,0436c547d1cf8375d5b80885,21f4418fc2f694315347163a,6da83c5c11aa821476a8bcdc" x="180.00" y="683.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="685.00" width="3" height="42.00" fill="#BC8A4B" data-operation-category="activation"/>
+<rect id="v-bc9416551013d9645e8a21d4" data-ir-ids="bc9416551013d9645e8a21d4,1853ba1b782cc5fd7e46bbd9,cf5314283aa10b0d67db1465,eb8f9052afe9db8c0e084338" x="180.00" y="745.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="747.00" width="3" height="42.00" fill="#898D93" data-operation-category="pool_or_reshape"/>
+<rect id="v-57de929b0543c6975b968b1c" data-ir-ids="57de929b0543c6975b968b1c,4c158154bfd355f7e4d1fb41,6c97a02e4309f8aa86355baf,a7f3a4c159c9992b9d5c63a4" x="180.00" y="807.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="809.00" width="3" height="42.00" fill="#527996" data-operation-category="linear"/>
+<rect id="v-c1683aa575cc718ccd0a9eb3" data-ir-ids="c1683aa575cc718ccd0a9eb3,0436c547d1cf8375d5b80885,21f4418fc2f694315347163a,6da83c5c11aa821476a8bcdc" x="180.00" y="869.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="871.00" width="3" height="42.00" fill="#BC8A4B" data-operation-category="activation"/>
+<rect id="v-cab1ce8ac35f35e52e460dd0" data-ir-ids="cab1ce8ac35f35e52e460dd0,4c158154bfd355f7e4d1fb41,6c97a02e4309f8aa86355baf,a7f3a4c159c9992b9d5c63a4" x="180.00" y="931.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="933.00" width="3" height="42.00" fill="#527996" data-operation-category="linear"/>
+<rect id="v-b8084d163ab3fe3ca6a98edd" data-ir-ids="b8084d163ab3fe3ca6a98edd,0436c547d1cf8375d5b80885,21f4418fc2f694315347163a,6da83c5c11aa821476a8bcdc" x="180.00" y="993.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="995.00" width="3" height="42.00" fill="#BC8A4B" data-operation-category="activation"/>
+<rect id="v-0ce91451cbaee1346b02b602" data-ir-ids="0ce91451cbaee1346b02b602,4c158154bfd355f7e4d1fb41,6c97a02e4309f8aa86355baf,a7f3a4c159c9992b9d5c63a4" x="180.00" y="1055.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="1057.00" width="3" height="42.00" fill="#527996" data-operation-category="linear"/>
+<rect id="v-4b80918a7c636dd804324b92" data-ir-ids="4b80918a7c636dd804324b92,0436c547d1cf8375d5b80885,21f4418fc2f694315347163a,6da83c5c11aa821476a8bcdc" x="180.00" y="1117.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="1119.00" width="3" height="42.00" fill="#BC8A4B" data-operation-category="activation"/>
+<rect id="v-a5265a4f31168df93ffd31d5" data-ir-ids="a5265a4f31168df93ffd31d5,1853ba1b782cc5fd7e46bbd9,cf5314283aa10b0d67db1465,eb8f9052afe9db8c0e084338" x="180.00" y="1179.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="1181.00" width="3" height="42.00" fill="#898D93" data-operation-category="pool_or_reshape"/>
+<rect id="v-9200d7cfa457b3b5a9098b20" data-ir-ids="9200d7cfa457b3b5a9098b20,4c158154bfd355f7e4d1fb41,6c97a02e4309f8aa86355baf,a7f3a4c159c9992b9d5c63a4" x="180.00" y="1241.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="1243.00" width="3" height="42.00" fill="#527996" data-operation-category="linear"/>
+<rect id="v-7042457cf6ca2f14654f913f" data-ir-ids="7042457cf6ca2f14654f913f,0436c547d1cf8375d5b80885,21f4418fc2f694315347163a,6da83c5c11aa821476a8bcdc" x="180.00" y="1303.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="1305.00" width="3" height="42.00" fill="#BC8A4B" data-operation-category="activation"/>
+<rect id="v-e98cc91c95e9e387a4f77490" data-ir-ids="e98cc91c95e9e387a4f77490,4c158154bfd355f7e4d1fb41,6c97a02e4309f8aa86355baf,a7f3a4c159c9992b9d5c63a4" x="180.00" y="1365.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="1367.00" width="3" height="42.00" fill="#527996" data-operation-category="linear"/>
+<rect id="v-a0f2acf7ca203e9849eaa9f2" data-ir-ids="a0f2acf7ca203e9849eaa9f2,0436c547d1cf8375d5b80885,21f4418fc2f694315347163a,6da83c5c11aa821476a8bcdc" x="180.00" y="1427.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="1429.00" width="3" height="42.00" fill="#BC8A4B" data-operation-category="activation"/>
+<rect id="v-1d4226e77fe100b83bd39b3d" data-ir-ids="1d4226e77fe100b83bd39b3d,4c158154bfd355f7e4d1fb41,6c97a02e4309f8aa86355baf,a7f3a4c159c9992b9d5c63a4" x="180.00" y="1489.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="1491.00" width="3" height="42.00" fill="#527996" data-operation-category="linear"/>
+<rect id="v-e8510ad8f027747ed93a2b8f" data-ir-ids="e8510ad8f027747ed93a2b8f,0436c547d1cf8375d5b80885,21f4418fc2f694315347163a,6da83c5c11aa821476a8bcdc" x="180.00" y="1551.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="1553.00" width="3" height="42.00" fill="#BC8A4B" data-operation-category="activation"/>
+<rect id="v-ccc7a298fd9b7e8b392ad12b" data-ir-ids="ccc7a298fd9b7e8b392ad12b,1853ba1b782cc5fd7e46bbd9,cf5314283aa10b0d67db1465,eb8f9052afe9db8c0e084338" x="180.00" y="1613.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="1615.00" width="3" height="42.00" fill="#898D93" data-operation-category="pool_or_reshape"/>
+<rect id="v-dab6edb30f9a33d9bf7247c9" data-ir-ids="dab6edb30f9a33d9bf7247c9,4c158154bfd355f7e4d1fb41,6c97a02e4309f8aa86355baf,a7f3a4c159c9992b9d5c63a4" x="180.00" y="1675.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="1677.00" width="3" height="42.00" fill="#527996" data-operation-category="linear"/>
+<rect id="v-fcf19c39032ac283417965f3" data-ir-ids="fcf19c39032ac283417965f3,0436c547d1cf8375d5b80885,21f4418fc2f694315347163a,6da83c5c11aa821476a8bcdc" x="180.00" y="1737.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="1739.00" width="3" height="42.00" fill="#BC8A4B" data-operation-category="activation"/>
+<rect id="v-9ce50e03f7873b10c05e121d" data-ir-ids="9ce50e03f7873b10c05e121d,4c158154bfd355f7e4d1fb41,6c97a02e4309f8aa86355baf,a7f3a4c159c9992b9d5c63a4" x="180.00" y="1799.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="1801.00" width="3" height="42.00" fill="#527996" data-operation-category="linear"/>
+<rect id="v-af5b9f99fcb4937e03eb200f" data-ir-ids="af5b9f99fcb4937e03eb200f,0436c547d1cf8375d5b80885,21f4418fc2f694315347163a,6da83c5c11aa821476a8bcdc" x="180.00" y="1861.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="1863.00" width="3" height="42.00" fill="#BC8A4B" data-operation-category="activation"/>
+<rect id="v-45740416336f462beef8d593" data-ir-ids="45740416336f462beef8d593,4c158154bfd355f7e4d1fb41,6c97a02e4309f8aa86355baf,a7f3a4c159c9992b9d5c63a4" x="180.00" y="1923.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="1925.00" width="3" height="42.00" fill="#527996" data-operation-category="linear"/>
+<rect id="v-0d8257fa4bf0c415dcaed205" data-ir-ids="0d8257fa4bf0c415dcaed205,0436c547d1cf8375d5b80885,21f4418fc2f694315347163a,6da83c5c11aa821476a8bcdc" x="180.00" y="1985.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="1987.00" width="3" height="42.00" fill="#BC8A4B" data-operation-category="activation"/>
+<rect id="v-5bbe873e740842e0da982d1a" data-ir-ids="5bbe873e740842e0da982d1a,1853ba1b782cc5fd7e46bbd9,cf5314283aa10b0d67db1465,eb8f9052afe9db8c0e084338" x="180.00" y="2047.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="2049.00" width="3" height="42.00" fill="#898D93" data-operation-category="pool_or_reshape"/>
+<rect id="v-c48428e8643371ee30b81a26" data-ir-ids="c48428e8643371ee30b81a26,043f059deb5c30fc28779316,0fcddbc066f0f175726a1fc1,102e6e8cf87d6f1d624bdffb,b53d4fe18f66f863456be5f1" x="180.00" y="2109.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="2111.00" width="3" height="42.00" fill="#898D93" data-operation-category="pool_or_reshape"/>
+<rect id="v-d8f25ebba9d20a835617bbee" data-ir-ids="d8f25ebba9d20a835617bbee,8ecf64fc282ecc41a6b6bf1e,e1900d43079a6b2f1b0651eb" x="180.00" y="2171.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="2173.00" width="3" height="42.00" fill="#898D93" data-operation-category="pool_or_reshape"/>
+<rect id="v-785baea603ae196beca21ff6" data-ir-ids="785baea603ae196beca21ff6,94eb6d98328258b22fb76a65,c7af024a1c2de5be5df4e04d" x="180.00" y="2233.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="2235.00" width="3" height="42.00" fill="#527996" data-operation-category="linear"/>
+<rect id="v-9b0fb9a3047741a2e990247d" data-ir-ids="9b0fb9a3047741a2e990247d,94eb6d98328258b22fb76a65,c7af024a1c2de5be5df4e04d" x="180.00" y="2295.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="2297.00" width="3" height="42.00" fill="#BC8A4B" data-operation-category="activation"/>
+<rect id="v-0db197eed958357f941c1065" data-ir-ids="0db197eed958357f941c1065,94eb6d98328258b22fb76a65,c7af024a1c2de5be5df4e04d" x="180.00" y="2357.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="2359.00" width="3" height="42.00" fill="#979197" data-operation-category="regularization"/>
+<rect id="v-22aec2d2a2839bd46e4e0663" data-ir-ids="22aec2d2a2839bd46e4e0663,94eb6d98328258b22fb76a65,c7af024a1c2de5be5df4e04d" x="180.00" y="2419.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="2421.00" width="3" height="42.00" fill="#527996" data-operation-category="linear"/>
+<rect id="v-2eb6ea474186db6556cab405" data-ir-ids="2eb6ea474186db6556cab405,94eb6d98328258b22fb76a65,c7af024a1c2de5be5df4e04d" x="180.00" y="2481.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="2483.00" width="3" height="42.00" fill="#BC8A4B" data-operation-category="activation"/>
+<rect id="v-e6fe6590df44777ceca7d424" data-ir-ids="e6fe6590df44777ceca7d424,94eb6d98328258b22fb76a65,c7af024a1c2de5be5df4e04d" x="180.00" y="2543.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="2545.00" width="3" height="42.00" fill="#979197" data-operation-category="regularization"/>
+<rect id="v-01a330c2f8f42137d34cdf51" data-ir-ids="01a330c2f8f42137d34cdf51,94eb6d98328258b22fb76a65,c7af024a1c2de5be5df4e04d" x="180.00" y="2605.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="2607.00" width="3" height="42.00" fill="#527996" data-operation-category="linear"/>
+<rect id="v-f11b8940c48f0751088d0c8b" data-ir-ids="f11b8940c48f0751088d0c8b,a8cc5571961b8040d89e2b30,b2c0baa583bf8c2022f3b1f7,c5675784b45ab5c6ec78284d" x="180.00" y="2667.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="2669.00" width="3" height="42.00" fill="#B0B0B0" data-operation-category="unknown"/>
+<path id="l-58c8645ce47054474331d8ad" data-ir-edge-ids="58c8645ce47054474331d8ad" d="M 298.50 171.00 L 298.50 187.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<path id="l-effe3049a323e5916c523402" data-ir-edge-ids="effe3049a323e5916c523402" d="M 298.50 233.00 L 298.50 249.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<path id="l-50672f21949383808fddd64c" data-ir-edge-ids="50672f21949383808fddd64c" d="M 298.50 295.00 L 298.50 311.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<path id="l-60b35cdbd35895200cf5eabb" data-ir-edge-ids="60b35cdbd35895200cf5eabb" d="M 298.50 357.00 L 298.50 373.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<path id="l-821b5a895be4d6d0eeb14307" data-ir-edge-ids="821b5a895be4d6d0eeb14307" d="M 298.50 419.00 L 298.50 435.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<path id="l-7d8c3d2d1e94abad84719ad6" data-ir-edge-ids="7d8c3d2d1e94abad84719ad6" d="M 298.50 481.00 L 298.50 497.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<path id="l-f2609fdccabd750ad48d2009" data-ir-edge-ids="f2609fdccabd750ad48d2009" d="M 298.50 543.00 L 298.50 559.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<path id="l-7b7b9f6e05a8f58aed5837d2" data-ir-edge-ids="7b7b9f6e05a8f58aed5837d2" d="M 298.50 605.00 L 298.50 621.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<path id="l-6d921c5408fdf7761ed81c06" data-ir-edge-ids="6d921c5408fdf7761ed81c06" d="M 298.50 667.00 L 298.50 683.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<path id="l-0fa10b7ef83d30488771f0e0" data-ir-edge-ids="0fa10b7ef83d30488771f0e0" d="M 298.50 729.00 L 298.50 745.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<path id="l-b63c3b8f05a942311e9b18d6" data-ir-edge-ids="b63c3b8f05a942311e9b18d6" d="M 298.50 791.00 L 298.50 807.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<path id="l-b406a0d3f5096e599cb6c455" data-ir-edge-ids="b406a0d3f5096e599cb6c455" d="M 298.50 853.00 L 298.50 869.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<path id="l-6ab9073d8364655b299a1637" data-ir-edge-ids="6ab9073d8364655b299a1637" d="M 298.50 915.00 L 298.50 931.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<path id="l-17b7f51111db5e7ecfb9a8e6" data-ir-edge-ids="17b7f51111db5e7ecfb9a8e6" d="M 298.50 977.00 L 298.50 993.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<path id="l-25fb9adf6e6e7bc3a30b8ff0" data-ir-edge-ids="25fb9adf6e6e7bc3a30b8ff0" d="M 298.50 1039.00 L 298.50 1055.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<path id="l-8876931db6849db943980faa" data-ir-edge-ids="8876931db6849db943980faa" d="M 298.50 1101.00 L 298.50 1117.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<path id="l-f27beb279f2d43cc5d8bf33e" data-ir-edge-ids="f27beb279f2d43cc5d8bf33e" d="M 298.50 1163.00 L 298.50 1179.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<path id="l-9eab81ff4696a66dc07a5fb0" data-ir-edge-ids="9eab81ff4696a66dc07a5fb0" d="M 298.50 1225.00 L 298.50 1241.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<path id="l-a24ecef729b6603d141846fd" data-ir-edge-ids="a24ecef729b6603d141846fd" d="M 298.50 1287.00 L 298.50 1303.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<path id="l-2b5f0321326564f75f9cd764" data-ir-edge-ids="2b5f0321326564f75f9cd764" d="M 298.50 1349.00 L 298.50 1365.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<path id="l-950612be9bf4c201620b0161" data-ir-edge-ids="950612be9bf4c201620b0161" d="M 298.50 1411.00 L 298.50 1427.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<path id="l-5407b83b06316704dcb53060" data-ir-edge-ids="5407b83b06316704dcb53060" d="M 298.50 1473.00 L 298.50 1489.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<path id="l-2bf1125378f6e56c05e564a9" data-ir-edge-ids="2bf1125378f6e56c05e564a9" d="M 298.50 1535.00 L 298.50 1551.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<path id="l-bc67b2070b6710fa1ef0db93" data-ir-edge-ids="bc67b2070b6710fa1ef0db93" d="M 298.50 1597.00 L 298.50 1613.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<path id="l-a04a4686de512cf163af9a01" data-ir-edge-ids="a04a4686de512cf163af9a01" d="M 298.50 1659.00 L 298.50 1675.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<path id="l-4c6bbb2af38d93fbf620748c" data-ir-edge-ids="4c6bbb2af38d93fbf620748c" d="M 298.50 1721.00 L 298.50 1737.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<path id="l-c16534478c950186ab367a71" data-ir-edge-ids="c16534478c950186ab367a71" d="M 298.50 1783.00 L 298.50 1799.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<path id="l-fdab3a1e4a7ae4d850265294" data-ir-edge-ids="fdab3a1e4a7ae4d850265294" d="M 298.50 1845.00 L 298.50 1861.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<path id="l-a366bbd4a1bad1ae45bbde10" data-ir-edge-ids="a366bbd4a1bad1ae45bbde10" d="M 298.50 1907.00 L 298.50 1923.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<path id="l-5666dd67e4858192259a47a9" data-ir-edge-ids="5666dd67e4858192259a47a9" d="M 298.50 1969.00 L 298.50 1985.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<path id="l-29fa4b9a1e4df7d33357b30e" data-ir-edge-ids="29fa4b9a1e4df7d33357b30e" d="M 298.50 2031.00 L 298.50 2047.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<path id="l-8a66d2c907387e4e363f670b" data-ir-edge-ids="8a66d2c907387e4e363f670b" d="M 298.50 2093.00 L 298.50 2109.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<path id="l-7ea84672a4719a69d842ca1f" data-ir-edge-ids="7ea84672a4719a69d842ca1f" d="M 298.50 2155.00 L 298.50 2171.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<path id="l-8e7545f4165bbd6232f4dd70" data-ir-edge-ids="8e7545f4165bbd6232f4dd70" d="M 298.50 2217.00 L 298.50 2233.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<path id="l-99b51deaa2ad7001019dfd1d" data-ir-edge-ids="99b51deaa2ad7001019dfd1d" d="M 298.50 2279.00 L 298.50 2295.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<path id="l-5cdea0a2893b6b683f41f6e8" data-ir-edge-ids="5cdea0a2893b6b683f41f6e8" d="M 298.50 2341.00 L 298.50 2357.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<path id="l-4cdc4e5e7cbbe264855bae4d" data-ir-edge-ids="4cdc4e5e7cbbe264855bae4d" d="M 298.50 2403.00 L 298.50 2419.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<path id="l-67e04e1926558bb16f396948" data-ir-edge-ids="67e04e1926558bb16f396948" d="M 298.50 2465.00 L 298.50 2481.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<path id="l-536b18fb1e4bf2410a943b16" data-ir-edge-ids="536b18fb1e4bf2410a943b16" d="M 298.50 2527.00 L 298.50 2543.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<path id="l-7318c784ffa7672e83dc8f56" data-ir-edge-ids="7318c784ffa7672e83dc8f56" d="M 298.50 2589.00 L 298.50 2605.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<path id="l-1e659f2ef64b7163c3c2db57" data-ir-edge-ids="1e659f2ef64b7163c3c2db57" d="M 298.50 2651.00 L 298.50 2667.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<text x="55.00" y="32.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="18.00" font-weight="bold">torchvision.models.vgg:vgg16</text>
+<text x="55.00" y="54.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">SOURCE-EXPANDED INSTANCE TENSOR GRAPH</text>
+<text x="55.00" y="73.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">Input shape: [1, 3, 224, 224]</text>
+<text x="55.00" y="114.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="11.00" font-weight="bold">INPUT</text>
+<text x="189.00" y="144.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="bold">x</text>
+<text x="189.00" y="162.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×3×224×224</text>
+<text x="55.00" y="176.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="11.00" font-weight="bold">STEM</text>
+<text x="189.00" y="206.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">features.0</text>
+<text x="189.00" y="224.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×64×224×224</text>
+<text x="189.00" y="268.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">features.1</text>
+<text x="189.00" y="286.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×64×224×224</text>
+<text x="189.00" y="330.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">features.2</text>
+<text x="189.00" y="348.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×64×224×224</text>
+<text x="189.00" y="392.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">features.3</text>
+<text x="189.00" y="410.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×64×224×224</text>
+<text x="189.00" y="454.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">features.4</text>
+<text x="189.00" y="472.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×64×112×112</text>
+<text x="189.00" y="516.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">features.5</text>
+<text x="189.00" y="534.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×128×112×112</text>
+<text x="189.00" y="578.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">features.6</text>
+<text x="189.00" y="596.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×128×112×112</text>
+<text x="189.00" y="640.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">features.7</text>
+<text x="189.00" y="658.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×128×112×112</text>
+<text x="189.00" y="702.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">features.8</text>
+<text x="189.00" y="720.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×128×112×112</text>
+<text x="189.00" y="764.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">features.9</text>
+<text x="189.00" y="782.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×128×56×56</text>
+<text x="189.00" y="826.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">features.10</text>
+<text x="189.00" y="844.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×256×56×56</text>
+<text x="189.00" y="888.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">features.11</text>
+<text x="189.00" y="906.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×256×56×56</text>
+<text x="189.00" y="950.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">features.12</text>
+<text x="189.00" y="968.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×256×56×56</text>
+<text x="189.00" y="1012.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">features.13</text>
+<text x="189.00" y="1030.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×256×56×56</text>
+<text x="189.00" y="1074.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">features.14</text>
+<text x="189.00" y="1092.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×256×56×56</text>
+<text x="189.00" y="1136.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">features.15</text>
+<text x="189.00" y="1154.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×256×56×56</text>
+<text x="189.00" y="1198.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">features.16</text>
+<text x="189.00" y="1216.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×256×28×28</text>
+<text x="189.00" y="1260.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">features.17</text>
+<text x="189.00" y="1278.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×512×28×28</text>
+<text x="189.00" y="1322.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">features.18</text>
+<text x="189.00" y="1340.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×512×28×28</text>
+<text x="189.00" y="1384.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">features.19</text>
+<text x="189.00" y="1402.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×512×28×28</text>
+<text x="189.00" y="1446.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">features.20</text>
+<text x="189.00" y="1464.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×512×28×28</text>
+<text x="189.00" y="1508.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">features.21</text>
+<text x="189.00" y="1526.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×512×28×28</text>
+<text x="189.00" y="1570.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">features.22</text>
+<text x="189.00" y="1588.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×512×28×28</text>
+<text x="189.00" y="1632.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">features.23</text>
+<text x="189.00" y="1650.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×512×14×14</text>
+<text x="189.00" y="1694.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">features.24</text>
+<text x="189.00" y="1712.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×512×14×14</text>
+<text x="189.00" y="1756.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">features.25</text>
+<text x="189.00" y="1774.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×512×14×14</text>
+<text x="189.00" y="1818.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">features.26</text>
+<text x="189.00" y="1836.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×512×14×14</text>
+<text x="189.00" y="1880.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">features.27</text>
+<text x="189.00" y="1898.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×512×14×14</text>
+<text x="189.00" y="1942.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">features.28</text>
+<text x="189.00" y="1960.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×512×14×14</text>
+<text x="189.00" y="2004.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">features.29</text>
+<text x="189.00" y="2022.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×512×14×14</text>
+<text x="189.00" y="2066.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">features.30</text>
+<text x="189.00" y="2084.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×512×7×7</text>
+<text x="55.00" y="2098.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="11.00" font-weight="bold">HEAD</text>
+<text x="189.00" y="2128.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">avgpool</text>
+<text x="189.00" y="2146.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×512×7×7</text>
+<text x="189.00" y="2190.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">flatten</text>
+<text x="189.00" y="2208.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×25088</text>
+<text x="55.00" y="2222.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="11.00" font-weight="bold">STEM</text>
+<text x="189.00" y="2252.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">classifier.0</text>
+<text x="189.00" y="2270.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×4096</text>
+<text x="189.00" y="2314.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">classifier.1</text>
+<text x="189.00" y="2332.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×4096</text>
+<text x="189.00" y="2376.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">classifier.2</text>
+<text x="189.00" y="2394.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×4096</text>
+<text x="189.00" y="2438.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">classifier.3</text>
+<text x="189.00" y="2456.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×4096</text>
+<text x="189.00" y="2500.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">classifier.4</text>
+<text x="189.00" y="2518.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×4096</text>
+<text x="189.00" y="2562.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">classifier.5</text>
+<text x="189.00" y="2580.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×4096</text>
+<text x="189.00" y="2624.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">classifier.6</text>
+<text x="189.00" y="2642.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×1000</text>
+<text x="55.00" y="2656.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="11.00" font-weight="bold">OUTPUT</text>
+<text x="189.00" y="2686.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="bold">output</text>
+<text x="189.00" y="2704.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×1000</text>
+<text x="55.00" y="2766.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="9.00" font-weight="normal">Shapes apply to the selected concrete input; runtime verification is separate.</text>
+<text x="55.00" y="2785.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="9.00" font-weight="normal">Source-derived graph; health status: partial</text>
+</svg>
