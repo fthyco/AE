@@ -51,7 +51,9 @@ def make_instance_scene(graph, *, status, entrypoint):
     style=select_theme('scientific-latex')
     nodes=graph['nodes'];links=graph['links']
     rects=[];texts=[];paths=[]
-    step=62;top=125;main_x=180;project_x=510
+    grouped=graph.get('level') in ('overview','block')
+    step=112 if grouped else 62
+    top=125;main_x=180;project_x=510
     positions={}
     texts.extend([{'x':55,'y':32,'text':entrypoint or 'Instance forward','size':18,'bold':True},
                   {'x':55,'y':54,'text':'SOURCE-EXPANDED INSTANCE TENSOR GRAPH','size':10,'bold':False},
@@ -98,6 +100,6 @@ def make_instance_scene(graph, *, status, entrypoint):
                   'size':9,'bold':False})
     texts.append({'x':55,'y':height-24,'text':f'Source-derived graph; health status: {status}',
                   'size':9,'bold':False})
-    return {'width':1000,'height':height,'rects':rects,'texts':texts,'paths':paths,
+    return {'width':640 if grouped else 1000,'height':height,'rects':rects,'texts':texts,'paths':paths,
             'title':entrypoint or 'Instance forward','status':status,
             'positions':positions,'style':style}
