@@ -44,3 +44,5 @@ python scripts/verify_container_specialization.py
 See docs/limitations.md and docs/container-specialization-v0.12.md.
 
 ResNet50 Bottleneck support: [independent stage gate](docs/instance-forward-v0.17.md).
+
+DenseNet121 (TorchVision 0.25.0 default factory): bounded, source-verified instance forward graph with complete feature-list concatenation dependencies for the audited input shapes. See [v0.18 scope and independent verification](docs/instance-forward-v0.18.md). Other variants and modified source remain unsupported.

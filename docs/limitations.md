@@ -67,3 +67,5 @@ unproven; no tuple aggregate is treated as a tensor. Presenter draws only
 source-supported cross-module positional links.
 
 Bounded static instance-forward expansion is currently verified only for the default ResNet18 and ResNet50 factories and fixed, explicitly supplied input sizes. The separate `instance` view is not a general runtime graph; independent FX/hooks verification is mandatory for a model-level claim.
+
+Full DenseNet121 `instance` forward expansion is available only for an audited original TorchVision 0.25.0 source fingerprint, default factory arguments and explicit concrete input shapes. Modified or unsupported sources remain unresolved. Independent FX/hooks runtime verification is separate from AE extraction.
