@@ -58,7 +58,7 @@ aside h2{font-size:14px;margin:0 0 10px}#details{white-space:pre-wrap;overflow-w
 <button type="button" id="zoom-fit">Fit width</button>
 <span id="evidence-status" role="status"></span></div>
 __AE_PANELS__
-</main><aside><h2>Source provenance</h2><p class="hint">Select a component to inspect its original IR identity and source span. Click “Show operations” to highlight its source-proven operations. This does not infer hidden runtime edges.</p>
+</main><aside><h2>Source provenance</h2><p class="hint">Select a component to inspect its original IR identity and source span. Click “Show operations” to inspect source-backed elements at Operation resolution. This does not infer hidden runtime edges.</p>
 <button type="button" id="drill" disabled>Show operations</button>
 <div id="details" aria-live="polite">Select an operation or block.</div>
 <footer>Only graph evidence present in the extraction bundle is displayed. Partial and unsupported views remain labeled; color is a secondary visual cue, not proof of execution.</footer>
@@ -131,7 +131,7 @@ function drill(){
   const matched=new Set(Object.entries(operation.elements)
     .filter(([id,entry])=>(entry.ir_node_ids||[]).some(x=>ids.has(x))).map(([id])=>id));
   if(!matched.size){
-    document.getElementById("details").textContent="No source-proven operation correspondence for this group. No graph was fabricated.";
+    document.getElementById("details").textContent="No source-proven Operation-level correspondence for this group. No graph was fabricated.";
     return;
   }
   for(const el of panes.operation.querySelectorAll('svg rect[id^="v-"]')){
@@ -144,7 +144,7 @@ function drill(){
   }
   const first=panes.operation.querySelector("svg rect.ae-selected");
   if(first){const y=Number(first.getAttribute("y"))||0;panes.operation.scrollTop=Math.max(0,(y*scale)-110);}
-  document.getElementById("details").textContent="Highlighted "+matched.size+" original operations.\nNo new nodes or edges were generated.";
+  document.getElementById("details").textContent="Highlighted "+matched.size+" original source-backed elements.\nNo new nodes or edges were generated.";
 }
 function searchGraph(){
   const term=document.getElementById("search").value.trim().toLowerCase();
