@@ -12,7 +12,7 @@ from pathlib import Path
 from ae.sae.api import extract, validate_bundle
 from ae.presenter.api import present
 
-from scripts.preflight_vit_tiny_v020 import audit
+from preflight_vit_tiny_v020 import audit
 
 
 def verify(output: Path):
