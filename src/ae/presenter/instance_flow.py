@@ -6,6 +6,7 @@ import json
 from .health import issue
 from .instance_hierarchy import project_vit_hierarchy
 from .mobilenetv3_hierarchy import project_mobilenet_hierarchy
+from .efficientnet_hierarchy import project_efficientnet_hierarchy
 from .themes import select_theme
 
 
@@ -41,6 +42,10 @@ def project_instance_forward(bundle, level='operation', focus=None):
             'input_shape':data['input_conditions']['input_shape'],
             'source_path':data['source_path']}
     if level != 'operation' or focus is not None:
+        if data.get('scope') == 'pinned_torchvision_0_25_0_efficientnet_b0':
+            return project_efficientnet_hierarchy(
+                graph, level=level, focus=focus, source_scope=data['scope']
+            )
         if data.get('scope') == 'pinned_torchvision_0_25_0_mobilenet_v3_small':
             return project_mobilenet_hierarchy(
                 graph, level=level, focus=focus, source_scope=data['scope']
