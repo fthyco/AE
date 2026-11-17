@@ -81,17 +81,17 @@ class _VGG:
         _check([type(n).__name__ for n in forward.body]==
                ["Assign","Assign","Assign","Assign","Return"],
                "VGG forward statements have changed")
-        def find(root, predicate, name):
+        def find(root, predicate, name, *, expected_count=1, selected=0):
             found=sorted((n for n in ast.walk(root) if predicate(n)),
                          key=lambda n:(n.lineno,n.col_offset))
-            _check(len(found)==1,"Original VGG operation not uniquely proven: "+name)
-            self.sites[name]=found[0]
+            _check(len(found)==expected_count,"Original VGG operation not uniquely proven: "+name)
+            self.sites[name]=found[selected]
         self.sites["input"]=forward
         self.sites["output"]=forward.body[-1]
         find(make,lambda n:isinstance(n,ast.Call) and isinstance(n.func,ast.Attribute)
              and n.func.attr=="Conv2d","conv")
         find(make,lambda n:isinstance(n,ast.Call) and isinstance(n.func,ast.Attribute)
-             and n.func.attr=="ReLU","relu")
+             and n.func.attr=="ReLU","relu",expected_count=2,selected=1)
         find(make,lambda n:isinstance(n,ast.Call) and isinstance(n.func,ast.Attribute)
              and n.func.attr=="MaxPool2d","pool")
         find(ctor,lambda n:isinstance(n,ast.Call) and isinstance(n.func,ast.Attribute)
