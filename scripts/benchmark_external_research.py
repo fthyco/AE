@@ -121,6 +121,45 @@ def audit(case: str, root: Path, output: Path) -> dict:
                 "visible_nodes": len(manifest["visual_elements"]),
                 "visible_edges": len(manifest["visual_links"]),
             }
+        structural = {}
+        for level in ("overview", "block", "operation"):
+            figures = output / ("structure-" + level)
+            projection = present(first, figures, view="structure", level=level,
+                                 format="svg", mode="exploration")
+            health = json.loads((figures / "presentation-health.json").read_text())
+            manifest = json.loads((figures / "presentation-manifest.json").read_text())
+            assert manifest["status"] == health["status"]
+            assert manifest["rendered"] == projection["render_allowed"]
+            assert all(x.get("ir_node_ids") and x.get("source_refs")
+                       for x in manifest["visual_elements"].values())
+            assert all(x.get("ir_edge_ids") and x.get("source_refs")
+                       for x in manifest["visual_links"].values())
+            structural[level] = {
+                "status": health["status"],
+                "render_allowed": projection["render_allowed"],
+                "visible_nodes": len(manifest["visual_elements"]),
+                "visible_edges": len(manifest["visual_links"]),
+                "semantic_categories": sorted(set(
+                    x["semantic_category"]
+                    for x in manifest["visual_elements"].values()
+                    if x.get("semantic_category"))),
+            }
+        assert structural["overview"]["visible_nodes"] <= structural["block"]["visible_nodes"]
+        assert structural["block"]["visible_nodes"] < structural["operation"]["visible_nodes"]
+        overview_manifest = json.loads(
+            (output / "structure-overview/presentation-manifest.json").read_text()
+        )["visual_elements"]
+        operation_manifest = json.loads(
+            (output / "structure-operation/presentation-manifest.json").read_text()
+        )["visual_elements"]
+        root_groups = [n for n in overview_manifest.values() if n["kind"] == "model"]
+        assert len(root_groups) == 1
+        source_members = set(root_groups[0]["member_ir_node_ids"])
+        proven_operation_ids = {
+            nid for nid, n in operation_manifest.items()
+            if n["kind"] == "operation" and source_members.intersection(n["ir_node_ids"])
+        }
+        assert proven_operation_ids, "No source-backed operation membership for root class"
     finally:
         builtins.__import__ = original_import
 
@@ -136,6 +175,8 @@ def audit(case: str, root: Path, output: Path) -> dict:
         "tensor_shapes": "not_verified",
         "dynamic_control_flow": "not_proven",
         "views": views,
+        "structural_views": structural,
+        "source_backed_root_operation_sites": len(proven_operation_ids),
         "verdict": "source_index_and_partial_views_only",
     }
 

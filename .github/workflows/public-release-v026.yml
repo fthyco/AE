@@ -1,4 +1,4 @@
-name: AE v0.26 offline viewer and clean release gate
+name: AE offline viewer and clean distribution gate
 
 on:
   push:
@@ -65,7 +65,9 @@ jobs:
           from pathlib import Path
           import os
           root=Path(os.environ['RUNNER_TEMP'])
-          assert m.version('architecture-extractor')=='0.26.0'
+          import tomllib
+          expected=tomllib.loads((Path(os.environ['GITHUB_WORKSPACE'])/'pyproject.toml').read_text())['project']['version']
+          assert m.version('architecture-extractor')==expected
           assert u.find_spec('torch') is None, 'Public AE viewer must not require torch'
           assert json.loads((root/'validation.json').read_text())['valid']
           report=json.loads((root/'viewer-result.json').read_text())

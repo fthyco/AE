@@ -6,6 +6,7 @@ from typing import Any
 
 from ae.sae.ir.canonical import stable_id
 from .health import issue
+from .semantic import source_category
 from .reader import Bundle
 
 
@@ -40,6 +41,9 @@ def project(bundle: Bundle, level: str = 'block') -> dict[str, Any]:
         entry = {'id': ident, 'kind': kind, 'label': label, 'parent_id': parent,
                  'ir_node_ids': ids, 'ir_edge_ids': sorted(set(edge_ids or [])),
                  'evidence': state, 'source_refs': refs, 'details': details}
+        category = source_category(kind, label)
+        if category != 'unknown':
+            entry['semantic_category'] = category
         graph['nodes'].append(entry)
         graph_node_by_id[ident] = entry
         return ident
@@ -199,7 +203,9 @@ def project(bundle: Bundle, level: str = 'block') -> dict[str, Any]:
                 if unknown:
                     graph['issues'].append(issue('MISSING_LOCAL_OR_EXTERNAL_DEFINITION',
                         f'Cannot resolve call {callee} in {m["qualname"]}',ids=[csid],refs=call['source_refs']))
-            if level == 'operation' or level == 'block':
+            # Block presents declared module/call topology; operation-only
+            # syntax nodes are expanded exclusively at Operation resolution.
+            if level == 'operation':
                 for op in sorted(m['forward_operations'],key=lambda x:(x['source_refs'][0]['start_byte'],x['operation_site_id'])):
                     opid=op['operation_site_id']
                     vo=add('operation',op['operator'],(*path,'operation',opid),[opid],parent=mod_id)

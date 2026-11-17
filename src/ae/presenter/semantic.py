@@ -14,6 +14,7 @@ COLORS = {
     "elementwise": "#68798A",
     "pool_or_reshape": "#898D93",
     "regularization": "#979197",
+    "matrix_multiplication": "#536D7A",
     "unknown": "#B0B0B0",
 }
 LABELS = {
@@ -24,6 +25,7 @@ LABELS = {
     "elementwise": "Elementwise / Residual",
     "pool_or_reshape": "Pool / Reshape",
     "regularization": "Regularization",
+    "matrix_multiplication": "Matrix Multiplication",
     "unknown": "Other / Unclassified",
 }
 
@@ -39,8 +41,12 @@ def semantic_category(op: str, target: str, scope: str) -> str:
     if op=="call_function":
         if target in {"add","mul","sub","div","operator.add","operator.mul"}:
             return "elementwise"
-        if target in {"scaled_dot_product_attention","softmax","matmul","bmm"}:
+        if target=="scaled_dot_product_attention":
             return "attention"
+        if target=="softmax":
+            return "activation"
+        if target in {"matmul","bmm"}:
+            return "matrix_multiplication"
         if target in {"flatten","reshape","view","permute","transpose","cat","concat"}:
             return "pool_or_reshape"
         if target=="stochastic_depth":
@@ -92,4 +98,32 @@ def semantic_category(op: str, target: str, scope: str) -> str:
             return "linear"
         if "act" in target or "gelu" in target:return "activation"
         if "pool" in target:return "pool_or_reshape"
+    return "unknown"
+
+# Conservative classification for source-level component declarations.
+# A constructor type is a lexical declaration, not proof of runtime execution.
+_DECLARED_TYPES = {
+    "linear": frozenset({"Linear", "Conv1d", "Conv2d", "Conv3d", "ConvTranspose1d", "ConvTranspose2d", "ConvTranspose3d", "Embedding", "Bilinear"}),
+    "normalization": frozenset({"BatchNorm1d", "BatchNorm2d", "BatchNorm3d", "LayerNorm", "GroupNorm", "InstanceNorm1d", "InstanceNorm2d", "RMSNorm"}),
+    "activation": frozenset({"ReLU", "ReLU6", "GELU", "SiLU", "Sigmoid", "Tanh", "Softmax", "LeakyReLU", "ELU", "Hardswish", "Hardsigmoid"}),
+    "attention": frozenset({"MultiheadAttention"}),
+    "pool_or_reshape": frozenset({"MaxPool1d", "MaxPool2d", "MaxPool3d", "AvgPool1d", "AvgPool2d", "AvgPool3d", "AdaptiveAvgPool1d", "AdaptiveAvgPool2d", "AdaptiveMaxPool2d", "Flatten", "Unflatten", "Upsample"}),
+    "regularization": frozenset({"Dropout", "Dropout1d", "Dropout2d", "Dropout3d", "AlphaDropout"}),
+}
+_STATIC_OPERATORS = {
+    "elementwise": frozenset({"Add", "Sub", "Mult", "Div", "Pow", "Mod"}),
+    "matrix_multiplication": frozenset({"MatMult"}),
+    "pool_or_reshape": frozenset({"Reshape", "View", "Flatten", "Permute", "Transpose", "Cat", "Concat"}),
+}
+
+
+def source_category(kind: str, label: str) -> str:
+    """Classify only explicit source constructor/operator spellings."""
+    if kind not in {"component", "nested-constructor", "operation"}:
+        return "unknown"
+    part = label.rsplit(":", 1)[-1].strip().split("(")[0].split(".")[-1]
+    groups = _STATIC_OPERATORS if kind == "operation" else _DECLARED_TYPES
+    for name, identifiers in groups.items():
+        if part in identifiers:
+            return name
     return "unknown"

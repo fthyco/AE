@@ -1,0 +1,72 @@
+name: Publish Architecture Extractor on PyPI with Trusted Publishing
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing verified GitHub Release tag, e.g. v0.27.0"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Verify tag naming and existing GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          case "$RELEASE_TAG" in v[0-9]*.[0-9]*.[0-9]*) ;; *) echo "Expected a semver vX.Y.Z tag"; exit 1;; esac
+          gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json tagName,isDraft,isPrerelease \
+            --jq 'select(.isDraft==false and .isPrerelease==false) | .tagName' | grep -Fx "$RELEASE_TAG"
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Build distribution and verify version matches published tag
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          python -m pip install build twine
+          python -m build
+          python -m twine check dist/*
+          python - <<'PY'
+          import os, tomllib
+          from pathlib import Path
+          metadata=tomllib.loads(Path('pyproject.toml').read_text())
+          expected='v'+metadata['project']['version']
+          assert os.environ['RELEASE_TAG']==expected, 'GitHub tag / package version mismatch'
+          assert metadata['project']['name']=='architecture-extractor'
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ae-pypi-dist
+          path: dist/
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    environment:
+      name: pypi
+      url: https://pypi.org/project/architecture-extractor/
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: ae-pypi-dist
+          path: dist/
+      - name: Publish via PyPI OpenID Connect trusted publisher
+        uses: pypa/gh-action-pypi-publish@release/v1

@@ -78,6 +78,35 @@ def present(bundle_path: str | Path, output: str | Path, *, level: str = 'block'
               'rendered':allowed,'visual_elements':{},'visual_links':{},
               'omitted_indexed_ir_ids':[],'output_sha256':{}}
     if graph is not None:
+        # Source-backed parent-child membership is used for drill-down;
+        # membership never asserts concrete runtime tensor dependencies.
+        elements = {n['id']: n for n in graph['nodes']}
+        memberships = {nid: set(n['ir_node_ids']) for nid, n in elements.items()}
+        for n in graph['nodes']:
+            parent = n.get('parent_id')
+            visited = {n['id']}
+            while parent in elements and parent not in visited:
+                memberships[parent].update(n['ir_node_ids'])
+                visited.add(parent)
+                parent = elements[parent].get('parent_id')
+        if view == 'structure' and level != 'operation' and bundle is not None:
+            # A grouped source node can carry exact declared-operation
+            # membership from the *full* source-only Operation projection.
+            # Stable visual IDs identify the same constructor path at
+            # every zoom level; this is NOT runtime topology or execution.
+            full = project(bundle, 'operation')
+            full_nodes = {n['id']: n for n in full['nodes']}
+            full_members = {nid: set(n['ir_node_ids']) for nid, n in full_nodes.items()}
+            for deep in full['nodes']:
+                parent = deep.get('parent_id')
+                visited = {deep['id']}
+                while parent in full_nodes and parent not in visited:
+                    full_members[parent].update(deep['ir_node_ids'])
+                    visited.add(parent)
+                    parent = full_nodes[parent].get('parent_id')
+            for vid in memberships:
+                if vid in full_members:
+                    memberships[vid].update(full_members[vid])
         if view=='instance':
             manifest['input_shape']=graph.get('input_shape')
             manifest['instance_artifact']='instance-forward.json'
@@ -85,6 +114,9 @@ def present(bundle_path: str | Path, output: str | Path, *, level: str = 'block'
             manifest['omitted_instance_node_ids']=graph.get('omitted_instance_node_ids', [])
             manifest['omitted_instance_edge_ids']=graph.get('omitted_instance_edge_ids', [])
         manifest['visual_elements']={n['id']:{'kind':n['kind'],
+               'label':n['label'], 'shape':n.get('shape'),
+               'evidence':n.get('evidence','source-backed'),
+               'member_ir_node_ids': sorted(memberships[n['id']]),
                'ir_node_ids':n['ir_node_ids'],'ir_edge_ids':n['ir_edge_ids'],
                'source_refs':n['source_refs'],
                **({'semantic_category':n['semantic_category']}

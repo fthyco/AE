@@ -4,18 +4,19 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "architecture-extractor"
-version = "0.26.0"
+version = "0.27.0"
 description = "Static Python/PyTorch architecture extraction and vector diagrams"
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [{name = "AE contributors"}]
-license = {text = "MIT"}
+license = "MIT"
 keywords = ["pytorch", "static-analysis", "architecture", "intermediate-representation"]
 dependencies = ["PyYAML>=6.0,<7"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "jsonschema>=4", "reportlab>=4"]
 render = ["reportlab>=4"]
+runtime = ["torch>=2.4,<3"]
 
 [project.scripts]
 ae = "ae.cli:main"
