@@ -142,6 +142,27 @@ def validate_model_index(index,ir):
         if ref not in nodes or (kind and nodes[ref]!=kind):
             raise ValueError(f'Model index dangling or mistyped reference: {ref}')
     check(index.get('root_definition_id'))
+    factory=index.get('factory_specialization')
+    if factory:
+        check(factory['factory_definition_id'],'function_definition')
+        check(factory['factory_configuration_id'],'factory_configuration')
+        check(factory['model_definition_id'],'class_definition')
+        check(factory['block_definition_id'],'class_definition')
+        if factory['model_definition_id'] != index.get('root_definition_id'):
+            raise ValueError('Factory model root mismatch')
+        if sum(factory['stage_counts']) != factory['total_blocks']:
+            raise ValueError('Factory block count mismatch')
+        if len(factory['stages']) != len(factory['stage_counts']):
+            raise ValueError('Factory stage count mismatch')
+        for i, stage in enumerate(factory['stages']):
+            check(stage['stage_id'],'factory_stage')
+            check(stage['block_definition_id'],'class_definition')
+            if stage['position'] != i or stage['count'] != factory['stage_counts'][i]:
+                raise ValueError('Factory stage order mismatch')
+            if len(stage['block_instance_ids']) != stage['count']:
+                raise ValueError('Factory instance count mismatch')
+            for ref in stage['block_instance_ids']:
+                check(ref,'factory_block_instance')
     for m in index.get('modules',[]):
         check(m['definition_id'],'class_definition')
         check(m['forward_method_id'],'method_definition')

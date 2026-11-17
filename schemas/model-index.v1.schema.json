@@ -49,6 +49,62 @@
     },
     "limitations": {
       "type": "array"
+    },
+    "factory_specialization": {
+      "type": "object",
+      "required": [
+        "factory_definition_id",
+        "factory_configuration_id",
+        "model_definition_id",
+        "block_definition_id",
+        "block_type",
+        "stage_counts",
+        "total_blocks",
+        "stages",
+        "scope",
+        "resolution"
+      ],
+      "properties": {
+        "factory_definition_id": {
+          "type": "string"
+        },
+        "factory_configuration_id": {
+          "type": "string"
+        },
+        "model_definition_id": {
+          "type": "string"
+        },
+        "block_definition_id": {
+          "type": "string"
+        },
+        "block_type": {
+          "type": "string"
+        },
+        "stage_counts": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "total_blocks": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "stages": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "scope": {
+          "const": "static_constructor_blueprint"
+        },
+        "resolution": {
+          "const": "conditional"
+        }
+      },
+      "additionalProperties": false
     }
   },
   "$id": "https://github.com/fthyco/MAGG/blob/main/schemas/model-index.v1.schema.json",

@@ -74,6 +74,27 @@ def project(bundle: Bundle, level: str = 'block') -> dict[str, Any]:
         if parent and via_comp and via_site:
             connect(via_comp, mod_id, 'CONSTRUCTS_LOCAL_MODULE',
                     edges_between(via_site, definition, 'CONSTRUCTS_LOCAL_MODULE'))
+        factory = index.get('factory_specialization')
+        if parent is None and factory and factory['model_definition_id'] == definition:
+            cfg = factory['factory_configuration_id']
+            cv = add('factory', f"{index['entrypoint'].split(':')[-1]}: {factory['block_type']}",
+                     (*path, 'factory', cfg), [cfg], parent=mod_id, state='conditional',
+                     details='Static constructor blueprint')
+            connect(cv, mod_id, 'FACTORY_CONSTRUCTS_CLASS',
+                    edges_between(cfg, definition, 'FACTORY_CONSTRUCTS_CLASS'))
+            for stage in factory['stages']:
+                sid = stage['stage_id']
+                sv = add('factory-stage', f"{stage['name']}: {stage['count']} × {stage['block_type']}",
+                         (*path, 'stage', sid), [sid], parent=cv, state='conditional',
+                         details=f"Stage {stage['position'] + 1}")
+                connect(cv, sv, 'FACTORY_HAS_STAGE', edges_between(cfg, sid, 'FACTORY_HAS_STAGE'))
+                if level != 'overview':
+                    for i, instance_id in enumerate(stage['block_instance_ids']):
+                        iv = add('factory-block', f"{stage['block_type']} [{i}]",
+                                 (*path, 'stage', sid, 'block', instance_id), [instance_id],
+                                 parent=sv, state='conditional', details=f"{stage['name']}.{i}")
+                        connect(sv, iv, 'STAGE_HAS_BLOCK_INSTANCE',
+                                edges_between(sid, instance_id, 'STAGE_HAS_BLOCK_INSTANCE'))
         comp_views: dict[str, str] = {}
         for comp in sorted(m['components'], key=lambda c:(c['source_refs'][0]['start_byte'], c['construction_site_id'])):
             cid = comp['construction_site_id']

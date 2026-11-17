@@ -14,6 +14,7 @@ from .analysis.configuration import analyze_configuration
 from .analysis.forward_flow import analyze_forward_values
 from .analysis.interprocedural import analyze_interprocedural
 from .analysis.symbolic_shapes import analyze_symbolic_shapes
+from .analysis.factory_specialization import specialize_factory
 from .indexing.model_index import build_model_index, validate_model_index
 from .linking.project import Unit, link_project, syntax_ids, unresolved
 from .inventory.walker import inventory
@@ -98,7 +99,18 @@ def extract(source_root: str | Path, output: str | Path, *, entrypoint: str | No
             graph.unresolved.append({'kind': 'entrypoint_resolution', 'path': '',
                                     'reason': f'Expected unique module:symbol for {entrypoint}; found {len(candidates)}',
                                     'candidate_ids': candidates, 'source_refs': []})
+    factory_info = None
+    if entrypoint and entrypoint_id is not None:
+        kind = next((n['kind'] for n in graph.nodes if n['id'] == entrypoint_id), None)
+        if kind == 'function_definition':
+            model_class_id, factory_info, failure = specialize_factory(graph, parsed_units, entrypoint)
+            if model_class_id is not None:
+                entrypoint_id = model_class_id
+            elif failure is not None:
+                graph.unresolved.append(failure)
     model_index = build_model_index(graph, parsed_units, entrypoint_id, entrypoint)
+    if factory_info is not None:
+        model_index['factory_specialization'] = factory_info
     analyze_interprocedural(graph, parsed_units, model_index)
     analyze_symbolic_shapes(graph, model_index)
     graph.nodes.sort(key=lambda n: n["id"])
