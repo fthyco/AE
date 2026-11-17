@@ -19,6 +19,7 @@ from .analysis.nested_shapes import propagate_nested_shapes
 from .analysis.factory_specialization import specialize_factory
 from .analysis.instance_forward import expand_factory_forward
 from .analysis.dense_instance_forward import expand_dense_forward
+from .analysis.unet_instance_forward import expand_unet_forward
 from .analysis.container_specialization import specialize_containers
 from .indexing.model_index import build_model_index, validate_model_index
 from .linking.project import Unit, link_project, syntax_ids, unresolved
@@ -136,9 +137,11 @@ def extract(source_root: str | Path, output: str | Path, *, entrypoint: str | No
         if not propagate_nested_shapes(graph):
             break
         analyze_composite_shapes(graph, parsed_units, model_index)
-    expanded = (expand_dense_forward(parsed_units, container_info, input_shape, graph.nodes)
-                if container_info is not None and factory_info is None
-                else expand_factory_forward(parsed_units, factory_info, input_shape, graph.nodes))
+    expanded = expand_unet_forward(parsed_units, entrypoint, input_shape, graph.nodes)
+    if expanded is None:
+        expanded = (expand_dense_forward(parsed_units, container_info, input_shape, graph.nodes)
+                    if container_info is not None and factory_info is None
+                    else expand_factory_forward(parsed_units, factory_info, input_shape, graph.nodes))
     if expanded is not None and expanded.get('status') == 'expanded_static':
         for node in expanded['nodes']:
             graph.add_node({
