@@ -24,7 +24,7 @@ def originals():
         if hashlib.sha256(Path(importlib.import_module(module).__file__)
                           .read_bytes()).hexdigest() != digest
     ]
-    if version != "0.25.0" or changed:
+    if version.split("+")[0] != "0.25.0" or changed:
         message = ("Original torchvision==0.25.0 with matching source bytes required: "
                    f"installed {version}; changed {changed}")
         if os.environ.get("AE_REQUIRE_MNV3_PIN") == "1":
