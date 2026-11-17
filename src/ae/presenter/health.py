@@ -17,6 +17,12 @@ def evaluate(bundle: Any | None, graph: dict | None, *, mode: str,
     issues: list[dict] = []
     if input_error is not None:
         issues.append(issue('INVALID_BUNDLE', input_error, severity='error'))
+    elif graph is not None and graph.get('view') == 'instance' and len(graph.get('nodes', [])) > 1:
+        # A source-pinned instance proof is independent of generic factory/module
+        # indexing; timm factories can be unsupported by ModelIndex even when
+        # the specialized, checksum-validated instance graph is fully resolved.
+        # A missing/unsupported instance graph still fails the normal gate.
+        issues.extend(graph.get('issues', []))
     elif bundle is not None and bundle.model_index.get('status') != 'indexed':
         issues.append(issue('ENTRYPOINT_UNRESOLVED',
                             f"Model index status: {bundle.model_index.get('status')}", severity='error'))
