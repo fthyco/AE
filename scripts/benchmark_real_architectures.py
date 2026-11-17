@@ -6,6 +6,8 @@ import hashlib
 import importlib
 import inspect
 import json
+import os
+import subprocess
 import resource
 import shutil
 import sys
@@ -177,6 +179,22 @@ def main(name):
     extract(sources, root / "sae", entrypoint=entry)
     extract_sec = round(time.perf_counter() - before, 4)
     validated = validate_bundle(root / "sae")["valid"]
+    stable_dir = root / "sae-repeated"
+    env = os.environ.copy()
+    env["PYTHONHASHSEED"] = "173"
+    stable_cmd = [sys.executable, "-m", "ae.cli", "extract",
+                  str(sources), "--entrypoint", entry,
+                  "--output", str(stable_dir)]
+    repeat_start = time.perf_counter()
+    repeat = subprocess.run(stable_cmd, env=env, capture_output=True,
+                            text=True, check=True)
+    repeat_seconds = round(time.perf_counter() - repeat_start, 4)
+    extract_rss_mb = round(resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss / 1024, 2)
+    deterministic = (
+        hashlib.sha256((root / "sae/architecture.ir.json").read_bytes()).digest() ==
+        hashlib.sha256((stable_dir / "architecture.ir.json").read_bytes()).digest()
+    )
+    assert deterministic, "IR changed between PYTHONHASHSEED runs"
     present(root / "sae", root / "figure", view="flow", level="operation",
             format="svg", mode="exploration")
     ir = json.loads((root / "sae/architecture.ir.json").read_text())
@@ -198,6 +216,9 @@ def main(name):
         "init_sec": init_sec, "peak_process_rss_mb":
             round(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024, 2),
         "validated": validated,
+        "deterministic_across_hash_seeds": deterministic,
+        "repeat_extract_sec": repeat_seconds,
+        "isolated_extract_peak_rss_mb": extract_rss_mb,
         "ir_nodes": len(ir["nodes"]), "ir_edges": len(ir["edges"]),
         "unresolved": len(ir["unresolved"]),
         "symbolic_shapes": sum(n["kind"] == "symbolic_shape_fact" for n in ir["nodes"]),
@@ -219,6 +240,7 @@ def main(name):
     (root / "result.json").write_text(json.dumps(result, indent=2, sort_keys=True))
     brief = {k: result[k] for k in [
         "model", "package_version", "extract_sec", "peak_process_rss_mb",
+        "isolated_extract_peak_rss_mb", "deterministic_across_hash_seeds",
         "ir_nodes", "indexed_modules", "direct_children_covered",
         "direct_children_total", "flow_status", "flow_issues",
         "visual_elements", "visual_links", "unresolved"]}

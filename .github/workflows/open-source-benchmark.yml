@@ -24,6 +24,7 @@ jobs:
         run: python -m pytest -q
       - name: Run eight independent model checks
         env:
+          PYTHONHASHSEED: '1'
           OMP_NUM_THREADS: '1'
           OPENBLAS_NUM_THREADS: '1'
           MKL_NUM_THREADS: '1'
