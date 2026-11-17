@@ -67,7 +67,7 @@ def _summary(graph: dict, stages: list[str], level: str) -> dict:
             ordered_groups.append(key)
         groups[key].append(node)
     labels = {
-        "input": "Inputs", "embedding": "Patch / Token Embedding",
+        "input": "Image / Optional Attn Mask", "embedding": "Patch / Token Embedding",
         "transformer": "Transformer Encoder (12 blocks)",
         "head": "LayerNorm / Classifier", "output": "Outputs",
     }
@@ -113,7 +113,9 @@ def _summary(graph: dict, stages: list[str], level: str) -> dict:
             "id": stable_id("instance-v021-edge", level, left, right, relation),
             "source": group_id[left], "target": group_id[right],
             "relation_kind": relation, "ir_edge_ids": ids,
-            "source_refs": [], "style": "static-value", "input_slot": None,
+            "source_refs": [], "style": (
+                "reference" if relation == "STATIC_INSTANCE_SHAPE_METADATA_DEPENDENCY"
+                else "static-value"), "input_slot": None,
         })
     # Conservation of evidence: no operation or dependency disappears from
     # the projection without being represented or explicitly collapsed.
