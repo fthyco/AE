@@ -4,14 +4,15 @@ from __future__ import annotations
 import json
 
 from .health import issue
+from .instance_hierarchy import project_vit_hierarchy
 from .themes import select_theme
 
 
 def project_instance_forward(bundle, level='operation', focus=None):
-    if focus is not None or level != 'operation':
+    if level not in ('overview','block','operation'):
         return {'view':'instance','level':level,'nodes':[],'links':[],
                 'issues':[issue('UNSUPPORTED_INSTANCE_PROJECTION',
-                                'Instance view requires operation level without focus',severity='error')]}
+                                'Unsupported instance hierarchy level',severity='error')]}
     file=bundle.directory/'instance-forward.json'
     if not file.is_file():
         return {'view':'instance','level':level,'nodes':[],'links':[],
@@ -33,11 +34,16 @@ def project_instance_forward(bundle, level='operation', focus=None):
             'relation_kind':x.get('relation','STATIC_INSTANCE_TENSOR_DEPENDENCY'),
             'ir_edge_ids':[x['id']],'instance_edge_id':x['id'],'input_slot':x['input_slot'],
             'source_refs':[], 'style':'static-value'} for x in data['edges']]
-    return {'view':'instance','level':level,'nodes':nodes,'links':links,
+    graph = {'view':'instance','level':'operation','nodes':nodes,'links':links,
             'issues':[issue('INDEPENDENT_EXECUTION_NOT_IN_BUNDLE',
                             'Static expansion is source-proven; runtime matching is performed by the separate verifier')],
             'input_shape':data['input_conditions']['input_shape'],
             'source_path':data['source_path']}
+    if level != 'operation' or focus is not None:
+        return project_vit_hierarchy(
+            graph, level=level, focus=focus, source_scope=data.get('scope','')
+        )
+    return graph
 
 
 def make_instance_scene(graph, *, status, entrypoint):
@@ -54,7 +60,8 @@ def make_instance_scene(graph, *, status, entrypoint):
     last_stage=None
     for idx,node in enumerate(nodes):
         tgt=node['target']
-        stage=(tgt.split('.')[0] if tgt.startswith('layer') else
+        stage=('ARCHITECTURE' if graph.get('level') in ('overview','block') else
+               tgt.split('.')[0] if tgt.startswith('layer') else
                'INPUT' if node['op']=='placeholder' else
                'OUTPUT' if node['op']=='output' else
                'HEAD' if tgt in {'avgpool','fc','flatten'} else 'STEM')
