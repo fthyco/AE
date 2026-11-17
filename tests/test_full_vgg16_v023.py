@@ -91,3 +91,23 @@ def test_vgg_focus_preserves_all_omitted_ids(tmp_path,snapshot):
     assert (set(manifest["visual_links"])|
             set(manifest["omitted_instance_edge_ids"]))=={
              e["id"] for e in graph["edges"]}
+
+
+def test_audited_operation_color_semantics_and_accessible_labels(tmp_path,snapshot):
+    graph,bundle=run(tmp_path,snapshot)
+    out=tmp_path/"semantic"
+    present(bundle,out,view="instance",level="operation",format="all")
+    manifest=json.loads((out/"presentation-manifest.json").read_text())
+    categories={n["target"]:manifest["visual_elements"][n["id"]]["semantic_category"]
+                for n in graph["nodes"]}
+    assert categories["features.0"]=="linear"
+    assert categories["features.1"]=="activation"
+    assert categories["features.4"]=="pool_or_reshape"
+    assert categories["classifier.0"]=="linear"
+    assert categories["classifier.2"]=="regularization"
+    svg=(out/"architecture.svg").read_text()
+    assert 'data-operation-category="linear"' in svg
+    assert 'data-operation-category="activation"' in svg
+    assert 'data-operation-category="pool_or_reshape"' in svg
+    assert (out/"architecture.pdf").stat().st_size>0
+    assert (out/"architecture.tex").stat().st_size>0
