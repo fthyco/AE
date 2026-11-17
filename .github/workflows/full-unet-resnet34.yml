@@ -39,6 +39,29 @@ jobs:
               benchmark-output/full-unet-resnet34/hashseed991/instance-forward.json
           cmp benchmark-output/full-unet-resnet34/1x3x64x64/sae/architecture.ir.json \
               benchmark-output/full-unet-resnet34/hashseed991/architecture.ir.json
+      - name: Assert source-only extraction never imports target packages
+        run: |
+          python - <<'PYCODE'
+          import builtins
+          from pathlib import Path
+          original=builtins.__import__
+          def reject_target_import(name, *args, **kwargs):
+              if name.split('.')[0] in ('torch','torchvision','segmentation_models_pytorch'):
+                  raise RuntimeError('AE extraction attempted to import target package: '+name)
+              return original(name,*args,**kwargs)
+          builtins.__import__=reject_target_import
+          from ae.sae.api import extract
+          extract(Path('benchmark-output/full-unet-resnet34/1x3x64x64/source'),
+                  Path('benchmark-output/full-unet-resnet34/no_target_import'),
+                  entrypoint='decoders.unet.model:Unet',input_shape=(1,3,64,64))
+          PYCODE
+      - name: Measure isolated extraction time and peak RSS
+        run: |
+          /usr/bin/time -f 'wall_seconds=%e\npeak_rss_kib=%M' \
+            -o benchmark-output/full-unet-resnet34/extraction-performance.txt \
+            ae extract benchmark-output/full-unet-resnet34/1x3x64x64/source \
+            --entrypoint decoders.unet.model:Unet --input-shape 1,3,64,64 \
+            --output benchmark-output/full-unet-resnet34/profiled-extraction
       - name: Upload source hashes, graphs and independent results
         if: always()
         uses: actions/upload-artifact@v4

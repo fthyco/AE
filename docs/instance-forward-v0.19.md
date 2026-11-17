@@ -25,7 +25,7 @@ The graph has **198 operation/metadata nodes**, **227 ordered operand edges**, *
 python scripts/verify_full_unet_resnet34.py --output benchmark-output/full-unet-resnet34
 ```
 
-The verifier runs outside the extractor, using original SMP/TorchVision model packages. For the selected input shapes `1×3×64×64`, `1×3×96×96`, `1×3×224×224`, and `1×3×64×96`, it checks **every FX operation and ordered dependency**, each FX Tensor shape (plus the 22 non-Tensor metadata nodes), runtime invocation order and output shape for every leaf module, shared-module identities, exact source hashes and provenance, and 1:1 graphical projection to SVG/PDF/TikZ. A separate hash-seed test asserts byte-identical IR.
+The verifier runs outside the extractor, using original SMP/TorchVision model packages. For the selected input shapes `1×3×64×64`, `1×3×96×96`, `1×3×224×224`, and `1×3×64×96`, it checks **every FX operation and ordered dependency**, each FX Tensor shape (plus the 22 non-Tensor metadata nodes), runtime invocation order and output shape for every leaf module, shared-module identities, exact source hashes and provenance, and 1:1 graphical projection to SVG/PDF/TikZ. A separate hash-seed test asserts byte-identical IR. CI also blocks imports of the target packages during extraction and records an isolated extractor process's elapsed time and peak RSS.
 
 These are model-and-input-scoped acceptance gates, not proof of completeness for arbitrary SMP configurations, other encoder families, modified forks, training-only branches, or general dynamic Python. Publisher health remains `Partial`; independent execution evidence lives in the verifier report, not in the static bundle.
 
