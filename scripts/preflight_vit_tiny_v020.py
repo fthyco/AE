@@ -110,7 +110,21 @@ def audit(output: Path, shapes=((1, 3, 224, 224), (2, 3, 224, 224))):
                 {"target": node["target"], "tensor_shape": node["tensor_shape"]}
                 for node in nodes if node["op"] == "call_module"
             ]
-            assert hooks == fx_calls, "FX module sequence / runtime leaf calls differ"
+            if hooks != fx_calls:
+                first = next(
+                    (idx for idx, (a, b) in enumerate(zip(hooks, fx_calls)) if a != b),
+                    min(len(hooks), len(fx_calls)),
+                )
+                discrepancy = {
+                    "label": ("fused" if fused else "unfused") + "-" + "x".join(map(str, shape)),
+                    "first_mismatch_index": first,
+                    "hook_count": len(hooks),
+                    "fx_call_count": len(fx_calls),
+                    "hooks_near": hooks[max(0, first - 3):first + 5],
+                    "fx_near": fx_calls[max(0, first - 3):first + 5],
+                }
+                (output / "reference-discrepancy.json").write_text(json.dumps(discrepancy, indent=2))
+                raise AssertionError(json.dumps(discrepancy, indent=2))
             assert result_shape == [shape[0], 1000], result_shape
             assert len({node["name"] for node in nodes}) == len(nodes)
             assert len({(edge["source"], edge["target"], edge["slot"]) for edge in edges}) == len(edges)
