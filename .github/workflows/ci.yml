@@ -1,10 +1,16 @@
-name: AE tests
+name: AE CI — tests, static evidence, and branch hygiene
 
 on:
   push:
+    branches: [main]
   pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
+  # ci.yml
   test:
     runs-on: ubuntu-latest
     strategy:
@@ -20,3 +26,348 @@ jobs:
         run: python -m pip install -e '.[dev]'
       - name: Test
         run: python -m pytest -q
+
+  # composite-shapes.yml
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install pinned PyTorch CPU
+        run: |
+          python -m pip install torch==2.10.0 torchvision==0.25.0 --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install -e '.[dev,render]'
+      - name: Unit tests
+        run: python -m pytest -q
+      - name: Independent FX and runtime shape agreement
+        env:
+          OMP_NUM_THREADS: '1'
+          MKL_NUM_THREADS: '1'
+          PYTHONHASHSEED: '4'
+        run: python scripts/verify_composite_shapes.py
+      - name: Upload original source and verification
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ae-composite-shape-evidence
+          path: benchmark-output/composite-v013/
+          if-no-files-found: warn
+
+  # container-specialization.yml
+  dense-containers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install pinned PyTorch CPU and AE
+        run: |
+          python -m pip install torch==2.10.0 torchvision==0.25.0 --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install -e '.[dev,render]'
+      - name: Run full regression suite
+        run: python -m pytest -q
+      - name: Check original DenseNet variants against FX and module inventory
+        env:
+          PYTHONHASHSEED: '1'
+          OMP_NUM_THREADS: '1'
+          MKL_NUM_THREADS: '1'
+        run: python scripts/verify_container_specialization.py
+      - name: Upload IR, diagrams, and source verification
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ae-densenet-container-specialization
+          path: benchmark-output/
+          if-no-files-found: warn
+
+  # factory-specialization.yml
+  real-resnet-factories:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install TorchVision CPU and AE
+        run: |
+          python -m pip install torch==2.10.0 torchvision==0.25.0 --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install -e '.[dev,render]'
+      - name: Regression tests
+        run: python -m pytest -q
+      - name: Verify unmodified ResNet factories
+        run: python scripts/verify_resnet_factories.py
+        env:
+          PYTHONHASHSEED: '1'
+          OMP_NUM_THREADS: '1'
+          AE_FACTORY_OUTPUT: benchmark-output
+      - name: Publish source-backed evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ae-resnet18-resnet50-factory-reference
+          path: benchmark-output/
+          if-no-files-found: warn
+
+  # instance-correspondence.yml
+  instance-correspondence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install runtime and AE
+        run: |
+          python -m pip install torch==2.10.0 torchvision==0.25.0 --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install -e '.[dev,render]'
+      - name: Run tests
+        run: python -m pytest -q
+      - name: Compare instance-aware FX graphs
+        env:
+          OMP_NUM_THREADS: '1'
+          MKL_NUM_THREADS: '1'
+          PYTHONHASHSEED: '11'
+        run: |
+          python scripts/verify_fx_instances.py --output benchmark-output/fx-instances
+      - name: Upload instance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ae-v015-instance-correspondence
+          path: benchmark-output/fx-instances/
+          if-no-files-found: warn
+
+  # nested-forward.yml
+  original-models:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install pinned CPU dependencies and AE
+        run: |
+          python -m pip install torch==2.10.0 torchvision==0.25.0 --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install segmentation-models-pytorch==0.6.0
+          python -m pip install -e '.[dev,render]'
+      - name: Regression tests
+        run: python -m pytest -q
+      - name: Verify unchanged DenseNet and U-Net sources
+        run: python scripts/verify_nested_real_models.py
+        env:
+          PYTHONHASHSEED: '3'
+          OMP_NUM_THREADS: '1'
+          OPENBLAS_NUM_THREADS: '1'
+          AE_NESTED_OUTPUT: benchmark-output
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ae-nested-densenet-unet-reference
+          path: benchmark-output/
+          if-no-files-found: warn
+
+  # nested-shapes-fx.yml
+  nested-shapes-fx:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install independent CPU runtime
+        run: |
+          python -m pip install torch==2.10.0 torchvision==0.25.0 --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install -e '.[dev,render]'
+      - name: Regression
+        run: python -m pytest -q
+      - name: Compare SAE to FX and ShapeProp
+        env:
+          OMP_NUM_THREADS: '1'
+          MKL_NUM_THREADS: '1'
+          PYTHONHASHSEED: '1'
+        run: |
+          for model in fixture nested_composite resnet18 resnet50 densenet121; do
+            python scripts/verify_fx_correspondence.py "$model" --output benchmark-output/fx-ae
+          done
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ae-v014-fx-source-site-evidence
+          path: benchmark-output/fx-ae/
+          if-no-files-found: warn
+
+  # real-models-smoke.yml
+  real-world-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout AE
+        uses: actions/checkout@v4
+
+      - name: Checkout Chessformer CF-ACT sources (read only)
+        uses: actions/checkout@v4
+        with:
+          repository: fthyco/maia3
+          ref: CF-ACT
+          path: external/maia3
+          persist-credentials: false
+
+      - name: Checkout AWN V(1-3)BT sources (read only)
+        uses: actions/checkout@v4
+        with:
+          repository: fthyco/Adaptive-Width-Neural-Networks-WITH-ORDERING-GUIDENCE
+          ref: 'V(1-3)BT'
+          path: external/awn
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install AE only
+        run: python -m pip install -e '.[dev]'
+
+      - name: Prepare target source snapshots without executing imports
+        run: |
+          mkdir -p selected/chess selected/awn
+          cp -R external/maia3/maia3 selected/chess/
+          cp external/awn/resnet.py selected/awn/
+
+      - name: Extract and render both repositories
+        run: |
+          ae extract selected/chess --entrypoint maia3.models_cf_act:MAIA3ActModel --output outputs/chess/sae
+          ae validate outputs/chess/sae
+          ae present outputs/chess/sae --view flow --level block --mode exploration --format all --output outputs/chess/figure
+          ae present outputs/chess/sae --view flow --focus MAIA3ActModel --level block --mode exploration --format all --output outputs/chess/focused
+          ae extract selected/awn --entrypoint resnet:BasicBlock --output outputs/awn/sae
+          ae validate outputs/awn/sae
+          ae present outputs/awn/sae --view flow --focus BasicBlock --level block --mode exploration --format all --output outputs/awn/figure
+
+      - name: Assert evidence and print health
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from ae.presenter.flow import FLOW_EDGES
+          for model in ('chess', 'awn'):
+              root = Path('outputs') / model
+              health = json.loads((root / 'figure/presentation-health.json').read_text())
+              ir = json.loads((root / 'sae/architecture.ir.json').read_text())
+              manifest = json.loads((root / 'figure/presentation-manifest.json').read_text())
+              assert health['status'] != 'blocked', (model, health['issues'])
+              assert manifest['view'] == 'flow'
+              assert (root / 'figure/architecture.svg').exists()
+              node_ids = {n['id'] for n in ir['nodes']}
+              edge_ids = {e['id'] for e in ir['edges']}
+              for v in manifest['visual_elements'].values():
+                  assert v['ir_node_ids'] and set(v['ir_node_ids']) <= node_ids
+                  assert v['source_refs']
+              for v in manifest['visual_links'].values():
+                  assert v['ir_edge_ids'] and set(v['ir_edge_ids']) <= edge_ids
+                  assert v['relation_kind'] in FLOW_EDGES
+                  assert all(next(e for e in ir['edges'] if e['id']==eid)['relation']==v['relation_kind'] for eid in v['ir_edge_ids'])
+                  assert v['source_refs']
+              print(model, health['status'], 'nodes=',len(ir['nodes']), 'edges=',len(ir['edges']),
+                    'visible links=',len(manifest['visual_links']), 'issues=',len(health['issues']))
+              if model == 'awn':
+                  assert any(n['kind'] == 'forward_choice' for n in ir['nodes'])
+                  assert any(n['kind'] == 'forward_augassign' for n in ir['nodes'])
+                  assert any(e['relation'] == 'STATIC_CONDITIONAL_DEPENDENCY' for e in ir['edges'])
+          PY
+
+      - name: Upload diagrams and health reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: real-model-diagrams-and-reports
+          path: |
+            outputs/*/figure/
+            outputs/*/focused/
+            outputs/*/sae/coverage.json
+            outputs/*/sae/diagnostics.json
+          if-no-files-found: warn
+
+  # open-source-benchmark.yml
+  verify-open-source:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install pinned runtime and AE
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install torch==2.10.0 torchvision==0.25.0 --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install timm==1.0.31 segmentation-models-pytorch==0.6.0
+          python -m pip install -e '.[dev,render]'
+      - name: Unit and completeness tests
+        run: python -m pytest -q
+      - name: Run eight independent model checks
+        env:
+          PYTHONHASHSEED: '1'
+          OMP_NUM_THREADS: '1'
+          OPENBLAS_NUM_THREADS: '1'
+          MKL_NUM_THREADS: '1'
+        run: |
+          set -u
+          errors=0
+          for model in resnet18 resnet50 densenet121 unet_resnet34 vit_tiny_patch16_224 vgg16 mobilenet_v3_small efficientnet_b0; do
+            echo "=== MODEL $model ==="
+            python scripts/benchmark_real_architectures.py "$model" || errors=$((errors+1))
+          done
+          echo "Failed model runs: $errors"
+          test "$errors" -eq 0
+      - name: Upload independent evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ae-real-open-source-benchmark
+          path: benchmark-output/
+          if-no-files-found: warn
+
+  prune-merged-branches:
+    name: Prune verified merged branches
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [test]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify evidence and delete only stale merged branch refs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python scripts/maintenance/prune_merged_branches.py --apply
+
+audit-branch-cleanup:
+    name: Dry-run branch cleanup
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Confirm eligible branches without deleting anything
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python scripts/maintenance/prune_merged_branches.py
+

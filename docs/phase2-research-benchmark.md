@@ -49,7 +49,7 @@ excluded from uploads. Tool output artifacts on original TorchVision models
 are uploaded separately.
 
 Run the independent gate using GitHub Actions
-`research-generalization-v025.yml`. All three pinned source tests must
+`.github/workflows/research-verification.yml` (`pinned-source-research` job). All three pinned source tests must
 succeed, and the FX verifier must pass before Phase 2 can be called complete.
 Comparison tool failures must be reported, not hidden. Every benchmark
 statement must cite the run ID and corresponding uploaded summary artifact.
