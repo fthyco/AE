@@ -66,4 +66,4 @@ arity, `torch.chunk`, nested unpacking and general concat output shape remain
 unproven; no tuple aggregate is treated as a tensor. Presenter draws only
 source-supported cross-module positional links.
 
-Bounded static instance-forward expansion is currently verified only for the default ResNet18 factory and fixed, explicitly supplied input sizes. The separate `instance` view is not a general runtime graph; independent FX/hooks verification is mandatory for a model-level claim.
+Bounded static instance-forward expansion is currently verified only for the default ResNet18 and ResNet50 factories and fixed, explicitly supplied input sizes. The separate `instance` view is not a general runtime graph; independent FX/hooks verification is mandatory for a model-level claim.
