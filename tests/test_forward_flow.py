@@ -9,10 +9,10 @@ import sys
 
 import pytest
 
-from magg.sae.api import extract
-from magg.presenter.api import present
-from magg.presenter.reader import load_bundle
-from magg.presenter.flow import project_flow
+from ae.sae.api import extract
+from ae.presenter.api import present
+from ae.presenter.reader import load_bundle
+from ae.presenter.flow import project_flow
 
 ROOT = Path(__file__).parents[1]
 
@@ -129,7 +129,7 @@ def test_flow_output_is_deterministic_across_hash_seeds(tmp_path):
     for seed in ('4','173'):
         env={**os.environ,'PYTHONHASHSEED':seed,'PYTHONPATH':str(ROOT/'src')}
         out=tmp_path/f'out-{seed}'
-        proc=subprocess.run([sys.executable,'-m','magg.cli','present',str(b.directory),
+        proc=subprocess.run([sys.executable,'-m','ae.cli','present',str(b.directory),
              '--view','flow','--level','block','--format','all','--output',str(out)],
              env=env,capture_output=True)
         assert proc.returncode==0,proc.stderr.decode()

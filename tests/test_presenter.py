@@ -9,10 +9,10 @@ import sys
 
 import pytest
 
-from magg.sae.api import extract
-from magg.presenter.api import present
-from magg.presenter.reader import load_bundle
-from magg.presenter.projection import project
+from ae.sae.api import extract
+from ae.presenter.api import present
+from ae.presenter.reader import load_bundle
+from ae.presenter.projection import project
 
 ROOT=Path(__file__).parents[1]
 
@@ -158,7 +158,7 @@ def test_subprocess_hash_seed(tmp_path):
     for seed in ('3','981'):
         out=tmp_path/f'out{seed}'
         env={**os.environ,'PYTHONPATH':str(ROOT/'src'),'PYTHONHASHSEED':seed}
-        x=subprocess.run([sys.executable,'-m','magg.cli','present',str(bundle),'--output',str(out),
+        x=subprocess.run([sys.executable,'-m','ae.cli','present',str(bundle),'--output',str(out),
                           '--level','operation','--format','svg'],capture_output=True,env=env)
         assert x.returncode==0,x.stderr.decode()
     assert (tmp_path/'out3'/'architecture.svg').read_bytes()==(tmp_path/'out981'/'architecture.svg').read_bytes()
@@ -167,6 +167,6 @@ def test_subprocess_hash_seed(tmp_path):
 def test_cli_policy_exit_code(tmp_path):
     bundle=fixture_bundle(tmp_path)
     env={**os.environ,'PYTHONPATH':str(ROOT/'src')}
-    p=subprocess.run([sys.executable,'-m','magg.cli','present',str(bundle),'--output',str(tmp_path/'out'),
+    p=subprocess.run([sys.executable,'-m','ae.cli','present',str(bundle),'--output',str(tmp_path/'out'),
                      '--mode','publication','--level','overview'],env=env,capture_output=True)
     assert p.returncode==0,p.stderr.decode()

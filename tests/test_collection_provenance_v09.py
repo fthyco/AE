@@ -9,11 +9,11 @@ import sys
 
 import pytest
 
-from magg.sae.api import extract, validate_bundle
-from magg.presenter.api import present
-from magg.presenter.reader import load_bundle
-from magg.presenter.flow import project_flow
-from magg.presenter.flow_layout import make_flow_scene
+from ae.sae.api import extract, validate_bundle
+from ae.presenter.api import present
+from ae.presenter.reader import load_bundle
+from ae.presenter.flow import project_flow
+from ae.presenter.flow_layout import make_flow_scene
 
 ROOT = Path(__file__).resolve().parents[1]
 CASE_ROOT = ROOT / 'tests' / 'architecture_cases'
@@ -186,7 +186,7 @@ def test_full_six_views_and_different_hash_seeds(tmp_path):
     for seed in ('7','148'):
         dest=tmp_path/('seed'+seed)
         env={**os.environ,'PYTHONPATH':str(ROOT/'src'),'PYTHONHASHSEED':seed}
-        cmd=[sys.executable,'-m','magg.cli','present',str(bundle),'--view','flow',
+        cmd=[sys.executable,'-m','ae.cli','present',str(bundle),'--view','flow',
              '--level','operation','--format','svg','--output',str(dest)]
         run=subprocess.run(cmd,env=env,capture_output=True,check=False)
         assert run.returncode==0,run.stderr.decode()

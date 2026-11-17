@@ -7,8 +7,8 @@ import sys
 
 import pytest
 
-from magg.sae import extract, validate_bundle, inspect_bundle
-from magg.sae.indexing.model_index import validate_model_index
+from ae.sae import extract, validate_bundle, inspect_bundle
+from ae.sae.indexing.model_index import validate_model_index
 
 ROOT=Path(__file__).resolve().parents[1]
 EXAMPLES=ROOT/'examples'
@@ -91,7 +91,7 @@ def test_deterministic_across_hash_seeds(tmp_path):
     for seed in ('1','977'):
         out=tmp_path/('run'+seed)
         env={**os.environ,'PYTHONHASHSEED':seed,'PYTHONPATH':str(ROOT/'src')}
-        proc=subprocess.run([sys.executable,'-m','magg.cli','extract',str(EXAMPLES/'transformer_mvp'),
+        proc=subprocess.run([sys.executable,'-m','ae.cli','extract',str(EXAMPLES/'transformer_mvp'),
                 '--entrypoint','model:Transformer','--output',str(out)],env=env,capture_output=True,text=True)
         assert proc.returncode==0,proc.stderr
         paths.append(out)

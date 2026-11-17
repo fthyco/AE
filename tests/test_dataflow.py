@@ -1,6 +1,6 @@
 """Phase 2 lexical dataflow, ambiguous branches, conservative non-execution."""
 import json
-from magg.sae import extract
+from ae.sae import extract
 
 
 def run(tmp_path, code):

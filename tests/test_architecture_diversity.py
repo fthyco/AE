@@ -3,8 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 import pytest
-from magg.sae.api import extract, validate_bundle
-from magg.presenter.api import present
+from ae.sae.api import extract, validate_bundle
+from ae.presenter.api import present
 
 ROOT = Path(__file__).resolve().parents[1]
 CASES = ROOT / 'tests' / 'architecture_cases'

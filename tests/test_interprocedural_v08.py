@@ -1,8 +1,8 @@
 """Interprocedural source-evidence MVP: assertions deliberately avoid runtime claims."""
 from pathlib import Path
 
-from magg.sae.api import extract
-from magg.presenter.reader import load_bundle
+from ae.sae.api import extract
+from ae.presenter.reader import load_bundle
 
 
 def parse(tmp_path: Path, text: str, *, entry='model:Model'):
@@ -120,7 +120,7 @@ class Model(nn.Module):
     head = next(c for c in parent['forward_calls'] if c['callee_expression']=='self.head')
     assert shapes[nested['call_site_id']] == ['...','64']
     assert shapes[head['call_site_id']] == ['...','10']
-    from magg.presenter.flow import project_flow
+    from ae.presenter.flow import project_flow
     visual=project_flow(b,focus='Model')
     rendered=next(n for n in visual['nodes'] if nested['call_site_id'] in n['ir_node_ids'])
     assert rendered['shape'] == '[..., 64]'
@@ -138,7 +138,7 @@ class Model(nn.Module):
   return self.b(self.a(x))
 ''')
     assert any(n['kind']=='symbolic_shape_conflict' for n in b.ir['unresolved'])
-    from magg.presenter.api import present
+    from ae.presenter.api import present
     result=present(b.directory,tmp_path/'figure',view='flow')
     assert result['status']=='partial'
 

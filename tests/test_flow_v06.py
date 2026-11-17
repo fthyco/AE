@@ -4,10 +4,10 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from magg.sae.api import extract
-from magg.presenter.api import present
-from magg.presenter.flow import project_flow
-from magg.presenter.reader import load_bundle
+from ae.sae.api import extract
+from ae.presenter.api import present
+from ae.presenter.flow import project_flow
+from ae.presenter.reader import load_bundle
 
 
 def bundle_for(tmp_path: Path, code: str):
