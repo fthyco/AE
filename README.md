@@ -25,6 +25,15 @@ Static factory specialization: ResNet block configuration; supported fixed-count
 
 Nested shape propagation, FX source-site audit, and [instance-aware FX verification](docs/instance-fx-v0.15.md).
 
+Bounded full forward expansion for the verified default ResNet18 factory:
+
+```bash
+ae extract path/to/torchvision/models --entrypoint resnet:resnet18 --input-shape 1,3,64,64 --output ae-bundle
+ae present ae-bundle --view instance --level operation --format all --output figures
+```
+
+The static instance graph is conditional on the input and source proof. [Scope and independent gate](docs/instance-forward-v0.16.md).
+
 ## Tests
 
 ```bash
