@@ -15,6 +15,7 @@ from .analysis.forward_flow import analyze_forward_values
 from .analysis.interprocedural import analyze_interprocedural
 from .analysis.symbolic_shapes import analyze_symbolic_shapes
 from .analysis.composite_shapes import analyze_composite_shapes
+from .analysis.nested_shapes import propagate_nested_shapes
 from .analysis.factory_specialization import specialize_factory
 from .analysis.container_specialization import specialize_containers
 from .indexing.model_index import build_model_index, validate_model_index
@@ -128,6 +129,10 @@ def extract(source_root: str | Path, output: str | Path, *, entrypoint: str | No
     analyze_interprocedural(graph, parsed_units, model_index)
     analyze_symbolic_shapes(graph, model_index)
     analyze_composite_shapes(graph, parsed_units, model_index)
+    for _ in range(min(64, max(2, len(model_index.get('modules', [])) * 3))):
+        if not propagate_nested_shapes(graph):
+            break
+        analyze_composite_shapes(graph, parsed_units, model_index)
     graph.nodes.sort(key=lambda n: n["id"])
     graph.edges.sort(key=lambda e: e["id"])
     graph.unresolved.sort(key=lambda u: (u["path"], u.get("site_id", ""), u["kind"], u.get("expression", "")))
