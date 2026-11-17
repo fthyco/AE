@@ -60,6 +60,7 @@ jobs:
           python - <<'PY'
           import json
           from pathlib import Path
+          from magg.presenter.flow import FLOW_EDGES
           for model in ('chess', 'awn'):
               root = Path('outputs') / model
               health = json.loads((root / 'figure/presentation-health.json').read_text())
@@ -75,7 +76,8 @@ jobs:
                   assert v['source_refs']
               for v in manifest['visual_links'].values():
                   assert v['ir_edge_ids'] and set(v['ir_edge_ids']) <= edge_ids
-                  assert v['relation_kind'] in {'STATIC_VALUE_DEPENDENCY', 'STATIC_FORWARD_RETURN', 'STATIC_CONDITIONAL_DEPENDENCY', 'STATIC_GUARD_DEPENDENCY', 'STATIC_GUARDED_CALL'}
+                  assert v['relation_kind'] in FLOW_EDGES
+              assert all(next(e for e in ir['edges'] if e['id']==eid)['relation']==v['relation_kind'] for eid in v['ir_edge_ids'])
                   assert v['source_refs']
               print(model, health['status'], 'nodes=',len(ir['nodes']), 'edges=',len(ir['edges']),
                     'visible links=',len(manifest['visual_links']), 'issues=',len(health['issues']))
