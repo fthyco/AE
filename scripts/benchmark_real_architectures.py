@@ -60,6 +60,10 @@ def source_snapshot(model, group, destination):
     for sub in model.modules():
         if type(sub).__module__.startswith(group + "."):
             classes.add(type(sub))
+    for cls in list(classes):
+        for parent in cls.__mro__[1:]:
+            if parent.__module__.startswith(group + "."):
+                classes.add(parent)
     for cls in sorted(classes, key=lambda c: (c.__module__, c.__name__)):
         path = inspect.getsourcefile(cls)
         if not path:
@@ -75,6 +79,17 @@ def source_snapshot(model, group, destination):
         target.write_bytes(data)
         assert target.read_bytes() == data
         copied[rel.as_posix()] = hashlib.sha256(data).hexdigest()
+        directory = rel.parent
+        while directory != Path("."):
+            init = base / directory / "__init__.py"
+            if init.is_file():
+                init_rel = (directory / "__init__.py").as_posix()
+                raw = init.read_bytes()
+                place = destination / init_rel
+                place.parent.mkdir(parents=True, exist_ok=True)
+                place.write_bytes(raw)
+                copied[init_rel] = hashlib.sha256(raw).hexdigest()
+            directory = directory.parent
     model_file = Path(inspect.getsourcefile(type(model))).resolve().relative_to(base)
     entrypoint = model_file.with_suffix("").as_posix().replace("/", ".") + ":" + type(model).__name__
     return entrypoint, copied
