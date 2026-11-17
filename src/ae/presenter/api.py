@@ -86,7 +86,10 @@ def present(bundle_path: str | Path, output: str | Path, *, level: str = 'block'
             manifest['omitted_instance_edge_ids']=graph.get('omitted_instance_edge_ids', [])
         manifest['visual_elements']={n['id']:{'kind':n['kind'],
                'ir_node_ids':n['ir_node_ids'],'ir_edge_ids':n['ir_edge_ids'],
-               'source_refs':n['source_refs']} for n in graph['nodes']}
+               'source_refs':n['source_refs'],
+               **({'semantic_category':n['semantic_category']}
+                  if 'semantic_category' in n else {})}
+               for n in graph['nodes']}
         manifest['visual_links']={e['id']:{'relation_kind':e['relation_kind'],
                'ir_edge_ids':e['ir_edge_ids'],'source_refs':e['source_refs'],
                **({'instance_edge_id':e['instance_edge_id']} if 'instance_edge_id' in e else {})}
