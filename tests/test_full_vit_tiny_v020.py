@@ -152,6 +152,11 @@ def test_vit_hierarchy_preserves_all_instance_evidence(
     hidden_edges = set(manifest["collapsed_instance_edge_ids"])
     assert visible_edges.isdisjoint(hidden_edges)
     assert visible_edges | hidden_edges == original_edges
+    assert any(link["relation_kind"] == "STATIC_INSTANCE_SHAPE_METADATA_DEPENDENCY"
+               for link in links.values()), "ViT mask/shape evidence must remain explicit"
+    assert 'stroke-dasharray=' in (output / "architecture.svg").read_text(), (
+        "Metadata paths must be visibly distinguished from tensor paths"
+    )
     assert not manifest["omitted_instance_node_ids"]
     assert not manifest["omitted_instance_edge_ids"]
     assert all((output / f"architecture.{ext}").stat().st_size > 0
