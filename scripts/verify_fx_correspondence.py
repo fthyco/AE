@@ -15,6 +15,7 @@ from torch.fx.passes.shape_prop import ShapeProp
 
 from ae.sae.api import extract, validate_bundle
 from ae.verification.fx_correspondence import compare_source_sites, fx_operation
+from ae.verification.instance_correspondence import compare_factory_instances
 
 
 class SourceTracer(Tracer):
@@ -60,6 +61,8 @@ def fx_events(graph: GraphModule) -> list[dict]:
             'target':str(node.target),
             'source':node.meta.get('ae_source'),
             'input_nodes':[source.name for source in node.all_input_nodes],
+            'module_stack':[{'path':path, 'type_name':cls.__name__, 'type_module':cls.__module__}
+                            for path, (_, cls) in node.meta.get('nn_module_stack', {}).items()],
         }
         meta = node.meta.get('tensor_meta')
         if isinstance(meta, torch.fx.passes.shape_prop.TensorMetadata):
@@ -148,6 +151,13 @@ def run(mode: str, output: Path) -> dict:
     report=compare_source_sites(ir,fx)
     report['shapes']=compare_shapes(ir,fx,report)
     index=json.loads((out/'model-index.json').read_text())
+    if mode in {'resnet18', 'resnet50'}:
+        runtime_modules = {path: type(module).__name__ for path, module in model.named_modules()}
+        report['instance_correspondence'] = compare_factory_instances(
+            ir, index, fx, runtime_modules=runtime_modules)
+        assert report['instance_correspondence']['block_sequence_matches']
+        assert not report['instance_correspondence']['missing_instance_paths']
+        assert all(x['matched'] for x in report['instance_correspondence']['runtime_module_type_checks'])
     root_fid=next((m.get('forward_method_id') for m in index.get('modules', [])
                    if m['definition_id']==index.get('root_definition_id')),None)
     root_out={n['id'] for n in ir['nodes']
@@ -189,6 +199,11 @@ def run(mode: str, output: Path) -> dict:
         'observed_fx_site_count','matched_sites','unmatched_fx_sites','ambiguous_sites',
         'observed_site_recall','one_to_one_events','edge_true_positives',
         'edge_false_positives','edge_false_negatives','edge_precision','edge_recall']}
+    brief['instances'] = {k:report['instance_correspondence'][k] for k in [
+        'status','expected_block_instances','observed_in_scope_fx_operations',
+        'matched_instance_operations','instance_operation_recall',
+        'fx_comparable_direct_edges','direct_edge_correspondence',
+        'shape_mismatches','issues']} if 'instance_correspondence' in report else None
     brief['shapes']=report['shapes']
     brief['root_output']=report['root_forward_output_shape_checks']
     print('FX_AE_MATCH '+json.dumps(brief,sort_keys=True),flush=True)

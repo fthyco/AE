@@ -23,7 +23,7 @@ SAE: source-backed IR, model index, source snapshots, hashes and unresolved reco
 
 Static factory specialization: ResNet block configuration; supported fixed-count nested containers (including DenseNet factory stages). Counts are conditional construction blueprints, not runtime tensor paths.
 
-Nested shape propagation and independent FX source-site audit: [technical reference](docs/nested-shapes-fx-v0.14.md).
+Nested shape propagation, FX source-site audit, and [instance-aware FX verification](docs/instance-fx-v0.15.md).
 
 ## Tests
 
