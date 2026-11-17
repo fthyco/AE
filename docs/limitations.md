@@ -73,3 +73,5 @@ Full DenseNet121 `instance` forward expansion is available only for an audited o
 U-Net ResNet34 instance-forward expansion is limited to audited, unmodified SMP 0.6.0 and TorchVision 0.25.0 source files, the default topology, and explicit concrete input sizes with H/W divisible by 32. Other configurations remain unsupported and fail closed. Full FX/hooks evidence is produced only by a separate verifier.
 
 ViT-Tiny expansion: only original SHA-256-pinned timm 1.0.22 `vit_tiny_patch16_224`, explicit fused/unfused attention branch and concrete RGB 224×224 inputs. Dynamic/nondefault/modified implementations are unsupported.
+
+Presenter v0.21 instance `overview`/`block` and operation `--focus` currently support only the original SHA-256-pinned timm 1.0.22 ViT Tiny instance graph. Summary groups aggregate existing proven operations and edges, with collapsed and hidden IDs recorded in `presentation-manifest.json`. No complete arbitrary-model hierarchy or runtime proof in the bundle is claimed.
