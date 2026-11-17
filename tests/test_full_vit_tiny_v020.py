@@ -156,6 +156,11 @@ def test_vit_hierarchy_preserves_all_instance_evidence(
     assert not manifest["omitted_instance_edge_ids"]
     assert all((output / f"architecture.{ext}").stat().st_size > 0
                for ext in ("svg", "pdf", "tex"))
+    import xml.etree.ElementTree as ET
+    root = ET.parse(output / "architecture.svg").getroot()
+    assert int(root.attrib["height"]) > int(root.attrib["width"]), (
+        "Grouped ViT pages must use a vertical page layout"
+    )
 
 
 def test_vit_block_focus_is_explicit_partial_subgraph(tmp_path, originals):
