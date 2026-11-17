@@ -60,3 +60,5 @@ VGG16 source-only (v0.23) default torchvision 0.25.0: verified 42 operations / 4
 EfficientNet-B0 source-only (v0.24): audited TorchVision 0.25.0 default model, 251 FX operations / 275 ordered dependencies, 214 leaf modules, 16 SE gates and 9 residual additions. Supports source-proven overview/block/operation/focus views for four audited input shapes. See [scope and independent verification](docs/instance-forward-v0.24.md).
 
 Research generalization v0.25: source-only audits on exact pinned AWN and Chessformer CF-ACT/CF-CAH repositories (no claimed runtime equivalence), plus independent FX/torchview/torchviz/VisualTorch comparison. [Scope, scripts and evidence policy](docs/phase2-research-benchmark.md).
+
+Offline interactive viewer v0.26 (Architecture / Block / Operation, zoom/pan, source-proven drill-down, no browser networking): `ae viewer BUNDLE --view instance --output viewer`, then open `viewer/index.html`. For general sources use `--view structure` or `--view nested`; unsupported full instance paths remain blocked. [Clean installation and release gate](docs/public-release-v026.md).

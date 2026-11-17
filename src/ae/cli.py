@@ -7,6 +7,7 @@ import sys
 
 from .sae.api import extract, inspect_bundle, validate_bundle
 from .presenter import present
+from .presenter.web_viewer import build_viewer
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -34,6 +35,11 @@ def build_parser() -> argparse.ArgumentParser:
     presenter.add_argument("--focus", help="Focus a module in flow/nested or a proven instance stage such as blocks.0")
     presenter.add_argument("--theme", choices=["scientific-latex", "legacy"], default="scientific-latex")
     presenter.add_argument("--allow-partial", action="store_true", help="Allow clearly labeled partial publication export")
+    viewer = commands.add_parser('viewer', help='Build a self-contained offline HTML viewer from a validated bundle')
+    viewer.add_argument('bundle', help='Existing SAE extraction bundle directory')
+    viewer.add_argument('--output', '-o', required=True, help='Output directory containing index.html')
+    viewer.add_argument('--view', choices=['instance','nested','flow','structure'], default='instance')
+    viewer.add_argument('--title', default='Architecture Extractor')
     return parser
 
 
@@ -47,12 +53,16 @@ def main(argv: list[str] | None = None) -> int:
                              attention_mode=args.attention_mode)
         elif args.command == "validate":
             result = validate_bundle(args.bundle)
+        elif args.command == 'viewer':
+            result = build_viewer(args.bundle, args.output, view=args.view, title=args.title)
         elif args.command == "present":
             result = present(args.bundle, args.output, level=args.level, mode=args.mode,
                              format=args.format, allow_partial=args.allow_partial, view=args.view, focus=args.focus, theme=args.theme)
         else:
             result = inspect_bundle(args.bundle)
         print(json.dumps(result, sort_keys=True, indent=2, ensure_ascii=False))
+        if args.command == 'viewer':
+            return 0 if result['rendered_levels'] else 2
         return 0 if args.command != "present" or result["render_allowed"] else 2
     except (ValueError, OSError, json.JSONDecodeError) as exc:
         print(f"ae: {type(exc).__name__}: {exc}", file=sys.stderr)
