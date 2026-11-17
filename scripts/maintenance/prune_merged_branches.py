@@ -19,7 +19,8 @@ RELEASE_BRANCHES = {
     "release/v026-verified-github": "v0.26.0",
     "release/v027-verified-github": "v0.27.0",
 }
-ASSETS = (".whl", ".tar.gz", "SHA256SUMS.txt")
+LEGACY_INITIAL_PR = (1, "feat/sae-static-extractor-v0.1",
+                     "447a190719a5bba23e4e4864f41370fb7df1bc5c")
 
 
 def request(path: str, *, method: str = "GET"):
@@ -53,7 +54,12 @@ def pages(path: str):
 
 def is_main_descendant(sha: str) -> bool:
     # A merged PR's squash commit or release target must be reachable from main.
-    match = request(f"/compare/{quote(sha, safe='')}...{MAIN}")
+    try:
+        match = request(f"/compare/{quote(sha, safe='')}...{MAIN}")
+    except RuntimeError as exc:
+        if "HTTP 404" in str(exc):
+            return False  # History was rewritten; never infer ancestry.
+        raise
     return match["status"] in ("identical", "ahead")
 
 
@@ -86,8 +92,14 @@ def candidates(branches, pull_requests):
         if not name.startswith(MERGED_PREFIXES):
             continue
         for pr in heads.get(name, []):
-            if pr["head"]["sha"] == sha and is_main_descendant(pr["merge_commit_sha"]):
-                result.append((name, sha, f"merged-pr-{pr['number']}"))
+            if pr["head"]["sha"] != sha:
+                continue
+            # PR #1 predates the curated init root; its old merge SHA is orphaned.
+            # Only this exact, published, merged PR head is grandfathered.
+            initial = (pr["number"], name, sha) == LEGACY_INITIAL_PR
+            if initial or is_main_descendant(pr["merge_commit_sha"]):
+                reason = "merged-pr-1-pre-curated-history" if initial else f"merged-pr-{pr['number']}"
+                result.append((name, sha, reason))
                 break
     return result
 

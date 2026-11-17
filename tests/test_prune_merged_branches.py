@@ -43,3 +43,22 @@ def test_release_branches_require_verified_published_artifacts():
         assert module.candidates(branches, []) == [
             ("release/v027-verified-github", "x", "published-release-verified")
         ]
+
+
+def test_exact_historical_init_pr_exception_only():
+    branch = [{"name": "feat/sae-static-extractor-v0.1",
+               "commit": {"sha": "447a190719a5bba23e4e4864f41370fb7df1bc5c"},
+               "protected": False}]
+    prs = [{"number": 1, "merged_at": "2026-11-17",
+            "base": {"ref": "main"},
+            "head": {"ref": "feat/sae-static-extractor-v0.1",
+                     "sha": branch[0]["commit"]["sha"]},
+            "merge_commit_sha": "orphan"}]
+    with patch.object(module, "is_main_descendant", return_value=False):
+        assert module.candidates(branch, prs) == [
+            ("feat/sae-static-extractor-v0.1", branch[0]["commit"]["sha"],
+             "merged-pr-1-pre-curated-history")
+        ]
+    branch[0]["commit"]["sha"] = "changed-after-merge"
+    with patch.object(module, "is_main_descendant", return_value=False):
+        assert module.candidates(branch, prs) == []
