@@ -16,6 +16,7 @@ def build_parser() -> argparse.ArgumentParser:
     extraction.add_argument("source", help="Source repository directory")
     extraction.add_argument("--output", "-o", required=True, help="Output IR bundle directory")
     extraction.add_argument("--entrypoint", help="Optional class/factory identifier (metadata hint, not executed)")
+    extraction.add_argument("--input-shape", help="Concrete input dimensions, e.g. 1,3,64,64")
     extraction.add_argument("--max-files", type=int, default=2000)
     extraction.add_argument("--max-file-bytes", type=int, default=2_000_000)
     for command in ("validate", "inspect"):
@@ -24,7 +25,7 @@ def build_parser() -> argparse.ArgumentParser:
     presenter = commands.add_parser("present", help="Draw a static architecture from a validated SAE bundle")
     presenter.add_argument("bundle", help="Existing SAE extraction bundle directory")
     presenter.add_argument("--output", "-o", required=True, help="Target diagram directory")
-    presenter.add_argument("--view", choices=["structure", "flow", "nested"], default="structure")
+    presenter.add_argument("--view", choices=["structure", "flow", "nested", "instance"], default="structure")
     presenter.add_argument("--level", choices=["overview", "block", "operation"], default="block")
     presenter.add_argument("--mode", choices=["exploration", "publication"], default="exploration")
     presenter.add_argument("--format", choices=["svg", "pdf", "tikz", "all"], default="svg")
@@ -39,7 +40,8 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.command == "extract":
             result = extract(args.source, args.output, entrypoint=args.entrypoint,
-                             max_files=args.max_files, max_file_bytes=args.max_file_bytes)
+                             max_files=args.max_files, max_file_bytes=args.max_file_bytes,
+                             input_shape=tuple(map(int, args.input_shape.split(","))) if args.input_shape else None)
         elif args.command == "validate":
             result = validate_bundle(args.bundle)
         elif args.command == "present":

@@ -17,6 +17,7 @@ from .analysis.symbolic_shapes import analyze_symbolic_shapes
 from .analysis.composite_shapes import analyze_composite_shapes
 from .analysis.nested_shapes import propagate_nested_shapes
 from .analysis.factory_specialization import specialize_factory
+from .analysis.instance_forward import expand_factory_forward
 from .analysis.container_specialization import specialize_containers
 from .indexing.model_index import build_model_index, validate_model_index
 from .linking.project import Unit, link_project, syntax_ids, unresolved
@@ -36,7 +37,8 @@ def _source_span(path: str, size: int) -> dict:
 
 
 def extract(source_root: str | Path, output: str | Path, *, entrypoint: str | None = None,
-            max_files: int = 2000, max_file_bytes: int = 2_000_000) -> dict[str, Any]:
+            max_files: int = 2000, max_file_bytes: int = 2_000_000,
+            input_shape: tuple[int, ...] | None = None) -> dict[str, Any]:
     """Extract reproducible source-grounded facts into a self-contained IR bundle.
 
     Source directories are never imported or executed. Only local files are read.
@@ -133,6 +135,31 @@ def extract(source_root: str | Path, output: str | Path, *, entrypoint: str | No
         if not propagate_nested_shapes(graph):
             break
         analyze_composite_shapes(graph, parsed_units, model_index)
+    expanded = expand_factory_forward(parsed_units, factory_info, input_shape, graph.nodes)
+    if expanded is not None and expanded.get('status') == 'expanded_static':
+        for node in expanded['nodes']:
+            graph.add_node({
+                'id': node['id'], 'kind': 'instance_forward_operation',
+                'attributes': {
+                    'op':node['op'], 'module_target':node['target'],
+                    'module_instance':node['module_instance'], 'shape':node['shape'],
+                    'source_site_ids':node['source_ir_ids'],
+                    'factory_instance_id':node.get('factory_instance_id'),
+                    'input_ids':node['input_ids'],
+                    'call_ordinal':node['call_ordinal'],
+                }, 'source_refs':node['source_refs'],
+                'evidence_class':'derived',
+                'analysis_rule':'bounded-static-instance-forward/v1',
+                'resolution':'conditional',
+            })
+        expanded_nodes = {n['id']:n for n in expanded['nodes']}
+        for edge in expanded['edges']:
+            graph.add_edge({
+                **edge, 'relation':'STATIC_INSTANCE_TENSOR_DEPENDENCY',
+                'evidence_class':'derived',
+                'analysis_rule':'bounded-static-instance-forward/v1',
+                'source_refs':expanded_nodes[edge['target']]['source_refs'],
+            })
     graph.nodes.sort(key=lambda n: n["id"])
     graph.edges.sort(key=lambda e: e["id"])
     graph.unresolved.sort(key=lambda u: (u["path"], u.get("site_id", ""), u["kind"], u.get("expression", "")))
@@ -162,6 +189,8 @@ def extract(source_root: str | Path, output: str | Path, *, entrypoint: str | No
                  "source-manifest.json": {"schema_version": "1.0", "files": manifest},
                  "coverage.json": coverage,
                  "diagnostics.json": {"schema_version": "1.0", "diagnostics": graph.diagnostics}}
+    if expanded is not None:
+        artifacts["instance-forward.json"] = expanded
     hashes = {k: sha256(canonical_bytes(v)) for k, v in artifacts.items()}
     metadata = {"schema_version": "1.0", "extractor_version": __version__,
                 "entrypoint": entrypoint, "verification": check,

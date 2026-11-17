@@ -9,6 +9,7 @@ from ae.sae.ir.canonical import canonical_bytes, sha256
 from .reader import load_bundle
 from .projection import project
 from .flow import project_flow, project_nested_flow
+from .instance_flow import project_instance_forward, make_instance_scene
 from .flow_layout import make_flow_scene
 from .health import evaluate
 from .layout import make_scene
@@ -30,7 +31,7 @@ def present(bundle_path: str | Path, output: str | Path, *, level: str = 'block'
     or withheld by publication policy.
     """
     style = select_theme(theme)
-    if view not in ('structure','flow','nested'):
+    if view not in ('structure','flow','nested','instance'):
         raise ValueError(f'Invalid view: {view}')
     if focus and view not in ('flow', 'nested'):
         raise ValueError('--focus currently supports flow and nested views only')
@@ -50,12 +51,15 @@ def present(bundle_path: str | Path, output: str | Path, *, level: str = 'block'
     bundle=None; graph=None; problem=None
     try:
         bundle=load_bundle(bundle_path)
-        graph=(project_flow(bundle,level,focus=focus) if view=='flow' else
+        graph=(project_instance_forward(bundle,level,focus=focus) if view=='instance' else
+               project_flow(bundle,level,focus=focus) if view=='flow' else
                project_nested_flow(bundle,level,focus=focus) if view=='nested' else
                project(bundle,level))
     except (OSError,ValueError,KeyError,TypeError,json.JSONDecodeError) as exc:
         problem=f'{type(exc).__name__}: {exc}'
     health=evaluate(bundle,graph,mode=mode,level=level,input_error=problem)
+    if view=='instance':
+        health['scope']='Bounded source-proven forward for explicit input shape; external execution check is separate'
     if view in ('flow', 'nested'):
         health['scope']='Source-backed static forward dependencies, supported call summaries and conditional type-level shapes; runtime behavior unverified'
     health['view']=view
@@ -74,11 +78,15 @@ def present(bundle_path: str | Path, output: str | Path, *, level: str = 'block'
               'rendered':allowed,'visual_elements':{},'visual_links':{},
               'omitted_indexed_ir_ids':[],'output_sha256':{}}
     if graph is not None:
+        if view=='instance':
+            manifest['input_shape']=graph.get('input_shape')
+            manifest['instance_artifact']='instance-forward.json'
         manifest['visual_elements']={n['id']:{'kind':n['kind'],
                'ir_node_ids':n['ir_node_ids'],'ir_edge_ids':n['ir_edge_ids'],
                'source_refs':n['source_refs']} for n in graph['nodes']}
         manifest['visual_links']={e['id']:{'relation_kind':e['relation_kind'],
-               'ir_edge_ids':e['ir_edge_ids'],'source_refs':e['source_refs']}
+               'ir_edge_ids':e['ir_edge_ids'],'source_refs':e['source_refs'],
+               **({'instance_edge_id':e['instance_edge_id']} if 'instance_edge_id' in e else {})}
                for e in graph['links']}
         if bundle:
             indexed=set()
@@ -93,7 +101,7 @@ def present(bundle_path: str | Path, output: str | Path, *, level: str = 'block'
             manifest['omitted_indexed_ir_ids']=[{'id':i,'reason':'hidden_by_selected_view_or_unsupported_projection'}
                                                 for i in sorted(indexed-mapped)]
     if allowed:
-        scene=(make_flow_scene if view in ('flow','nested') else make_scene)(
+        scene=(make_instance_scene if view=='instance' else make_flow_scene if view in ('flow','nested') else make_scene)(
             graph, status=health['status'],
             entrypoint=(f"{health['entrypoint']} / {focus}"
                         if focus and focus != (health['entrypoint'] or '').split(':')[-1]
