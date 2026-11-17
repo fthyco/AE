@@ -112,3 +112,57 @@ def test_mutation_rejected_before_emitting_graph(tmp_path,originals,change):
 def test_small_factory_entrypoint_variant(tmp_path,originals):
     data,_=prepare(tmp_path,originals,entrypoint="mobilenetv3:mobilenet_v3_small")
     assert data["status"]=="expanded_static" and len(data["nodes"])==159
+
+
+@pytest.mark.parametrize("level,count", [("overview",6), ("block",16)])
+def test_mobile_hierarchy_preserves_source_operation_and_edge_ids(
+        tmp_path,originals,level,count):
+    graph,bundle=prepare(tmp_path,originals)
+    folder=tmp_path/"hierarchy"
+    result=present(bundle,folder,view="instance",level=level,format="all")
+    assert result["status"]=="partial" and result["render_allowed"]
+    manifest=json.loads((folder/"presentation-manifest.json").read_text())
+    visual_nodes=manifest["visual_elements"]
+    visual_edges=manifest["visual_links"]
+    assert len(visual_nodes)==count
+    assert all(item["source_refs"] for item in visual_nodes.values())
+    represented={uid for entry in visual_nodes.values()
+                 for uid in entry["ir_node_ids"]}
+    assert {n["id"] for n in graph["nodes"]} <= represented
+    visible={eid for entry in visual_edges.values()
+             for eid in entry["ir_edge_ids"]}
+    collapsed=set(manifest["collapsed_instance_edge_ids"])
+    assert visible.isdisjoint(collapsed)
+    assert visible|collapsed=={e["id"] for e in graph["edges"]}
+    assert not manifest["omitted_instance_node_ids"]
+    assert not manifest["omitted_instance_edge_ids"]
+    import xml.etree.ElementTree as ET
+    dimensions=ET.parse(folder/"architecture.svg").getroot().attrib
+    assert int(dimensions["height"])>int(dimensions["width"])
+
+
+def test_mobile_focus_keeps_immediate_dependency_context(tmp_path,originals):
+    graph,bundle=prepare(tmp_path,originals)
+    dest=tmp_path/"focused"
+    result=present(bundle,dest,view="instance",level="operation",
+                   focus="features.4",format="all")
+    assert result["status"]=="partial" and result["render_allowed"]
+    manifest=json.loads((dest/"presentation-manifest.json").read_text())
+    seen=set(manifest["visual_elements"])
+    seen_edges=set(manifest["visual_links"])
+    assert 0<len(seen)<len(graph["nodes"])
+    assert seen|set(manifest["omitted_instance_node_ids"])=={
+        node["id"] for node in graph["nodes"]
+    }
+    assert seen_edges|set(manifest["omitted_instance_edge_ids"])=={
+        edge["id"] for edge in graph["edges"]
+    }
+    assert not (dest/"architecture.pdf").stat().st_size==0
+
+
+def test_mobile_invalid_focus_blocks_without_stale_diagram(tmp_path,originals):
+    _,bundle=prepare(tmp_path,originals)
+    dest=tmp_path/"invalid"
+    result=present(bundle,dest,view="instance",level="operation",focus="features.99")
+    assert result["status"]=="blocked"
+    assert not (dest/"architecture.svg").exists()
