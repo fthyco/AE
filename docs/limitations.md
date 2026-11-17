@@ -1,4 +1,6 @@
-# SAE v0.3.0 — verified capabilities and remaining limitations
+# AE — Static Analysis Capabilities and Limitations
+
+This document tracks foundational static-analysis guarantees and open limitations. For the current diagrams, viewer, and independently verified model coverage, see [README](../README.md) and [v0.27 scope](v027-generalization.md).
 
 ## Implemented
 
@@ -24,7 +26,7 @@
 - Nontrivial symbolic shape propagation through all PyTorch/functional operations.
 - Hydra/OmegaConf interpolation semantics, dynamic YAML evaluation and user-defined factories.
 - Systematic measurement of recall/completeness on real-world models such as Chessformer and AWN.
-- Presenter, paper-quality architecture figures or graphical export.
+- Universal exact instance-forward extraction and complete layouts for arbitrary dynamic Python/PyTorch models.
 
 All shape templates are conditional type-level formulas, not observed tensor shapes.
 Source-dependency edges are **not** runtime tensor-flow proof. Python runtime
