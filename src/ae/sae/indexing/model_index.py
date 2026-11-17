@@ -150,7 +150,7 @@ def build_model_index(graph: Graph, units: list[Unit], entrypoint_id: str | None
                               'candidate_ids': sorted(sites)})
                         continue
                     if not sites:
-                        result['unresolved'].append({'kind': 'unrecognized_component_assignment',
+                        result['unresolved'].append({'kind': 'unrecognized_or_ambiguous_component',
                               'owner_definition_id': definition_id, 'assignment_ast_id': ids[target],
                               'expression': ast.unparse(value), 'source_refs': [span(unit, value)]})
                         continue
