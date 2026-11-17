@@ -21,6 +21,8 @@ ae present ae-bundle --view flow --level block --theme scientific-latex --format
 
 Views: `structure` (module/call relationships), `flow` (supported static value dependencies). Levels: `overview`, `block`, `operation`. Use `--focus ResidualBlock` for an individual module.
 
+Factory entrypoints with statically resolved block counts are indexed with stage and instance identities. See [factory specialization](docs/factory-specialization.md).
+
 ## Data
 
 **Extractor:** `architecture.ir.json`, `model-index.json`, source and token indexes, file hashes, coverage, diagnostics, and source snapshots.

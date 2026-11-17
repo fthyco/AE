@@ -64,7 +64,8 @@ def project(bundle: Bundle, level: str = 'block') -> dict[str, Any]:
                                'source_refs': [s for eid in backing_edges for s in bundle.edges[eid]['source_refs']],
                                'style': style})
 
-    # A definition has one visual identity per statically indexed construction path.
+    # A definition has one visual identity per statically indexed *construction path*.
+    # This avoids collapsing distinct instances of the same custom module definition.
     def render_module(definition: str, parent: str | None, path: tuple, active: frozenset[str],
                       via_comp: str | None = None, via_site: str | None = None) -> str:
         m = modules[definition]
@@ -74,6 +75,27 @@ def project(bundle: Bundle, level: str = 'block') -> dict[str, Any]:
         if parent and via_comp and via_site:
             connect(via_comp, mod_id, 'CONSTRUCTS_LOCAL_MODULE',
                     edges_between(via_site, definition, 'CONSTRUCTS_LOCAL_MODULE'))
+        factory = index.get('factory_specialization')
+        if parent is None and factory and factory['model_definition_id'] == definition:
+            cfg = factory['factory_configuration_id']
+            cv = add('factory', f"{index['entrypoint'].split(':')[-1]}: {factory['block_type']}",
+                     (*path, 'factory', cfg), [cfg], parent=mod_id, state='conditional',
+                     details='Static constructor blueprint')
+            connect(cv, mod_id, 'FACTORY_CONSTRUCTS_CLASS',
+                    edges_between(cfg, definition, 'FACTORY_CONSTRUCTS_CLASS'))
+            for stage in factory['stages']:
+                sid = stage['stage_id']
+                sv = add('factory-stage', f"{stage['name']}: {stage['count']} × {stage['block_type']}",
+                         (*path, 'stage', sid), [sid], parent=cv, state='conditional',
+                         details=f"Stage {stage['position'] + 1}")
+                connect(cv, sv, 'FACTORY_HAS_STAGE', edges_between(cfg, sid, 'FACTORY_HAS_STAGE'))
+                if level != 'overview':
+                    for i, instance_id in enumerate(stage['block_instance_ids']):
+                        iv = add('factory-block', f"{stage['block_type']} [{i}]",
+                                 (*path, 'stage', sid, 'block', instance_id), [instance_id],
+                                 parent=sv, state='conditional', details=f"{stage['name']}.{i}")
+                        connect(sv, iv, 'STAGE_HAS_BLOCK_INSTANCE',
+                                edges_between(sid, instance_id, 'STAGE_HAS_BLOCK_INSTANCE'))
         comp_views: dict[str, str] = {}
         for comp in sorted(m['components'], key=lambda c:(c['source_refs'][0]['start_byte'], c['construction_site_id'])):
             cid = comp['construction_site_id']
@@ -93,6 +115,7 @@ def project(bundle: Bundle, level: str = 'block') -> dict[str, Any]:
                          f'Recursive module expansion was stopped at {label_}', ids=[cid],refs=comp.get('source_refs',[])))
                 else:
                     render_module(child, cc, (*path,'module-instance',cid), active | {child}, cc, cid)
+            # Optional nested constructor facts for nn.Sequential and similar containers.
             if level == 'operation':
                 for layer_spec_id in comp.get('layer_spec_ids', []):
                     nested = sorted((e for e in ir['edges']
@@ -141,6 +164,7 @@ def project(bundle: Bundle, level: str = 'block') -> dict[str, Any]:
                     if e['relation']=='EXPRESSION_DEPENDS_ON' and e['source'] in active_views and e['target'] in active_views:
                         connect(active_views[e['source']],active_views[e['target']],
                                 'EXPRESSION_DEPENDS_ON',[rid],style='syntax-dependency')
+        # Model-index unresolved assignments are not silently interpreted as components.
         for u in index.get('unresolved',[]):
             if u.get('owner_definition_id') != definition:
                 continue
