@@ -22,6 +22,25 @@ against real forward hooks. It explicitly tests fused and unfused attention
 graphs. The resulting `fx.json`, `hooks.json`, `result.json`, and `summary.json`
 are reference artifacts only.
 
+## Independently measured reference (2026-11-17)
+
+Both batch-one and batch-two input tests passed in the pinned GitHub Action
+using real timm, FX, ShapeProp and runtime hooks. The source SHA-256 values
+of the five audited original timm files are now hard-coded and checked.
+
+| Reference path | FX nodes | FX edges | Tensor shapes | FX call_module | Runtime leaf hooks | Inlined timm LayerNorm calls |
+|---|---:|---:|---:|---:|---:|---:|
+| Fused attention | 477 | 596 | 405 | 200 | 225 | 25 |
+| Unfused attention | 549 | 668 | 477 | 212 | 237 | 25 |
+
+Each metric is per input shape. The 25 inlined LayerNorm invocations consist
+of `blocks.0..11.norm1`, `blocks.0..11.norm2`, and final `norm`.
+FX represents these as underlying functional operations whereas hooks observe
+the original modules. Both views are preserved; neither is dropped silently.
+
+This remains **reference-only**: the AE-vs-reference equality gate is not
+implemented or passed yet.
+
 ## Required before claiming AE v0.20 complete
 
 1. Implement a source-only, fail-closed, SHA-256-pinned instance expansion for
