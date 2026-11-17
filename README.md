@@ -21,7 +21,9 @@ ae present ae-bundle --view flow --level block --theme scientific-latex --format
 
 Views: `structure` (module/call relationships), `flow` (supported static value dependencies). Levels: `overview`, `block`, `operation`. Use `--focus ResidualBlock` for an individual module.
 
-Factory entrypoints with statically resolved block counts are indexed with stage and instance identities. See [factory specialization](docs/factory-specialization.md).
+Factory entrypoints with fixed block counts are indexed with stage and instance identities. See [factory specialization](docs/factory-specialization.md).
+
+Fixed-count constructor containers (DenseNet-style stages and registered members) are indexed as source-backed construction blueprints. See [container specialization](docs/container-specialization-v0.12.md).
 
 ## Data
 

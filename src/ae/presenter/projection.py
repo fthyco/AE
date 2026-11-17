@@ -96,6 +96,43 @@ def project(bundle: Bundle, level: str = 'block') -> dict[str, Any]:
                                  parent=sv, state='conditional', details=f"{stage['name']}.{i}")
                         connect(sv, iv, 'STAGE_HAS_BLOCK_INSTANCE',
                                 edges_between(sid, instance_id, 'STAGE_HAS_BLOCK_INSTANCE'))
+        container = index.get('container_specialization')
+        if parent is None and container and container['model_definition_id'] == definition:
+            cfg = container['configuration_id']
+            summary = add('factory', f"{index['entrypoint'].split(':')[-1]}: fixed containers",
+                          (*path, 'containers', cfg), [cfg], parent=mod_id,
+                          state='conditional', details='Static registration blueprint')
+            connect(summary, mod_id, 'CONTAINER_CONSTRUCTS_CLASS',
+                    edges_between(cfg, definition, 'CONTAINER_CONSTRUCTS_CLASS'))
+            for stage in container['stages']:
+                sid = stage['stage_id']
+                sv = add('factory-stage',
+                         f"{container['block_type']} {stage['position'] + 1}: {stage['count']} × {container['member_type']}",
+                         (*path, 'container-stage', sid), [sid], parent=summary,
+                         state='conditional', details=f"Stage {stage['position'] + 1}")
+                connect(summary, sv, 'CONTAINER_HAS_STAGE',
+                        edges_between(cfg, sid, 'CONTAINER_HAS_STAGE'))
+                if level != 'overview':
+                    bid = stage['block_instance_id']
+                    bv = add('factory-block', f"{container['block_type']} [{stage['position'] + 1}]",
+                             (*path, 'container-block', bid), [bid], parent=sv,
+                             state='conditional')
+                    connect(sv, bv, 'STAGE_REGISTERS_BLOCK',
+                            edges_between(sid, bid, 'STAGE_REGISTERS_BLOCK'))
+                    if level == 'operation':
+                        for position, member_id in enumerate(stage['member_instance_ids']):
+                            mv = add('factory-block', f"{container['member_type']} [{position + 1}]",
+                                     (*path, 'container-member', member_id), [member_id],
+                                     parent=bv, state='conditional')
+                            connect(bv, mv, 'CONTAINER_HAS_MEMBER',
+                                    edges_between(bid, member_id, 'CONTAINER_HAS_MEMBER'))
+                    tid = stage['transition_instance_id']
+                    if tid is not None:
+                        tv = add('factory-block', container['transition_type'],
+                                 (*path, 'container-transition', tid), [tid],
+                                 parent=sv, state='conditional')
+                        connect(sv, tv, 'CONTAINER_HAS_TRANSITION',
+                                edges_between(sid, tid, 'CONTAINER_HAS_TRANSITION'))
         comp_views: dict[str, str] = {}
         for comp in sorted(m['components'], key=lambda c:(c['source_refs'][0]['start_byte'], c['construction_site_id'])):
             cid = comp['construction_site_id']

@@ -313,6 +313,29 @@ def validate_model_index(index: dict[str, Any], ir: dict[str, Any]) -> None:
                 raise ValueError('Factory instance count mismatch')
             for ident in stage['block_instance_ids']:
                 check(ident, 'factory_block_instance')
+    container = index.get('container_specialization')
+    if container:
+        check(container['factory_definition_id'], 'function_definition')
+        check(container['configuration_id'], 'container_configuration')
+        check(container['model_definition_id'], 'class_definition')
+        for key in ('block_definition_id', 'member_definition_id', 'transition_definition_id'):
+            check(container[key], 'class_definition')
+        if container['model_definition_id'] != index.get('root_definition_id'):
+            raise ValueError('Container model definition differs from root')
+        if sum(container['stage_counts']) != container['total_members']:
+            raise ValueError('Container member total mismatch')
+        if len(container['stages']) != len(container['stage_counts']):
+            raise ValueError('Container stage count mismatch')
+        for i, stage in enumerate(container['stages']):
+            check(stage['stage_id'], 'container_stage')
+            check(stage['block_instance_id'], 'container_block_instance')
+            check(stage['transition_instance_id'], 'container_transition_instance')
+            if stage['position'] != i or stage['count'] != container['stage_counts'][i]:
+                raise ValueError('Container stage position or count mismatch')
+            if len(stage['member_instance_ids']) != stage['count']:
+                raise ValueError('Container member count mismatch')
+            for ident in stage['member_instance_ids']:
+                check(ident, 'container_member_instance')
     for module in index.get('modules', []):
         check(module['definition_id'], 'class_definition')
         check(module['forward_method_id'], 'method_definition')
