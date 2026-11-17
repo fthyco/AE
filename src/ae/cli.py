@@ -10,7 +10,7 @@ from .presenter import present
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="magg", description="MAGG: static source-grounded model architecture extraction")
+    parser = argparse.ArgumentParser(prog="ae", description="AE: static source-grounded model architecture extraction")
     commands = parser.add_subparsers(dest="command", required=True)
     extraction = commands.add_parser("extract", help="Extract from source without importing or executing it")
     extraction.add_argument("source", help="Source repository directory")
@@ -50,7 +50,7 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(result, sort_keys=True, indent=2, ensure_ascii=False))
         return 0 if args.command != "present" or result["render_allowed"] else 2
     except (ValueError, OSError, json.JSONDecodeError) as exc:
-        print(f"magg: {type(exc).__name__}: {exc}", file=sys.stderr)
+        print(f"ae: {type(exc).__name__}: {exc}", file=sys.stderr)
         return 1
 
 

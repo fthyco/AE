@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from magg.sae.ir.canonical import canonical_bytes, sha256
+from ae.sae.ir.canonical import canonical_bytes, sha256
 from .reader import load_bundle
 from .projection import project
 from .flow import project_flow
