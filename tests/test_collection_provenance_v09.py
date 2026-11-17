@@ -154,7 +154,7 @@ class Model(nn.Module):
     assert any('Starred collection length' in x['reason'] for x in b.ir['unresolved'])
 
 
-def test_collection_in_python_concat_does_not_infer_tensor_shape(tmp_path):
+def test_collection_in_python_concat_only_infers_tensor_not_aggregate_shape(tmp_path):
     b=run(tmp_path, '''import torch
 from torch import nn
 class Model(nn.Module):
@@ -171,7 +171,7 @@ class Model(nn.Module):
     assert aggregate['id'] not in shapes
     concat=next(c['call_site_id'] for m in b.model_index['modules'] for c in m['forward_calls']
                 if c['callee_expression']=='torch.cat')
-    assert concat not in shapes  # shape math of concat not implemented
+    assert shapes[concat] == ['...', '40']  # shared input and fixed Linear outputs
 
 
 def test_full_six_views_and_different_hash_seeds(tmp_path):
