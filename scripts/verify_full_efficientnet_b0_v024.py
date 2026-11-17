@@ -38,6 +38,7 @@ def verify(base):
     assert len(model.features)==9
     traced=symbolic_trace(model)
     summary=[]
+    gallery=[]
     for shape in SHAPES:
         value=torch.zeros(*shape)
         ShapeProp(traced).propagate(value)
@@ -109,6 +110,20 @@ def verify(base):
         manifest=json.loads((folder/"operation/presentation-manifest.json").read_text())
         assert set(manifest["visual_elements"])==set(id_to_name)
         assert set(manifest["visual_links"])=={e["id"] for e in data["edges"]}
+        for level,count in (("overview",6),("block",12)):
+            out=folder / ("figures-"+level)
+            proj=present(bundle,out,view="instance",level=level,format="all")
+            assert proj["status"]=="partial" and proj["render_allowed"]
+            evidence=json.loads((out/"presentation-manifest.json").read_text())
+            assert len(evidence["visual_elements"])==count
+            assert set(id_to_name)<={key for node in evidence["visual_elements"].values()
+                                     for key in node["ir_node_ids"]}
+            visible={key for edge in evidence["visual_links"].values()
+                     for key in edge["ir_edge_ids"]}
+            hidden=set(evidence["collapsed_instance_edge_ids"])
+            assert visible.isdisjoint(hidden)
+            assert visible|hidden=={edge["id"] for edge in data["edges"]}
+            gallery.append((label,level,f"{label}/figures-{level}/architecture.svg"))
         summary.append({"shape":list(shape),"nodes":251,"ordered_edges":275,
                         "leaf_modules":214,"residuals":9,"SE_multiplications":16,
                         "original_sd_calls":9,"matched":True})
@@ -116,6 +131,18 @@ def verify(base):
             "status":"source-only_mirrors_original_fx_and_runtime",
             "source_sha256":hashes,"cases":summary}
     (base/"summary.json").write_text(json.dumps(report,indent=2))
+    cards=["<section><h2>"+name+" / "+level+"</h2>"
+           '<object type="image/svg+xml" data="'+path+'"></object>'
+           '<p><a href="'+path+'">Original source-backed SVG</a></p></section>'
+           for name,level,path in gallery]
+    (base/"hierarchy-gallery.html").write_text(
+        '<!doctype html><html lang="en"><head><meta charset="utf-8">'
+        '<title>AE — EfficientNet B0 gallery</title>'
+        '<style>body{font:14px Arial,sans-serif;max-width:900px;margin:25px auto}'
+        'section{padding:15px;margin:20px;border:1px solid #ddd}'
+        'object{width:100%;height:700px}</style></head><body>'
+        '<h1>EfficientNet-B0 — Original Architecture Extractor output</h1>'
+        +''.join(cards)+'</body></html>')
     print(json.dumps(report,indent=2),flush=True)
     return report
 
