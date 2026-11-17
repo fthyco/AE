@@ -113,9 +113,8 @@ class _Original:
             require("se_ops:" + suffix,
                     lambda n, name=suffix: isinstance(n, ast.Call) and
                     isinstance(n.func, ast.Attribute) and
-                    isinstance(n.func.value, ast.Attribute) and
-                    isinstance(n.func.value.value, ast.Name) and
-                    n.func.value.value.id == "self" and n.func.value.attr == name,
+                    isinstance(n.func.value, ast.Name) and
+                    n.func.value.id == "self" and n.func.attr == name,
                     self.sites["se_ops"][1])
         require("se_mul:mul", lambda n: isinstance(n, ast.BinOp) and
                 isinstance(n.op, ast.Mult), self.sites["se_mul"][1])
