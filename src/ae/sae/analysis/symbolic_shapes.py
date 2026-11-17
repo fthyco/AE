@@ -150,13 +150,13 @@ def analyze_symbolic_shapes(graph: Graph, model_index: dict) -> None:
 
     for value, dimensions in sorted(shapes.items()):
         origin = nodes[value]
-        fact_id = stable_id('magg-symbolic-shape/v1', value, dimensions)
+        fact_id = stable_id('ae-symbolic-shape/v1', value, dimensions)
         graph.add_node({'id':fact_id, 'kind':'symbolic_shape_fact',
                         'attributes': {'value_id':value, 'dimensions':list(dimensions),
                                        'scope':'conditional_type_level', 'reason':causes[value]},
                         'source_refs':origin['source_refs'], 'evidence_class':'derived',
                         'analysis_rule':RULE, 'resolution':'conditional'})
-        graph.add_edge({'id':stable_id('magg-symbolic-shape-edge/v1', value, fact_id),
+        graph.add_edge({'id':stable_id('ae-symbolic-shape-edge/v1', value, fact_id),
                         'source':value, 'target':fact_id, 'relation':'HAS_SYMBOLIC_SHAPE',
                         'source_refs':origin['source_refs'], 'evidence_class':'derived',
                         'analysis_rule':RULE})

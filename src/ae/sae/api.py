@@ -6,7 +6,7 @@ import ast
 from pathlib import Path
 from typing import Any
 
-from magg import __version__
+from ae import __version__
 from .analysis.analyzer import Analyzer
 from .analysis.dataflow import analyze_dataflow
 from .analysis.pytorch_static import analyze_pytorch
