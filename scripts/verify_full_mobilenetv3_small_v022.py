@@ -18,6 +18,7 @@ from preflight_mobilenetv3_small_v022 import audit
 def verify(output: Path) -> dict:
     ref = audit(output)
     results = []
+    hierarchy_gallery = []
     for case in ref["cases"]:
         label = case["configuration"]
         shape = tuple(case["shape"])
@@ -80,6 +81,33 @@ def verify(output: Path) -> dict:
         for ext in ("svg", "pdf", "tex"):
             path = folder / "figures" / f"architecture.{ext}"
             assert path.stat().st_size > 100, (label, ext)
+        # The overview/block plots are derived from the same already-verified
+        # operation graph, and must conserve all original evidence IDs.
+        for level, count in (("overview", 6), ("block", 16)):
+            folder_view = folder / ("figures-" + level)
+            view = present(bundle, folder_view, view="instance",
+                           level=level, format="all")
+            assert view["status"] == "partial" and view["render_allowed"]
+            provenance = json.loads(
+                (folder_view / "presentation-manifest.json").read_text()
+            )
+            assert len(provenance["visual_elements"]) == count
+            assert ids <= {
+                uid for n in provenance["visual_elements"].values()
+                for uid in n["ir_node_ids"]
+            }
+            cross = {
+                uid for e in provenance["visual_links"].values()
+                for uid in e["ir_edge_ids"]
+            }
+            hidden = set(provenance["collapsed_instance_edge_ids"])
+            assert cross.isdisjoint(hidden)
+            assert cross | hidden == {e["id"] for e in data["edges"]}
+            assert all((folder_view / f"architecture.{ext}").stat().st_size > 100
+                       for ext in ("svg", "pdf", "tex"))
+            hierarchy_gallery.append(
+                (label, level, f"{label}/figures-{level}/architecture.svg")
+            )
         results.append({
             "case": label, "operations": len(got),
             "ordered_edges": len(data["edges"]),
@@ -94,6 +122,28 @@ def verify(output: Path) -> dict:
                "cases": results}
     (output / "ae-acceptance-summary.json").write_text(
         json.dumps(summary, indent=2))
+    cards = []
+    for label, level, path in hierarchy_gallery:
+        cards.append(
+            f'<section><strong>{label} — {level}</strong>'
+            f'<object data="{path}" type="image/svg+xml"></object>'
+            f'<p><a href="{path}">Original SVG</a></p></section>'
+        )
+    page = (
+        '<!doctype html><html lang="en"><head><meta charset="utf-8">'
+        '<meta name="viewport" content="width=device-width,initial-scale=1">'
+        '<title>AE v0.22 — MobileNetV3 Small original output</title>'
+        '<style>body{font:14px Arial,sans-serif;max-width:900px;'
+        'margin:0 auto;padding:20px;background:#f7f7f7}'
+        'section{padding:18px;background:#fff;margin:20px 0;border:1px solid #ddd}'
+        'object{width:100%;height:680px;border:1px solid #eee;overflow:auto}'
+        'a{color:#222}</style></head><body>'
+        '<h1>AE v0.22 — MobileNetV3 Small</h1>'
+        '<p>Original Presenter exports from source-only, independently FX-verified '
+        'architecture IR. Each block/group retains evidence IDs in its manifest.</p>'
+        + "".join(cards) + '</body></html>'
+    )
+    (output / "hierarchy-gallery.html").write_text(page)
     print(json.dumps(summary, indent=2), flush=True)
     return summary
 
