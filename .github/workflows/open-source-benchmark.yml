@@ -1,0 +1,46 @@
+name: AE open-source architecture benchmark
+
+on:
+  push:
+    branches: [test/open-source-architecture-benchmark]
+  workflow_dispatch:
+
+jobs:
+  verify-open-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install pinned runtime and AE
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install torch==2.10.0 torchvision==0.25.0 --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install timm==1.0.31 segmentation-models-pytorch==0.6.0
+          python -m pip install -e '.[dev,render]'
+      - name: Unit and completeness tests
+        run: python -m pytest -q
+      - name: Run eight independent model checks
+        env:
+          PYTHONHASHSEED: '1'
+          OMP_NUM_THREADS: '1'
+          OPENBLAS_NUM_THREADS: '1'
+          MKL_NUM_THREADS: '1'
+        run: |
+          set -u
+          errors=0
+          for model in resnet18 resnet50 densenet121 unet_resnet34 vit_tiny_patch16_224 vgg16 mobilenet_v3_small efficientnet_b0; do
+            echo "=== MODEL $model ==="
+            python scripts/benchmark_real_architectures.py "$model" || errors=$((errors+1))
+          done
+          echo "Failed model runs: $errors"
+          test "$errors" -eq 0
+      - name: Upload independent evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ae-real-open-source-benchmark
+          path: benchmark-output/
+          if-no-files-found: warn
