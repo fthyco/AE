@@ -356,7 +356,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python scripts/maintenance/prune_merged_branches.py --apply
 
-audit-branch-cleanup:
+  audit-branch-cleanup:
     name: Dry-run branch cleanup
     if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
