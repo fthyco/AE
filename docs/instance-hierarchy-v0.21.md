@@ -52,3 +52,19 @@ The word "Transformer Encoder" names a presentation group of operations already
 present in the verified instance graph; it is not a new computational node.
 
 Status: **draft branch; CI and visual acceptance required before merging**.
+
+## Visual acceptance output
+
+The full timm ViT-Tiny workflow runs:
+
+```bash
+python scripts/render_vit_hierarchy_v021.py --output benchmark-output/vit-tiny-v020
+```
+
+This emits original Presenter SVG/PDF/TikZ for overview, block, and
+`blocks.0` focus for both fused/unfused cases at batch 1 and 2, plus
+`hierarchy-gallery.html` and `hierarchy-results.json` in the same
+GitHub Actions artifact. Summarized figures use portrait layout; metadata
+edges are dashed; shared optional-attention-mask routes are rendered using
+a common bus but retain independent IDs and provenance. No original
+operation-level diagram is modified by the hierarchy renderer.
