@@ -79,11 +79,19 @@ def make_instance_scene(graph, *, status, entrypoint):
         label=tgt if len(tgt)<=37 else tgt[:34]+'...'
         texts.append({'x':x+9,'y':y+19,'text':label,'size':10,'bold':node['op'] in ('placeholder','output')})
         texts.append({'x':x+9,'y':y+37,'text':node['shape'],'size':8.4,'bold':False})
+    node_by_id={n['id']:n for n in nodes}
     for idx,edge in enumerate(links):
         a=positions[edge['source']];b=positions[edge['target']]
         x1=a['x']+a['w']/2;y1=a['y']+a['h']
         x2=b['x']+b['w']/2;y2=b['y']
-        if b['y']>a['y'] and b['y']-a['y']<=step+0.01 and a['x']==b['x']:
+        if (grouped and
+                node_by_id[edge['source']]['label'] == 'Image / Optional Attn Mask' and
+                'Transformer' in node_by_id[edge['target']]['label']):
+            # Multiple original mask dependencies share a single visual bus;
+            # every original edge and its ID is still retained separately.
+            route=86
+            points=[(x1,y1),(route,y1),(route,y2),(x2,y2)]
+        elif b['y']>a['y'] and b['y']-a['y']<=step+0.01 and a['x']==b['x']:
             points=[(x1,y1),(x2,y2)]
         else:
             # All branch routes stay outside component rectangles.
@@ -93,10 +101,13 @@ def make_instance_scene(graph, *, status, entrypoint):
             # Insert orthogonal segments where endpoints differ from the outer lane.
             points=[(x1,y1),(route,y1),(route,y2),(x2,y2)]
         paths.append({'id':edge['id'],'ir_edge_ids':edge['ir_edge_ids'],
-                      'kind':'static-value','label':edge['relation_kind'],'points':points,
+                      'kind':edge.get('style','static-value'),'label':edge['relation_kind'],'points':points,
                       'x1':x1,'y1':y1,'x2':x2,'y2':y2})
     height=top+len(nodes)*step+80
-    texts.append({'x':55,'y':height-43,'text':'Shapes apply to the selected concrete input; runtime verification is separate.',
+    texts.append({'x':55,'y':height-43,'text':(
+                  'Solid: tensor dependency | dashed: metadata dependency'
+                  if grouped else
+                  'Shapes apply to the selected concrete input; runtime verification is separate.'),
                   'size':9,'bold':False})
     texts.append({'x':55,'y':height-24,'text':f'Source-derived graph; health status: {status}',
                   'size':9,'bold':False})
