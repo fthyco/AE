@@ -1,61 +1,60 @@
-# AE v0.20 — ViT Tiny (Stage 5, IN PROGRESS)
+# AE v0.20 — timm ViT-Tiny full instance-forward (Stage 5)
 
-## Original reference
+## Exact scope
 
-Use unmodified `timm==1.0.22` factory `vit_tiny_patch16_224` with `pretrained=False`,
-`torch==2.10.0+cpu`, `torchvision==0.25.0+cpu`, and `eval()`.
-The known default constructor parameters are patch size 16, embedding dimension
-192, depth 12, three attention heads, one class token, and a 1,000-class output.
-For now the explicit test geometries are `1×3×224×224` and `2×3×224×224`.
+Unmodified `timm==1.0.22`, `vit_tiny_patch16_224(pretrained=False)`, `eval()`.
+Original package source files are individually checked by SHA-256. Independent
+runtime verifier pins torch 2.10.0+cpu and torchvision 0.25.0+cpu.
+Factory: patch 16, embed dimension 192, 12 transformer blocks, 3 heads,
+class token, 1,000-class output. Tested inputs: `(1,3,224,224)` and `(2,3,224,224)`.
 
-## Completed in the preflight
+Fused and unfused attention are separate forward graphs. The caller must select
+the path explicitly; AE never infers this choice from runtime environment.
+
+## CLI
 
 ```bash
-python scripts/preflight_vit_tiny_v020.py --output benchmark-output/vit-tiny-v020
+ae extract source-snapshot --entrypoint timm.models.vision_transformer:vit_tiny_patch16_224 --input-shape 1,3,224,224 --attention-mode fused --output ae-bundle
+ae validate ae-bundle
+ae present ae-bundle --view instance --level operation --format all --output figures
 ```
 
-This independent verifier instantiates original timm outside SAE, records the
-original source-file SHA-256s, traverses actual FX operations, edges and ShapeProp
-Tensor shapes, and checks the leaf-module invocation sequence and output shapes
-against real forward hooks. It explicitly tests fused and unfused attention
-**as separate implementation configurations**, preserving their separate FX
-graphs. The resulting `fx.json`, `hooks.json`, `result.json`, and `summary.json`
-are reference artifacts only.
+Use `--attention-mode unfused` for the other graph. The input source snapshot
+must contain the five original, unchanged timm files at their original paths.
+Extraction parses AST/source hashes; it does not import or execute timm or torch.
+Unsupported sources, missing files, implicit attention mode or invalid geometry
+fail closed without speculative instance nodes or edges.
 
-## Independently measured reference (2026-11-17)
+## Independent gate
 
-Both batch-one and batch-two input tests passed in the pinned GitHub Action
-using real timm, FX, ShapeProp and runtime hooks. The source SHA-256 values
-of the five audited original timm files are now hard-coded and checked.
+```bash
+python scripts/verify_full_vit_tiny_v020.py --output benchmark-output/vit-tiny-v020
+```
 
-| Reference path | FX nodes | FX edges | Tensor shapes | FX call_module | Runtime leaf hooks | Inlined timm LayerNorm calls |
-|---|---:|---:|---:|---:|---:|---:|
-| Fused attention | 477 | 596 | 405 | 200 | 225 | 25 |
-| Unfused attention | 549 | 668 | 477 | 212 | 237 | 25 |
+The external verifier instantiates the original model, traces FX, applies
+ShapeProp and runtime leaf hooks, and independently checks every source-derived
+AE node/target, ordered operand, Tensor shape and output. It also checks
+source provenance and 1:1 SVG/PDF/TikZ mapping.
 
-Each metric is per input shape. The 25 inlined LayerNorm invocations consist
-of `blocks.0..11.norm1`, `blocks.0..11.norm2`, and final `norm`.
-FX represents these as underlying functional operations whereas hooks observe
-the original modules. Both views are preserved; neither is dropped silently.
+| Attention | FX nodes | Edges | Tensor shapes | FX module calls | Runtime leaf hooks |
+|---|---:|---:|---:|---:|---:|
+| Fused | 477 | 596 | 405 | 200 | 225 |
+| Unfused | 549 | 668 | 477 | 212 | 237 |
 
-This remains **reference-only**: the AE-vs-reference equality gate is not
-implemented or passed yet.
+Counts are per tested batch size. The 25 timm LayerNorm module invocations
+(24 block norms and final norm) are represented as functional layer_norm nodes
+in FX, and are cross-checked rather than silently removed.
 
-## Required before claiming AE v0.20 complete
+CI additionally tests source mutation/missing-file rejection, unsupported
+input geometry, deterministic hash seeds, forbidden target imports, isolated
+extraction time/RSS, and all historical regression tests.
 
-1. Implement a source-only, fail-closed, SHA-256-pinned instance expansion for
-   the exact original timm source and selected input geometry. SAE must never
-   import `timm`, `torch`, or run the analyzed model.
-2. Establish source AST sites, ordered QKV and attention dependencies,
-   token/position embedding, MLPs, 12 block invocations, residuals, normalization,
-   pooling/head, shape metadata and unique reused-module call identities.
-3. Independently compare every AE operation/target, ordered dependency, Tensor
-   shape, leaf invocation, source evidence and output against each supported FX
-   configuration; unsupported paths must emit no speculative graph.
-4. Compare SVG/PDF/TikZ element/edge IDs 1:1 against the verified AE instance IR.
-5. Add source mutation, unsupported input/factory, deterministic hash-seed,
-   zero-target-import, isolated performance, and full test-suite gates.
-6. After a green PR check, merge only after the same gates pass on `main`.
+## Limits and publication
 
-The preflight **does not** prove that AE extracts ViT Tiny. `main` remains v0.19
-until all acceptance gates pass.
+Exact audited source/factory/input-specific specialization only. Arbitrary
+ViTs, nondefault kwargs, non-224 geometry, modified files, training-only paths,
+dynamic branches and arbitrary runtime CUDA kernels are NOT verified.
+Static publisher health remains `Partial`: runtime proof stays in the
+independent verifier rather than being embedded in static IR.
+
+Merge only after green PR CI; repeat full gate on main after merge.
