@@ -143,4 +143,19 @@ magg present sae-output --view flow --theme legacy --format svg --output prior-f
 
 For narrow paper figures, use `--focus` to export individual modules; long pipelines may still produce wide vector canvases. Details and acceptance checks: [scientific-latex theme](docs/scientific-latex-theme.md).
 
-- [Architecture diversity benchmark and regression tests](docs/architecture-diversity-v0.8.md)
+### Architecture diversity benchmark
+
+- [Architecture diversity benchmark v0.8](docs/architecture-diversity-v0.8.md)
+
+## SAE / Presenter v0.9 — fixed-position tuple/list provenance
+
+Explicit `return logits, score` and `return encoded, skip` syntax now retain per-index
+source provenance. Supported unique, single-use local/module forwards can bind
+returned positions to caller `encoded, skip = module(x)` with evidence-backed
+`STATIC_COLLECTION_ELEMENT_BINDING` links. The Presenter draws inter-module
+bindings on dotted outer channels. Element shapes can propagate along these
+proven positions; the tuple/list itself is not assigned a tensor shape.
+
+`torch.chunk(...)`, starred or dynamic unpacking and unknown-return arities
+remain unresolved. Static-flow `complete` does not prove concatenation/reshape
+semantics or model runtime correctness. See [v0.9 rules and benchmark](docs/collection-provenance-v0.9.md).

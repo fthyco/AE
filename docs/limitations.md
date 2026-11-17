@@ -56,3 +56,12 @@ claimed. `--focus` can scope the diagram to one model definition.
   last-feature conflicts are surfaced as diagnostics; arbitrary broadcasting,
   reshaping, convolution spatial formulas and context-sensitive batch axes
   remain unproved. Presenter shows only existing IR facts.
+
+## v0.9 positional tuple/list evidence
+
+Literal fixed-size tuple/list source expressions and supported single-use,
+nonrecursive cross-function returns provide indexed collection provenance.
+Each element can retain its own conditional symbolic shape. Dynamic or starred
+arity, `torch.chunk`, nested unpacking and general concat output shape remain
+unproven; no tuple aggregate is treated as a tensor. Presenter draws only
+source-supported cross-module positional links.
