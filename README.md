@@ -142,3 +142,5 @@ magg present sae-output --view flow --theme legacy --format svg --output prior-f
 ```
 
 For narrow paper figures, use `--focus` to export individual modules; long pipelines may still produce wide vector canvases. Details and acceptance checks: [scientific-latex theme](docs/scientific-latex-theme.md).
+
+- [Architecture diversity benchmark and regression tests](docs/architecture-diversity-v0.8.md)
