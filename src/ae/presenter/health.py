@@ -25,7 +25,7 @@ def evaluate(bundle: Any | None, graph: dict | None, *, mode: str,
         issues.append(issue('ENTRYPOINT_UNRESOLVED', 'No indexed model root', severity='error'))
     elif graph is not None:
         issues.extend(graph.get('issues', []))
-        if graph.get('view') == 'flow' and bundle is not None and not graph.get('focus'):
+        if graph.get('view') in ('flow', 'nested') and bundle is not None and not graph.get('focus'):
             index = bundle.model_index
             unresolved = index.get('unresolved', [])
             if unresolved:
@@ -43,6 +43,12 @@ def evaluate(bundle: Any | None, graph: dict | None, *, mode: str,
                                     f'{len(containers)} constructed containers without indexed child execution',
                                     ids=[c['construction_site_id'] for c in containers],
                                     refs=[r for c in containers for r in c.get('source_refs', [])]))
+            templates = [t for m in index.get('modules', [])
+                         for t in m.get('nested_module_templates', [])]
+            if templates:
+                issues.append(issue('DYNAMIC_MODULE_TEMPLATES',
+                                    f'{len(templates)} source-backed module templates; instance counts unverified',
+                                    refs=[r for t in templates for r in t.get('source_refs', [])][:20]))
             calls = [c for m in index.get('modules', []) for c in m.get('forward_calls', [])
                      if c.get('local_definition_ids') and not c.get('module_construction_site_ids')]
             if calls:
