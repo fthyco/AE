@@ -26,6 +26,7 @@ SOURCE_MODULES = {
     "timm/layers/attention.py": "timm.layers.attention",
     "timm/layers/patch_embed.py": "timm.layers.patch_embed",
     "timm/layers/mlp.py": "timm.layers.mlp",
+    "timm/layers/norm.py": "timm.layers.norm",
 }
 
 
@@ -110,17 +111,34 @@ def audit(output: Path, shapes=((1, 3, 224, 224), (2, 3, 224, 224))):
                 {"target": node["target"], "tensor_shape": node["tensor_shape"]}
                 for node in nodes if node["op"] == "call_module"
             ]
-            if hooks != fx_calls:
+            # timm.LayerNorm is an inlined Python module for torch.fx:
+            # FX records its functional layer_norm, hooks see the leaf module.
+            # Check all FX leaf calls against runtime, and *only* allow the
+            # explicit 12 norm1 + 12 norm2 + final norm runtime-only events.
+            fx_targets = {item["target"] for item in fx_calls}
+            inlined_hooks = [h for h in hooks if h["target"] not in fx_targets]
+            expected_inlined = {f"blocks.{i}.{name}" for i in range(12)
+                                for name in ("norm1", "norm2")} | {"norm"}
+            inlined_targets = [h["target"] for h in inlined_hooks]
+            assert len(inlined_hooks) == 25 and set(inlined_targets) == expected_inlined, (
+                "Unexpected non-FX leaf invocations: " + repr(inlined_targets))
+            assert all(
+                type(model.get_submodule(h["target"])).__name__ == "LayerNorm"
+                and type(model.get_submodule(h["target"])).__module__.startswith("timm.layers")
+                for h in inlined_hooks
+            ), "Non-LayerNorm runtime call missing from FX"
+            matched_hooks = [h for h in hooks if h["target"] in fx_targets]
+            if matched_hooks != fx_calls:
                 first = next(
-                    (idx for idx, (a, b) in enumerate(zip(hooks, fx_calls)) if a != b),
-                    min(len(hooks), len(fx_calls)),
+                    (idx for idx, (a, b) in enumerate(zip(matched_hooks, fx_calls)) if a != b),
+                    min(len(matched_hooks), len(fx_calls)),
                 )
                 discrepancy = {
-                    "label": ("fused" if fused else "unfused") + "-" + "x".join(map(str, shape)),
                     "first_mismatch_index": first,
                     "hook_count": len(hooks),
+                    "filtered_hook_count": len(matched_hooks),
                     "fx_call_count": len(fx_calls),
-                    "hooks_near": hooks[max(0, first - 3):first + 5],
+                    "hooks_near": matched_hooks[max(0, first - 3):first + 5],
                     "fx_near": fx_calls[max(0, first - 3):first + 5],
                 }
                 (output / "reference-discrepancy.json").write_text(json.dumps(discrepancy, indent=2))
@@ -141,6 +159,8 @@ def audit(output: Path, shapes=((1, 3, 224, 224), (2, 3, 224, 224))):
                 "fx_edges": len(edges),
                 "fx_tensor_shapes": sum(node["tensor_shape"] is not None for node in nodes),
                 "leaf_runtime_invocations": len(hooks),
+                "fx_call_module_invocations": len(fx_calls),
+                "inlined_timm_layernorm_invocations": len(inlined_hooks),
                 "output_shape": result_shape,
                 "status": "reference_only_not_ae_verified",
             }
