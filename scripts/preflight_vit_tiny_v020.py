@@ -30,6 +30,18 @@ SOURCE_MODULES = {
 }
 
 
+EXPECTED_SOURCE_SHA256 = {
+    "timm/models/vision_transformer.py": "fbbfd91ae654ec3d32ccea05002177efee21281c6db73493c4ea79acc3d7b212",
+    "timm/layers/attention.py": "5fcb14cb16e7382a4845d7aa97328253745827a6f1399e60632ad527fd8c1e07",
+    "timm/layers/patch_embed.py": "7b7e670f8e6a2828752a65297025fb903fc2fbe0298617a3cd29d804be1455aa",
+    "timm/layers/mlp.py": "c024128a1c7e2a55ebc5e33a7c94c585ae1e960cd032b39b08445ea30f05c5a5",
+    "timm/layers/norm.py": "afe3abf01a4379065c1c11bf6b6f947a1a743aff7f5e51849b353697b0db557d",
+}
+EXPECTED_COUNTS = {
+    True: (477, 596, 405, 225, 200, 25),
+    False: (549, 668, 477, 237, 212, 25),
+}
+
 def snapshot_sources(destination: Path) -> dict[str, str]:
     result = {}
     for rel, module in SOURCE_MODULES.items():
@@ -84,6 +96,7 @@ def audit(output: Path, shapes=((1, 3, 224, 224), (2, 3, 224, 224))):
     torch.set_num_threads(1)
     output.mkdir(parents=True, exist_ok=True)
     source_sha256 = snapshot_sources(output / "source")
+    assert source_sha256 == EXPECTED_SOURCE_SHA256, "Audited timm source bytes changed"
     all_cases = []
     for fused in (True, False):
         set_fused_attn(fused)
@@ -144,6 +157,10 @@ def audit(output: Path, shapes=((1, 3, 224, 224), (2, 3, 224, 224))):
                 (output / "reference-discrepancy.json").write_text(json.dumps(discrepancy, indent=2))
                 raise AssertionError(json.dumps(discrepancy, indent=2))
             assert result_shape == [shape[0], 1000], result_shape
+            counts = (len(nodes), len(edges),
+                      sum(node["tensor_shape"] is not None for node in nodes),
+                      len(hooks), len(fx_calls), len(inlined_hooks))
+            assert counts == EXPECTED_COUNTS[fused], ("Reference topology drift", fused, counts)
             assert len({node["name"] for node in nodes}) == len(nodes)
             assert len({(edge["source"], edge["target"], edge["slot"]) for edge in edges}) == len(edges)
             label = ("fused" if fused else "unfused") + "-" + "x".join(map(str, shape))
