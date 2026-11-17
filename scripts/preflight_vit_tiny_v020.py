@@ -119,6 +119,16 @@ def audit(output: Path, shapes=((1, 3, 224, 224), (2, 3, 224, 224))):
                 for node in reference.graph.nodes
                 for index, dep in enumerate(node.all_input_nodes)
             ]
+            if shape[0] == 1:
+                representative = [
+                    [n["name"], n["op"], n["target"], n["input_nodes"], n["tensor_shape"]]
+                    for n in nodes[:66]
+                ]
+                representative += [
+                    [n["name"], n["op"], n["target"], n["input_nodes"], n["tensor_shape"]]
+                    for n in nodes[-16:]
+                ]
+                print("AE_VIT_FX_REPRESENTATIVE=" + json.dumps({"fused": fused, "nodes": representative}), flush=True)
             hooks, result_shape = hook_trace(model, value)
             fx_calls = [
                 {"target": node["target"], "tensor_shape": node["tensor_shape"]}
