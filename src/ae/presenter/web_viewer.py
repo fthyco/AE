@@ -37,7 +37,7 @@ main{min-width:0;position:relative}.toolbar{display:flex;align-items:center;gap:
 .graph{overflow:auto;height:calc(100vh - 136px);background:#fff;cursor:grab;touch-action:pan-x pan-y}
 .graph.dragging{cursor:grabbing}.graph[hidden]{display:none}.shell{margin:24px;position:relative}
 .shell svg{display:block;transform-origin:top left;max-width:none}
-svg rect[id^="v-"]{cursor:pointer;transition:opacity .15s,stroke-width .15s}
+svg rect[id^="v-"],svg rect[data-parent-id]{cursor:pointer;transition:opacity .15s,stroke-width .15s}
 svg rect.ae-dim,svg path.ae-dim{opacity:.12}
 svg rect.ae-selected{stroke:#b26023!important;stroke-width:3!important;opacity:1!important}
 aside{padding:18px 18px 28px;background:#fcfcfc;border-left:1px solid var(--line);overflow:auto;max-height:calc(100vh - 81px)}
@@ -192,7 +192,7 @@ for(const pane of Object.values(panes)){
   });
   pane.addEventListener("pointerup",()=>{origin=null;pane.classList.remove("dragging");});
   pane.addEventListener("pointerleave",()=>{origin=null;pane.classList.remove("dragging");});
-  pane.addEventListener("click",e=>{if(lastDrag){lastDrag=false;return;}const rect=e.target.closest('rect[id^="v-"]');if(rect)inspect(rect.id.slice(2));});
+  pane.addEventListener("click",e=>{if(lastDrag){lastDrag=false;return;}const rect=e.target.closest('rect[id^="v-"],rect[data-parent-id]');if(rect)inspect(rect.getAttribute("data-parent-id")||rect.id.slice(2));});
 }
 show(active);
 </script></body></html>

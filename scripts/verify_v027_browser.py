@@ -41,7 +41,7 @@ def verify(output: Path) -> dict:
         assert "Label:" in page.locator("#details").inner_text()
         page.locator("#search").fill("")
 
-        page.locator(f"#v-{model_id}").click()
+        page.locator(f'rect[data-parent-id="{model_id}"]').click(position={"x":6,"y":6})
         assert page.locator("#drill").is_enabled()
         page.locator("#drill").click()
         assert page.get_by_role("button", name="Operation").get_attribute("aria-pressed") == "true"

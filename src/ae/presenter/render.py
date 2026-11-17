@@ -47,6 +47,8 @@ def svg(scene: dict) -> bytes:
     for r in scene['rects']:
         dash = '' if r['dash']=='none' else f' stroke-dasharray="{r["dash"]}"'
         vid = f' id="v-{r["id"]}" data-ir-ids="{",".join(r["ir_ids"])}"' if r.get('id') else ''
+        if r.get('parent_interactive_id'):
+            vid += f' data-parent-id="{r["parent_interactive_id"]}"'
         color = s['header_fill'] if r['kind']=='header' else s['block_fill'] if r['fill'] not in ('#ffffff', '#e9e9e9') else s['module_fill'] if r['fill']=='#ffffff' else s['header_fill']
         strength = s['emphasis_width'] if r['kind'] in ('flow-module','model','module') else s['border_width']
         a.append(f'<rect{vid} x="{_f(r["x"])}" y="{_f(r["y"])}" width="{_f(r["w"])}" height="{_f(r["h"])}" rx="{_f(s["corner_radius"])}" fill="{color}" stroke="{s["stroke"]}" stroke-width="{_f(strength)}"{dash}/>')

@@ -93,7 +93,7 @@ def make_scene(graph: dict[str, Any], *, status: str, entrypoint: str | None) ->
             rect['semantic_category'] = n['semantic_category']
         scene['rects'].append(rect)
         if grouped:
-            scene['rects'].append({'x':p['x'],'y':p['y'],'w':p['w'],'h':HEAD-15,'kind':'header',
+            scene['rects'].append({'x':p['x'],'y':p['y'],'w':p['w'],'h':HEAD-15,'kind':'header','parent_interactive_id':ident,
                                   'dash':'none','fill':'#e9e9e9' if ismodule else '#f0f0f0'})
         max_chars=max(12,int((p['w']-28)/7.2))
         lines=textwrap.wrap(n['label'],width=min(max_chars,48),break_long_words=True,break_on_hyphens=False)
