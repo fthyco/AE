@@ -75,3 +75,5 @@ U-Net ResNet34 instance-forward expansion is limited to audited, unmodified SMP 
 ViT-Tiny expansion: only original SHA-256-pinned timm 1.0.22 `vit_tiny_patch16_224`, explicit fused/unfused attention branch and concrete RGB 224×224 inputs. Dynamic/nondefault/modified implementations are unsupported.
 
 Presenter v0.21 instance `overview`/`block` and operation `--focus` currently support only the original SHA-256-pinned timm 1.0.22 ViT Tiny instance graph. Summary groups aggregate existing proven operations and edges, with collapsed and hidden IDs recorded in `presentation-manifest.json`. No complete arbitrary-model hierarchy or runtime proof in the bundle is claimed.
+
+MobileNetV3 Small v0.22 instance-forward and overview/block/focus visualizations are limited to original SHA-256-pinned TorchVision 0.25.0 sources, default factory and audited RGB square input geometries. Other architectures, variants, custom weights/kwargs and dynamic paths are not inferred or verified.

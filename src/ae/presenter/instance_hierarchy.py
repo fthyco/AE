@@ -55,7 +55,10 @@ def _unique_refs(nodes: list[dict]) -> list[dict]:
     return [keyed[k] for k in sorted(keyed)]
 
 
-def _summary(graph: dict, stages: list[str], level: str) -> dict:
+def _summary(graph: dict, stages: list[str], level: str, *,
+             model_key: str = "timm-vit-tiny",
+             labels_override: dict[str, str] | None = None,
+             fallback_prefix: str = "Transformer ") -> dict:
     mapped = [
         "transformer" if level == "overview" and s.startswith("blocks.") else s
         for s in stages
@@ -71,12 +74,14 @@ def _summary(graph: dict, stages: list[str], level: str) -> dict:
         "transformer": "Transformer Encoder (12 blocks)",
         "head": "LayerNorm / Classifier", "output": "Outputs",
     }
+    if labels_override:
+        labels.update(labels_override)
     new_nodes = []
     group_id = {}
     member_group = {}
     for key in ordered_groups:
         members = groups[key]
-        ident = stable_id("instance-v021", "timm-vit-tiny", level, key)
+        ident = stable_id("instance-v021", model_key, level, key)
         group_id[key] = ident
         node_ids = sorted({original for n in members for original in n["ir_node_ids"]})
         for n in members:
@@ -85,7 +90,7 @@ def _summary(graph: dict, stages: list[str], level: str) -> dict:
                            if n.get("shape") != "metadata"), "metadata")
         new_nodes.append({
             "id": ident, "kind": "instance-summary",
-            "label": labels.get(key, "Transformer " + key.replace("blocks.", "Block ")),
+            "label": labels.get(key, fallback_prefix + key.replace("blocks.", "Block ")),
             "target": labels.get(key, "Transformer " + key.replace("blocks.", "Block ")),
             "shape": last_shape, "evidence": "derived",
             "parent_id": None, "op": "presentation_group",
@@ -110,7 +115,7 @@ def _summary(graph: dict, stages: list[str], level: str) -> dict:
                                                 item[0][2])):
         ids = sorted({eid for edge in edges for eid in edge["ir_edge_ids"]})
         new_links.append({
-            "id": stable_id("instance-v021-edge", level, left, right, relation),
+            "id": stable_id("instance-v021-edge", model_key, level, left, right, relation),
             "source": group_id[left], "target": group_id[right],
             "relation_kind": relation, "ir_edge_ids": ids,
             "source_refs": [], "style": (
@@ -138,7 +143,7 @@ def _summary(graph: dict, stages: list[str], level: str) -> dict:
 
 def _focus(graph: dict, stages: list[str], focus: str) -> dict:
     if focus not in set(stages):
-        return _unsupported("operation", "No source-proven ViT stage: " + focus)
+        return _unsupported("operation", "No source-proven instance stage: " + focus)
     members = {node["id"] for node, stage in zip(graph["nodes"], stages)
                if stage == focus}
     # Show immediate context for incoming / outgoing cross-boundary edges.

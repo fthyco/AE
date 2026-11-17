@@ -21,6 +21,7 @@ from .analysis.instance_forward import expand_factory_forward
 from .analysis.dense_instance_forward import expand_dense_forward
 from .analysis.unet_instance_forward import expand_unet_forward
 from .analysis.vit_instance_forward import expand_vit_forward
+from .analysis.mobilenetv3_instance_forward import expand_mobilenetv3_forward
 from .analysis.container_specialization import specialize_containers
 from .indexing.model_index import build_model_index, validate_model_index
 from .linking.project import Unit, link_project, syntax_ids, unresolved
@@ -139,7 +140,9 @@ def extract(source_root: str | Path, output: str | Path, *, entrypoint: str | No
         if not propagate_nested_shapes(graph):
             break
         analyze_composite_shapes(graph, parsed_units, model_index)
-    expanded = expand_vit_forward(parsed_units, entrypoint, input_shape, graph.nodes, attention_mode)
+    expanded = expand_mobilenetv3_forward(parsed_units, entrypoint, input_shape, graph.nodes)
+    if expanded is None:
+        expanded = expand_vit_forward(parsed_units, entrypoint, input_shape, graph.nodes, attention_mode)
     if expanded is None:
         expanded = expand_unet_forward(parsed_units, entrypoint, input_shape, graph.nodes)
     if expanded is None:
