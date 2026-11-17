@@ -12,8 +12,8 @@ from .health import issue
 from .reader import Bundle
 
 
-FLOW_EDGES = frozenset({'STATIC_VALUE_DEPENDENCY', 'STATIC_FORWARD_RETURN', 'STATIC_CONDITIONAL_DEPENDENCY', 'STATIC_GUARD_DEPENDENCY', 'STATIC_GUARDED_CALL'})
-FLOW_VALUES = frozenset({'forward_input', 'forward_output', 'forward_unpack', 'forward_choice', 'forward_guard', 'forward_augassign'})
+FLOW_EDGES = frozenset({'STATIC_VALUE_DEPENDENCY', 'STATIC_FORWARD_RETURN', 'STATIC_CONDITIONAL_DEPENDENCY', 'STATIC_GUARD_DEPENDENCY', 'STATIC_GUARDED_CALL', 'STATIC_COLLECTION_ELEMENT', 'STATIC_COLLECTION_MEMBER', 'STATIC_COLLECTION_ELEMENT_BINDING'})
+FLOW_VALUES = frozenset({'forward_input', 'forward_output', 'forward_unpack', 'forward_choice', 'forward_guard', 'forward_augassign', 'forward_collection', 'forward_collection_element'})
 
 
 def _caption(call: dict, components: dict[str, dict]) -> str:
@@ -59,6 +59,8 @@ def project_flow(bundle: Bundle, level: str = 'block', focus: str | None = None)
     shape_edges = {e['source']:e['id'] for e in bundle.ir['edges']
                    if e['relation'] == 'HAS_SYMBOLIC_SHAPE'}
     guarded = {e['target'] for e in bundle.ir['edges'] if e['relation'] == 'STATIC_GUARDED_CALL'}
+    global_mapped: dict[str, str] = {}
+    mapped_lane: dict[str, str] = {}
     for module in modules:
         fid = module.get('forward_method_id')
         if not fid:
@@ -103,6 +105,8 @@ def project_flow(bundle: Bundle, level: str = 'block', focus: str | None = None)
             if source_id in mapped:
                 continue
             mapped[source_id] = vid
+            global_mapped[source_id] = vid
+            mapped_lane[source_id] = root_id
             source = bundle.nodes[source_id]
             fact = shape_facts.get(source_id)
             shape = '[' + ', '.join(fact['attributes']['dimensions']) + ']' if fact else None
@@ -142,8 +146,22 @@ def project_flow(bundle: Bundle, level: str = 'block', focus: str | None = None)
                                          f"No source-backed value dependency in {module['qualname']}",
                                          ids=[fid], refs=bundle.nodes[fid]['source_refs']))
 
+    # Only show actual SAE links between displayed module lanes. This does
+    # not imply runtime tensor flow, and Focus deliberately omits other lanes.
+    for edge in flow_edges:
+        if (edge['relation'] != 'STATIC_COLLECTION_ELEMENT_BINDING'
+                or edge['source'] not in global_mapped
+                or edge['target'] not in global_mapped
+                or mapped_lane[edge['source']] == mapped_lane[edge['target']]):
+            continue
+        graph['links'].append({
+            'id': stable_id('flow-cross-module/v1', edge['id']),
+            'source': global_mapped[edge['source']],
+            'target': global_mapped[edge['target']],
+            'relation_kind': edge['relation'], 'ir_edge_ids': [edge['id']],
+            'source_refs': edge['source_refs'], 'style': 'interprocedural'})
     if not graph['nodes']:
-        graph['issues'].append(issue('NO_STATIC_FLOW_EVIDENCE', 'No usable static forward flow. Re-extract with a compatible SAE.', severity='error'))
+        graph['issues'].append(issue('NO_STATIC_FLOW_EVIDENCE' , 'No usable static forward flow. Re-extract with a compatible SAE.', severity='error'))
     graph['nodes'].sort(key=lambda n: (n['parent_id'] or '', n['source_refs'][0]['path'],
                                        n['source_refs'][0]['start_byte'], n['id']))
     graph['links'].sort(key=lambda e: e['id'])

@@ -28,6 +28,7 @@ def make_flow_scene(graph: dict[str, Any], *, status: str, entrypoint: str | Non
     texts.append({'x': MARGIN, 'y': 54, 'text': 'STATIC FORWARD VALUE DEPENDENCIES  |  Source-backed',
                   'size': 10, 'bold': False})
     curr_y, max_x = TOP, 660
+    lane_bands: dict[str, tuple[float, float]] = {}
 
     for lane in lanes:
         members = [n for n in graph['nodes'] if n['parent_id'] == lane['id']]
@@ -136,8 +137,31 @@ def make_flow_scene(graph: dict[str, Any], *, status: str, entrypoint: str | Non
             paths.append({'id': e['id'], 'ir_edge_ids': e['ir_edge_ids'],
                           'kind': e['style'], 'label': e['relation_kind'],
                           'points': points, 'x1': x1, 'y1': y1, 'x2': x2, 'y2': y2})
+        lane_bands[lane['id']] = (curr_y, curr_y + lane_h)
         curr_y += lane_h + 24
         max_x = max(max_x, MARGIN+lane_w+35)
+
+    # Cross-module collection-element bindings use dedicated outer channels.
+    # No route crosses through a member block; bridges are IR-backed and dotted.
+    node_lanes = {n['id']:n['parent_id'] for n in graph['nodes'] if n['parent_id'] is not None}
+    cross = [e for e in graph['links'] if e['source'] in positions and e['target'] in positions
+             and node_lanes.get(e['source']) != node_lanes.get(e['target'])]
+    for offset, edge in enumerate(sorted(cross,key=lambda e:e['id'])):
+        a,b = positions[edge['source']],positions[edge['target']]
+        source_band = lane_bands[node_lanes[edge['source']]]
+        target_band = lane_bands[node_lanes[edge['target']]]
+        # Lane footer and header tracks sit outside all internal block boxes.
+        x1,y1 = a['x']+a['w'],a['y']+a['h']/2
+        x2,y2 = b['x'],b['y']+b['h']/2
+        corridor = max_x + 24 + offset*14
+        points = [(x1,y1),(x1+15,y1),(x1+15,source_band[1]-8),
+                  (corridor,source_band[1]-8),(corridor,target_band[0]+49),
+                  (x2-16,target_band[0]+49),(x2-16,y2),(x2,y2)]
+        points=[pt for i,pt in enumerate(points) if i==0 or pt!=points[i-1]]
+        paths.append({'id':edge['id'], 'ir_edge_ids':edge['ir_edge_ids'],
+                      'kind':edge['style'],'label':edge['relation_kind'],
+                      'points':points,'x1':x1,'y1':y1,'x2':x2,'y2':y2})
+    max_x += 54 + 14*len(cross) if cross else 0
 
     height = int(curr_y+51)
     texts.append({'x':MARGIN,'y':height-43,
