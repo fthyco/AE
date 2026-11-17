@@ -163,11 +163,13 @@ def run(mode: str, output: Path) -> dict:
         if output_shape is None: continue
         suffix=template[1:] if template and template[0]=='...' else template
         expected=[int(d) for d in suffix] if all(d.isdecimal() for d in suffix) else None
-        agree=(expected is not None and len(output_shape)>=len(suffix) and
-               expected==output_shape[-len(suffix):]) if template and template[0]=='...' else (
-               expected is not None and expected==output_shape)
+        agree=(len(output_shape)>=len(suffix) and
+               expected==output_shape[-len(suffix):]) if template and template[0]=='...' and expected is not None else (
+               expected==output_shape if expected is not None else None)
         root_checks.append({'static':list(template),'fx_output':output_shape,
-                            'match':agree, 'kind':'suffix' if template[0]=='...' else 'concrete'})
+                            'match':agree, 'kind':'suffix' if template[0]=='...' else 'concrete',
+                            'status':('unverifiable' if agree is None else
+                                      'matched' if agree else 'mismatched')})
     report['root_forward_output_shape_checks']=root_checks
     report['model']=mode
     report['tool_versions']={'torch':torch.__version__,'torchvision':torchvision.__version__}
