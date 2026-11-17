@@ -48,3 +48,5 @@ ResNet50 Bottleneck support: [independent stage gate](docs/instance-forward-v0.1
 DenseNet121 (TorchVision 0.25.0 default factory): bounded, source-verified instance forward graph with complete feature-list concatenation dependencies for the audited input shapes. See [v0.18 scope and independent verification](docs/instance-forward-v0.18.md). Other variants and modified source remain unsupported.
 
 SMP 0.6.0 U-Net/ResNet34 bounded, source-proven instance graph and external FX/hooks validation: [v0.19](docs/instance-forward-v0.19.md). Non-Tensor shape metadata is labeled separately; its nodes do not have Tensor shapes.
+
+timm ViT-Tiny (1.0.22): bounded 12-block source-only instance-forward expansion with explicit `--attention-mode fused|unfused` and independent FX/hooks validation. See [v0.20](docs/instance-forward-v0.20.md). Other ViTs and modified sources remain unsupported.
