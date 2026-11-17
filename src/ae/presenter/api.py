@@ -33,8 +33,8 @@ def present(bundle_path: str | Path, output: str | Path, *, level: str = 'block'
     style = select_theme(theme)
     if view not in ('structure','flow','nested','instance'):
         raise ValueError(f'Invalid view: {view}')
-    if focus and view not in ('flow', 'nested'):
-        raise ValueError('--focus currently supports flow and nested views only')
+    if focus and view not in ('flow', 'nested', 'instance'):
+        raise ValueError('--focus currently supports flow, nested and instance views only')
     if level not in ('overview','block','operation'):
         raise ValueError(f'Invalid level: {level}')
     if mode not in ('exploration','publication'):
@@ -81,6 +81,9 @@ def present(bundle_path: str | Path, output: str | Path, *, level: str = 'block'
         if view=='instance':
             manifest['input_shape']=graph.get('input_shape')
             manifest['instance_artifact']='instance-forward.json'
+            manifest['collapsed_instance_edge_ids']=graph.get('collapsed_instance_edge_ids', [])
+            manifest['omitted_instance_node_ids']=graph.get('omitted_instance_node_ids', [])
+            manifest['omitted_instance_edge_ids']=graph.get('omitted_instance_edge_ids', [])
         manifest['visual_elements']={n['id']:{'kind':n['kind'],
                'ir_node_ids':n['ir_node_ids'],'ir_edge_ids':n['ir_edge_ids'],
                'source_refs':n['source_refs']} for n in graph['nodes']}
