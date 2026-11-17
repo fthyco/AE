@@ -15,19 +15,20 @@ from torch.fx.passes.shape_prop import ShapeProp
 from ae.sae.api import extract, validate_bundle
 
 
-def verify(output: Path, sides=(64,96,224)) -> dict:
+def verify(output: Path, sides=(64,96,224), model_name='resnet18') -> dict:
     output.mkdir(parents=True,exist_ok=True)
     torch.set_num_threads(1)
     rows=[]
     original=Path(torchvision.models.resnet.__file__).resolve()
     data=original.read_bytes()
-    model=torchvision.models.resnet18(weights=None).eval()
+    assert model_name in {'resnet18','resnet50'}
+    model=getattr(torchvision.models,model_name)(weights=None).eval()
     runtime_names=dict(model.named_modules())
     for side in sides:
         folder=output / f'input_{side}'
         source=folder/'source';source.mkdir(parents=True,exist_ok=True)
         (source/'resnet.py').write_bytes(data)
-        extract(source, folder/'sae', entrypoint='resnet:resnet18',input_shape=(1,3,side,side))
+        extract(source, folder/'sae', entrypoint=f'resnet:{model_name}',input_shape=(1,3,side,side))
         valid=validate_bundle(folder/'sae')
         assert valid['valid'],valid
         static=json.loads((folder/'sae/instance-forward.json').read_text())
@@ -35,6 +36,8 @@ def verify(output: Path, sides=(64,96,224)) -> dict:
         graph=symbolic_trace(model)
         ShapeProp(graph).propagate(torch.zeros(1,3,side,side))
         fx=list(graph.graph.nodes)
+        expected_counts={'resnet18':(71,78),'resnet50':(177,192)}
+        assert (len(fx),sum(len(x.all_input_nodes) for x in fx))==expected_counts[model_name]
         assert len(static['nodes'])==len(fx), (len(static['nodes']),len(fx))
         by_id={n['id']:n for n in static['nodes']}
         assert len(by_id)==len(static['nodes'])
@@ -105,7 +108,7 @@ def verify(output: Path, sides=(64,96,224)) -> dict:
              'status':'verified_for_input'}
         rows.append(row)
         (folder/'result.json').write_text(json.dumps(row,indent=2))
-    result={'model':'resnet18','source_sha256':hashlib.sha256(data).hexdigest(),
+    result={'model':model_name,'source_sha256':hashlib.sha256(data).hexdigest(),
             'torch_version':torch.__version__,'torchvision_version':torchvision.__version__,
             'verified_inputs':rows,
             'scope':'default_factory, selected concrete input shapes; not arbitrary dynamic paths',
@@ -118,6 +121,7 @@ def verify(output: Path, sides=(64,96,224)) -> dict:
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser()
+    parser.add_argument('--model',choices=['resnet18','resnet50'],default='resnet18')
     parser.add_argument('--output',type=Path,default=Path('benchmark-output/full-resnet18'))
     args=parser.parse_args()
-    verify(args.output)
+    verify(args.output,model_name=args.model)

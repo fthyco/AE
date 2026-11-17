@@ -25,7 +25,7 @@ Static factory specialization: ResNet block configuration; supported fixed-count
 
 Nested shape propagation, FX source-site audit, and [instance-aware FX verification](docs/instance-fx-v0.15.md).
 
-Bounded full forward expansion for the verified default ResNet18 factory:
+Bounded full forward expansion for the verified default ResNet18 and ResNet50 factories:
 
 ```bash
 ae extract path/to/torchvision/models --entrypoint resnet:resnet18 --input-shape 1,3,64,64 --output ae-bundle
@@ -42,3 +42,5 @@ python scripts/verify_container_specialization.py
 ```
 
 See docs/limitations.md and docs/container-specialization-v0.12.md.
+
+ResNet50 Bottleneck support: [independent stage gate](docs/instance-forward-v0.17.md).

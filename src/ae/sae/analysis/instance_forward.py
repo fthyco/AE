@@ -72,16 +72,19 @@ def _source_checks(unit: Unit, model: ast.ClassDef, block: ast.ClassDef,
     _check(len(input_shape) == 4 and all(type(v) is int and v > 0 for v in input_shape),
            'Input must have four positive concrete dimensions')
     _check(input_shape[1] == 3, 'Input channel count differs from static stem')
-    _check(block.name == 'BasicBlock' and model.name == 'ResNet',
+    _check(block.name in ('BasicBlock','Bottleneck') and model.name == 'ResNet',
            'No bounded construction proof for selected block/model implementation')
+    expansion = 1 if block.name == 'BasicBlock' else 4
+    guard_position = 6 if block.name == 'BasicBlock' else 9
+    forward_length = 10 if block.name == 'BasicBlock' else 13
     exp = [n for n in block.body if isinstance(n, ast.AnnAssign)
            and isinstance(n.target, ast.Name) and n.target.id == 'expansion']
     _check(len(exp) == 1 and isinstance(exp[0].value, ast.Constant)
-           and exp[0].value.value == 1, 'Block expansion is not 1')
+           and exp[0].value.value == expansion, 'Block expansion is not proven')
     forward = _method(block, 'forward')
-    _check(len(forward.body) == 10, 'Block forward control-flow template changed')
-    _check(isinstance(forward.body[6], ast.If), 'Expected downsample guard missing')
-    guard = forward.body[6]
+    _check(len(forward.body) == forward_length, 'Block forward control-flow template changed')
+    _check(isinstance(forward.body[guard_position], ast.If), 'Expected downsample guard missing')
+    guard = forward.body[guard_position]
     _check(isinstance(guard.test, ast.Compare) and _self_attr(guard.test.left) == 'downsample'
            and len(guard.test.ops) == 1 and isinstance(guard.test.ops[0], ast.IsNot)
            and isinstance(guard.test.comparators[0], ast.Constant)
@@ -141,11 +144,14 @@ def _source_checks(unit: Unit, model: ast.ClassDef, block: ast.ClassDef,
         if attr == 'bn1':
             _check(isinstance(expr, ast.Call) and isinstance(expr.func, ast.Name)
                    and expr.func.id == 'norm_layer', 'Stem normalization is not norm_layer')
-    for attr, kind in [('conv1','conv3x3'),('conv2','conv3x3')]:
+    block_convs = ([('conv1','conv3x3'),('conv2','conv3x3')]
+                   if block.name=='BasicBlock' else
+                   [('conv1','conv1x1'),('conv2','conv3x3'),('conv3','conv1x1')])
+    for attr, kind in block_convs:
         expr = _assignment(block,attr)
         _check(isinstance(expr, ast.Call) and isinstance(expr.func, ast.Name)
-               and expr.func.id == kind, f'{attr} is not proven conv3x3')
-    for attr in ('bn1','bn2'):
+               and expr.func.id == kind, f'{attr} is not proven {kind}')
+    for attr in (('bn1','bn2') if block.name=='BasicBlock' else ('bn1','bn2','bn3')):
         expr = _assignment(block,attr)
         _check(isinstance(expr, ast.Call) and isinstance(expr.func, ast.Name)
                and expr.func.id == 'norm_layer', f'{attr} is not proven norm_layer')
@@ -200,17 +206,46 @@ def _source_checks(unit: Unit, model: ast.ClassDef, block: ast.ClassDef,
     avg=_nn_call(model,'avgpool','AdaptiveAvgPool2d')
     _check(len(avg.args)==1 and _literal(avg.args[0])==(1,1),
            'Unsupported average pooling geometry')
-    for name, expected_args in [('conv1',['inplanes','planes','stride']),
-                                ('conv2',['planes','planes'])]:
+    if block.name=='BasicBlock':
+        expected=[('conv1',['inplanes','planes','stride']),
+                  ('conv2',['planes','planes'])]
+    else:
+        expected=[('conv1',['inplanes','width']),
+                  ('conv2',['width','width','stride','groups','dilation'])]
+        width_assignment=[n for n in _method(block,'__init__').body
+                          if isinstance(n,ast.Assign) and len(n.targets)==1
+                          and isinstance(n.targets[0],ast.Name)
+                          and n.targets[0].id=='width']
+        _check(len(width_assignment)==1
+               and ast.unparse(width_assignment[0].value)=='int(planes * (base_width / 64.0)) * groups',
+               'Unrecognized bottleneck width formula')
+        conv3=_assignment(block,'conv3')
+        _check(len(conv3.args)==2 and isinstance(conv3.args[0],ast.Name)
+               and conv3.args[0].id=='width'
+               and isinstance(conv3.args[1],ast.BinOp)
+               and isinstance(conv3.args[1].op,ast.Mult)
+               and isinstance(conv3.args[1].left,ast.Name)
+               and conv3.args[1].left.id=='planes'
+               and _self_attr(conv3.args[1].right)=='expansion',
+               'Unrecognized bottleneck expansion output binding')
+    for name, expected_args in expected:
         conv=_assignment(block,name)
         _check(len(conv.args)==len(expected_args) and
                all(isinstance(a,ast.Name) and a.id==n
                    for a,n in zip(conv.args,expected_args)) and not conv.keywords,
-               'Unsupported BasicBlock convolution binding')
+               'Unsupported block convolution binding')
     for name in ('bn1','bn2'):
         norm=_assignment(block,name)
         _check(len(norm.args)==1 and isinstance(norm.args[0],ast.Name)
-               and norm.args[0].id=='planes', 'Unsupported block normalization channel binding')
+               and norm.args[0].id==('planes' if block.name=='BasicBlock' else 'width'),
+               'Unsupported block normalization channel binding')
+    if block.name=='Bottleneck':
+        norm3=_assignment(block,'bn3')
+        _check(len(norm3.args)==1 and isinstance(norm3.args[0],ast.BinOp)
+               and isinstance(norm3.args[0].left,ast.Name)
+               and norm3.args[0].left.id=='planes'
+               and _self_attr(norm3.args[0].right)=='expansion',
+               'Unsupported bottleneck final normalization')
     _check(len(container.args[0].args)==3 and
            _self_attr(container.args[0].args[0])=='inplanes'
            and isinstance(container.args[0].args[1],ast.BinOp)
@@ -248,8 +283,8 @@ def _source_checks(unit: Unit, model: ast.ClassDef, block: ast.ClassDef,
                    and isinstance(kw['dilate'].value, ast.Name)
                    and kw['dilate'].value.id == 'replace_stride_with_dilation',
                    'Unsupported dilation configuration')
-        stage_specs[stage['name']] = {'planes':planes,'stride':stride,'start_channels':inplanes}
-        inplanes=planes
+        stage_specs[stage['name']] = {'planes':planes,'stride':stride,'start_channels':inplanes,'expansion':expansion}
+        inplanes=planes*expansion
     fc = _nn_call(model,'fc','Linear')
     first=fc.args[0] if fc.args else None
     _check(isinstance(first,ast.BinOp) and isinstance(first.op,ast.Mult)
@@ -283,6 +318,7 @@ class _Expander:
                  input_shape: tuple[int,...], ir_nodes: list[dict]):
         self.unit=unit;self.factory=factory;self.stages=stages
         self.block_forward=block_forward;self.root_forward=root_forward
+        self.block_type=factory['block_type']
         self.input_shape=input_shape
         self.nodes=[];self.edges=[];self.counts={}
         self.source_site_index={}
@@ -325,16 +361,25 @@ class _Expander:
             _check(stage is not None,'Missing static block configuration')
             out_channels=stage['planes']
             stride=stage['stride'] if block_pos==0 else 1
-            if member=='conv1': shape=self._conv(value.shape,out_channels,3,stride,1)
-            elif member=='conv2':shape=self._conv(value.shape,out_channels,3,1,1)
-            elif member in {'bn1','bn2','relu'}:shape=value.shape
-            else:raise StaticPathUnsupported('Unknown BasicBlock member '+member)
+            if self.block_type=='BasicBlock':
+                if member=='conv1':shape=self._conv(value.shape,out_channels,3,stride,1)
+                elif member=='conv2':shape=self._conv(value.shape,out_channels,3,1,1)
+                elif member in {'bn1','bn2','relu'}:shape=value.shape
+                else:raise StaticPathUnsupported('Unknown BasicBlock member '+member)
+            elif self.block_type=='Bottleneck':
+                if member=='conv1':shape=self._conv(value.shape,out_channels,1,1,0)
+                elif member=='conv2':shape=self._conv(value.shape,out_channels,3,stride,1)
+                elif member=='conv3':shape=self._conv(value.shape,out_channels*stage['expansion'],1,1,0)
+                elif member in {'bn1','bn2','bn3','relu'}:shape=value.shape
+                else:raise StaticPathUnsupported('Unknown Bottleneck member '+member)
+            else:raise StaticPathUnsupported('Unsupported block type')
         else:
             if member=='conv1':shape=self._conv(value.shape,64,7,2,3)
             elif member=='maxpool':shape=self._conv(value.shape,value.shape[1],3,2,1)
             elif member=='avgpool':shape=(*value.shape[:2],1,1)
             elif member=='fc':
-                _check(len(value.shape)==2 and value.shape[1]==512,'Unknown Linear input dimension')
+                _check(len(value.shape)==2 and value.shape[1]==512*(1 if self.block_type=='BasicBlock' else 4),
+                       'Unknown Linear input dimension')
                 shape=(value.shape[0],1000)
             elif member in {'bn1','relu'}:shape=value.shape
             else:raise StaticPathUnsupported('Unknown root member '+member)
@@ -343,7 +388,8 @@ class _Expander:
     def _block(self, path:str, value:_Value, stage:dict, pos:int) -> _Value:
         env={'x':value}
         # First block has a projection precisely when _make_layer's proven condition is true.
-        downsample=(pos==0 and (stage['stride']!=1 or stage['start_channels']!=stage['planes']))
+        downsample=(pos==0 and (stage['stride']!=1 or
+                                stage['start_channels']!=stage['planes']*stage['expansion']))
         for stmt in self.block_forward.body:
             if isinstance(stmt,ast.Assign):
                 _check(len(stmt.targets)==1 and isinstance(stmt.targets[0],ast.Name),
@@ -360,7 +406,8 @@ class _Expander:
                     env[dest]=self._call(path,attr,env[call.args[0].id],call,stage=stage,block_pos=pos)
                 else:raise StaticPathUnsupported('Unknown block assignment expression')
             elif isinstance(stmt,ast.If):
-                _check(stmt is self.block_forward.body[6], 'Unsupported block condition')
+                _check(stmt is self.block_forward.body[6 if self.block_type=='BasicBlock' else 9],
+                       'Unsupported block condition')
                 if downsample:
                     _check(len(stmt.body)==1 and isinstance(stmt.body[0],ast.Assign),
                            'Unknown projection guard body')
@@ -368,7 +415,7 @@ class _Expander:
                     _check(isinstance(call,ast.Call) and len(call.args)==1
                            and isinstance(call.args[0],ast.Name) and call.args[0].id=='x',
                            'Unknown projection input')
-                    begin=env['x'];new_shape=self._conv(begin.shape,stage['planes'],1,stage['stride'],0)
+                    begin=env['x'];new_shape=self._conv(begin.shape,stage['planes']*stage['expansion'],1,stage['stride'],0)
                     branch=self.emit('call_module',path+'.downsample.0',[begin],new_shape,call,
                                      module_instance=path+'.downsample.0')
                     branch=self.emit('call_module',path+'.downsample.1',[branch],new_shape,call,
