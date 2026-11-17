@@ -30,7 +30,7 @@ def project_instance_forward(bundle, level='operation', focus=None):
             'op':x['op'],'target':x['target']}
            for x in data['nodes']]
     links=[{'id':x['id'],'source':x['source'],'target':x['target'],
-            'relation_kind':'STATIC_INSTANCE_TENSOR_DEPENDENCY',
+            'relation_kind':x.get('relation','STATIC_INSTANCE_TENSOR_DEPENDENCY'),
             'ir_edge_ids':[x['id']],'instance_edge_id':x['id'],'input_slot':x['input_slot'],
             'source_refs':[], 'style':'static-value'} for x in data['edges']]
     return {'view':'instance','level':level,'nodes':nodes,'links':links,

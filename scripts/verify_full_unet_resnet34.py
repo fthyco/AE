@@ -125,6 +125,15 @@ def verify(output: Path, shapes=((1,3,64,64), (1,3,96,96),
                            for pos in range(len(a['input_ids']))}
         if actual_edges!=expected_edge_set or len(actual_edges)!=len(static['edges']):
             mismatches.append({'kind':'IR edge inconsistency'})
+        by_id={a['id']:a for a in static['nodes']}
+        for edge in static['edges']:
+            pred=by_id[edge['source']];succ=by_id[edge['target']]
+            want=('STATIC_INSTANCE_SHAPE_METADATA_DEPENDENCY'
+                  if pred['shape'] is None or succ['shape'] is None
+                  else 'STATIC_INSTANCE_TENSOR_DEPENDENCY')
+            if edge.get('relation')!=want:
+                mismatches.append({'kind':'tensor/metadata edge classification',
+                                   'source':edge['source'],'target':edge['target']})
         hooks,outshape=_hook_sequence(model,torch.zeros(batch,ch,h,w))
         expected_hooks=[(n['target'],n['shape']) for n in static['nodes']
                         if n['op']=='call_module']
@@ -144,8 +153,8 @@ def verify(output: Path, shapes=((1,3,64,64), (1,3,96,96),
         manifest=json.loads((folder/'figure/presentation-manifest.json').read_text())
         if rendered['status']!='partial' or not rendered['render_allowed']:
             mismatches.append({'kind':'health gate','value':rendered})
-        if set(manifest['visual_elements'])!=node_ids or
-           set(manifest['visual_links'])!={x['id'] for x in static['edges']}:
+        if (set(manifest['visual_elements'])!=node_ids or
+            set(manifest['visual_links'])!={x['id'] for x in static['edges']}):
             mismatches.append({'kind':'projection completeness'})
         for extension in ('svg','pdf','tex'):
             path=folder/'figure'/f'architecture.{extension}'

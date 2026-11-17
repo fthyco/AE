@@ -161,7 +161,7 @@ def extract(source_root: str | Path, output: str | Path, *, entrypoint: str | No
         expanded_nodes = {n['id']:n for n in expanded['nodes']}
         for edge in expanded['edges']:
             graph.add_edge({
-                **edge, 'relation':'STATIC_INSTANCE_TENSOR_DEPENDENCY',
+                **edge, 'relation':edge.get('relation','STATIC_INSTANCE_TENSOR_DEPENDENCY'),
                 'evidence_class':'derived',
                 'analysis_rule':'bounded-static-instance-forward/v1',
                 'source_refs':expanded_nodes[edge['target']]['source_refs'],

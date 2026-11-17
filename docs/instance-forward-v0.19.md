@@ -15,7 +15,7 @@ Supported input: RGB NCHW batch with positive dimensions, H/W at least 32 and di
 - Retains the six feature maps and reverses their selection order, then connects **four multi-scale concatenation skips**
 - Emits five target-size reads and interpolations, decoder Conv2d/BatchNorm/ReLU leaves, Identity attentions, and SegmentationHead leaves
 - Separates module identity from call identity (e.g. two calls to one encoder BasicBlock ReLU)
-- Includes FX-style source-backed non-Tensor shape-metadata operations; these nodes have `shape=null`, not fabricated Tensor shapes
+- Includes FX-style source-backed non-Tensor shape-metadata operations; these nodes have `shape=null`, not fabricated Tensor shapes. Metadata operand edges are explicitly distinguished from Tensor operand edges
 
 The graph has **198 operation/metadata nodes**, **227 ordered operand edges**, **149 leaf `call_module` events**, **16 residual adds**, **4 concats**, and **5 interpolate operations** in the audited topology.
 

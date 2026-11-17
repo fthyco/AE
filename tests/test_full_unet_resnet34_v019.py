@@ -42,6 +42,10 @@ def test_full_graph_and_diagram(tmp_path,original_files):
     assert data['status']=='expanded_static'
     assert len(data['nodes'])==198
     assert len(data['edges'])==227
+    assert sum(e['relation']=='STATIC_INSTANCE_SHAPE_METADATA_DEPENDENCY'
+               for e in data['edges'])==32
+    assert sum(e['relation']=='STATIC_INSTANCE_TENSOR_DEPENDENCY'
+               for e in data['edges'])==195
     assert data['output_shape']==[1,1,64,64]
     assert sum(x['op']=='call_function' and x['target']=='cat' for x in data['nodes'])==4
     assert sum(x['op']=='call_function' and x['target']=='add' for x in data['nodes'])==16

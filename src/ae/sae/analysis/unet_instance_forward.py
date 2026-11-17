@@ -213,10 +213,15 @@ class _UnetExpander:
         self.nodes.append({'id':ident,'op':op,'target':target,'call_ordinal':ordinal,
                            'module_instance':module_instance, 'source_refs':[ref],
                            'source_ir_ids':ids,'shape':list(shape) if shape is not None else None,
+                           'value_kind':'metadata' if shape is None else 'tensor',
                            'input_ids':[v.ident for v in inputs]})
         for slot,v in enumerate(inputs):
+            relation=('STATIC_INSTANCE_SHAPE_METADATA_DEPENDENCY'
+                      if shape is None or v.shape is None
+                      else 'STATIC_INSTANCE_TENSOR_DEPENDENCY')
             self.edges.append({'id':stable_id('instance-forward-edge/v1',v.ident,ident,slot),
-                               'source':v.ident,'target':ident,'input_slot':slot})
+                               'source':v.ident,'target':ident,'input_slot':slot,
+                               'relation':relation})
         return _Data(ident,shape,python_value)
 
     def module(self, path: str, value: _Data, shape: tuple[int,...], site: str) -> _Data:
