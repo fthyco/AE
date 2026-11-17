@@ -23,14 +23,14 @@ def project_instance_forward(bundle, level='operation', focus=None):
                 'issues':[issue('INSTANCE_FORWARD_UNRESOLVED',
                                 '; '.join(data.get('issues',[])),severity='error')]}
     nodes=[{'id':x['id'],'kind':'instance-operation','label':x['target'],
-            'shape':'×'.join(map(str,x['shape'])),'evidence':'derived',
+            'shape':'×'.join(map(str,x['shape'])) if x['shape'] is not None else 'metadata','evidence':'derived',
             'parent_id':None,'ir_edge_ids':[],'ir_node_ids':[x['id']] + x['source_ir_ids'] +
                 ([x['factory_instance_id']] if x.get('factory_instance_id') else []),
             'source_refs':x['source_refs'],'instance_node_id':x['id'],
             'op':x['op'],'target':x['target']}
            for x in data['nodes']]
     links=[{'id':x['id'],'source':x['source'],'target':x['target'],
-            'relation_kind':'STATIC_INSTANCE_TENSOR_DEPENDENCY',
+            'relation_kind':x.get('relation','STATIC_INSTANCE_TENSOR_DEPENDENCY'),
             'ir_edge_ids':[x['id']],'instance_edge_id':x['id'],'input_slot':x['input_slot'],
             'source_refs':[], 'style':'static-value'} for x in data['edges']]
     return {'view':'instance','level':level,'nodes':nodes,'links':links,

@@ -46,3 +46,5 @@ See docs/limitations.md and docs/container-specialization-v0.12.md.
 ResNet50 Bottleneck support: [independent stage gate](docs/instance-forward-v0.17.md).
 
 DenseNet121 (TorchVision 0.25.0 default factory): bounded, source-verified instance forward graph with complete feature-list concatenation dependencies for the audited input shapes. See [v0.18 scope and independent verification](docs/instance-forward-v0.18.md). Other variants and modified source remain unsupported.
+
+SMP 0.6.0 U-Net/ResNet34 bounded, source-proven instance graph and external FX/hooks validation: [v0.19](docs/instance-forward-v0.19.md). Non-Tensor shape metadata is labeled separately; its nodes do not have Tensor shapes.
