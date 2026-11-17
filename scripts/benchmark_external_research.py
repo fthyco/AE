@@ -145,7 +145,7 @@ def audit(case: str, root: Path, output: Path) -> dict:
                     if x.get("semantic_category"))),
             }
         assert structural["overview"]["visible_nodes"] <= structural["block"]["visible_nodes"]
-        assert structural["block"]["visible_nodes"] <= structural["operation"]["visible_nodes"]
+        assert structural["block"]["visible_nodes"] < structural["operation"]["visible_nodes"]
     finally:
         builtins.__import__ = original_import
 

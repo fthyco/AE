@@ -9,7 +9,7 @@ description = "Static Python/PyTorch architecture extraction and vector diagrams
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [{name = "AE contributors"}]
-license = {text = "MIT"}
+license = "MIT"
 keywords = ["pytorch", "static-analysis", "architecture", "intermediate-representation"]
 dependencies = ["PyYAML>=6.0,<7"]
 

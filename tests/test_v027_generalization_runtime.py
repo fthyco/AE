@@ -41,7 +41,7 @@ def test_auto_fallback_is_evidence_backed_and_three_levels_differ(tmp_path):
         assert all(x["ir_node_ids"] and x["source_refs"]
                    for x in data["visual_elements"].values())
         records.append(len(data["visual_elements"]))
-    assert records[0] < records[1] <= records[2]
+    assert records[0] < records[1] < records[2]
     category = [n.get("semantic_category")
                 for n in data["visual_elements"].values()]
     assert "linear" in category
