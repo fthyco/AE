@@ -89,6 +89,8 @@ def make_scene(graph: dict[str, Any], *, status: str, entrypoint: str | None) ->
         rect={'id':ident,'ir_ids':n['ir_node_ids'],'x':p['x'],'y':p['y'],'w':p['w'],'h':p['h'],'kind':n['kind'],
               'dash': '5,4' if unresolved else 'none',
               'fill':'#ffffff' if (ismodule or grouped) else '#f5f5f5' if n['kind']=='component' else '#ffffff'}
+        if n.get('semantic_category'):
+            rect['semantic_category'] = n['semantic_category']
         scene['rects'].append(rect)
         if grouped:
             scene['rects'].append({'x':p['x'],'y':p['y'],'w':p['w'],'h':HEAD-15,'kind':'header',

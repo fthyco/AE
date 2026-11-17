@@ -50,7 +50,7 @@ def svg(scene: dict) -> bytes:
         color = s['header_fill'] if r['kind']=='header' else s['block_fill'] if r['fill'] not in ('#ffffff', '#e9e9e9') else s['module_fill'] if r['fill']=='#ffffff' else s['header_fill']
         strength = s['emphasis_width'] if r['kind'] in ('flow-module','model','module') else s['border_width']
         a.append(f'<rect{vid} x="{_f(r["x"])}" y="{_f(r["y"])}" width="{_f(r["w"])}" height="{_f(r["h"])}" rx="{_f(s["corner_radius"])}" fill="{color}" stroke="{s["stroke"]}" stroke-width="{_f(strength)}"{dash}/>')
-        if r.get('semantic_category') in COLORS and r['kind']=='instance-operation':
+        if r.get('semantic_category') in COLORS and r['kind'] in ('instance-operation', 'component', 'operation', 'nested-constructor'):
             accent = COLORS[r['semantic_category']]
             a.append(f'<rect x="{_f(r["x"]+1.5)}" y="{_f(r["y"]+2)}" width="3" height="{_f(r["h"]-4)}" fill="{accent}" data-operation-category="{r["semantic_category"]}"/>')
     for p in scene['paths']:
@@ -111,7 +111,7 @@ def pdf(scene: dict) -> bytes:
         c.setLineWidth(s['emphasis_width'] if r['kind'] in ('flow-module','model','module') else s['border_width'])
         c.setDash([] if r['dash']=='none' else [4,3])
         c.roundRect(r['x'],r['y'],r['w'],r['h'],s['corner_radius'],stroke=1,fill=1)
-        if r.get('semantic_category') in COLORS and r['kind']=='instance-operation':
+        if r.get('semantic_category') in COLORS and r['kind'] in ('instance-operation', 'component', 'operation', 'nested-constructor'):
             c.setFillColor(HexColor(COLORS[r['semantic_category']]))
             c.rect(r['x']+1.5,r['y']+2,3,r['h']-4,stroke=0,fill=1)
     c.setDash([])
@@ -168,7 +168,7 @@ def tikz(scene: dict) -> bytes:
         x,y,w,h=(_f(r[z]) for z in ('x','y','w','h'))
         strength=s['emphasis_width'] if r['kind'] in ('flow-module','model','module') else s['border_width']
         a.append(f'\\draw[draw=black!90,fill={shade},{line},line width={_f(strength)}pt,rounded corners={_f(s["corner_radius"])}pt] ({x},{y}) rectangle ({_f(r["x"]+r["w"])},{_f(r["y"]+r["h"])});')
-        if r.get('semantic_category') in COLORS and r['kind']=='instance-operation':
+        if r.get('semantic_category') in COLORS and r['kind'] in ('instance-operation', 'component', 'operation', 'nested-constructor'):
             color=COLORS[r['semantic_category']][1:]
             a.append(f'\\draw[draw={{rgb,255:red,{int(color[:2],16)};green,{int(color[2:4],16)};blue,{int(color[4:],16)}}},line width=3pt] ({_f(r["x"]+3)},{_f(r["y"]+2)}) -- ({_f(r["x"]+3)},{_f(r["y"]+r["h"]-2)});')
     for p in scene['paths']:

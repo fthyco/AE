@@ -8,6 +8,7 @@ import sys
 from .sae.api import extract, inspect_bundle, validate_bundle
 from .presenter import present
 from .presenter.web_viewer import build_viewer
+from .verification.runtime_reference import runtime_audit
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -38,8 +39,16 @@ def build_parser() -> argparse.ArgumentParser:
     viewer = commands.add_parser('viewer', help='Build a self-contained offline HTML viewer from a validated bundle')
     viewer.add_argument('bundle', help='Existing SAE extraction bundle directory')
     viewer.add_argument('--output', '-o', required=True, help='Output directory containing index.html')
-    viewer.add_argument('--view', choices=['instance','nested','flow','structure'], default='instance')
+    viewer.add_argument('--view', choices=['auto','instance','nested','flow','structure'], default='auto')
     viewer.add_argument('--title', default='Architecture Extractor')
+    runtime = commands.add_parser('runtime-audit', help='OPT-IN: execute trusted PyTorch model as independent FX/runtime reference')
+    runtime.add_argument('source', help='Trusted Python source directory. Executed: review first.')
+    runtime.add_argument('--factory', required=True, help='module:zero_arg_factory returning torch.nn.Module')
+    runtime.add_argument('--input-shape', required=True, action='append', help='Repeated positional synthetic input shape, e.g. 1,3,64,64')
+    runtime.add_argument('--input-dtype', action='append', help='Repeated input dtype: float32,int64,etc; defaults float32')
+    runtime.add_argument('--output', '-o', required=True, help='Reference JSON output directory')
+    runtime.add_argument('--allow-execute', action='store_true', help='Explicit approval to import/execute target model; NOT a sandbox')
+    runtime.add_argument('--max-nodes', type=int, default=20000)
     return parser
 
 
@@ -53,6 +62,12 @@ def main(argv: list[str] | None = None) -> int:
                              attention_mode=args.attention_mode)
         elif args.command == "validate":
             result = validate_bundle(args.bundle)
+        elif args.command == 'runtime-audit':
+            shapes = [tuple(int(x) for x in item.split(',')) for item in args.input_shape]
+            result = runtime_audit(source_root=args.source, factory=args.factory,
+                input_shapes=shapes, input_dtypes=args.input_dtype,
+                output=args.output, allow_execute=args.allow_execute,
+                max_nodes=args.max_nodes)
         elif args.command == 'viewer':
             result = build_viewer(args.bundle, args.output, view=args.view, title=args.title)
         elif args.command == "present":
@@ -63,6 +78,8 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(result, sort_keys=True, indent=2, ensure_ascii=False))
         if args.command == 'viewer':
             return 0 if result['rendered_levels'] else 2
+        if args.command == 'runtime-audit':
+            return 0 if result['status'] == 'traced' else 2
         return 0 if args.command != "present" or result["render_allowed"] else 2
     except (ValueError, OSError, json.JSONDecodeError) as exc:
         print(f"ae: {type(exc).__name__}: {exc}", file=sys.stderr)

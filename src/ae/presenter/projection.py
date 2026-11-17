@@ -6,6 +6,7 @@ from typing import Any
 
 from ae.sae.ir.canonical import stable_id
 from .health import issue
+from .semantic import source_category
 from .reader import Bundle
 
 
@@ -40,6 +41,9 @@ def project(bundle: Bundle, level: str = 'block') -> dict[str, Any]:
         entry = {'id': ident, 'kind': kind, 'label': label, 'parent_id': parent,
                  'ir_node_ids': ids, 'ir_edge_ids': sorted(set(edge_ids or [])),
                  'evidence': state, 'source_refs': refs, 'details': details}
+        category = source_category(kind, label)
+        if category != 'unknown':
+            entry['semantic_category'] = category
         graph['nodes'].append(entry)
         graph_node_by_id[ident] = entry
         return ident
