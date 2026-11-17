@@ -65,3 +65,35 @@ def test_non_audited_input_rejected(tmp_path,snapshot,shape):
 def test_original_source_mutation_rejected(tmp_path,snapshot,mutation):
     graph,_=run(tmp_path,snapshot,mutation=mutation)
     assert graph["status"]=="unsupported" and not graph["edges"]
+
+
+@pytest.mark.parametrize("level,expected", [("overview",6),("block",12)])
+def test_efficientnet_grouped_manifest_conserves_ids(tmp_path,snapshot,level,expected):
+    graph,bundle=run(tmp_path,snapshot)
+    folder=tmp_path/"hierarchy"
+    r=present(bundle,folder,level=level,view="instance",format="all")
+    assert r["render_allowed"] and r["status"]=="partial"
+    manifest=json.loads((folder/"presentation-manifest.json").read_text())
+    grouped=manifest["visual_elements"]
+    links=manifest["visual_links"]
+    assert len(grouped)==expected
+    assert {n["id"] for n in graph["nodes"]}<={
+        original for summary in grouped.values() for original in summary["ir_node_ids"]}
+    visible={x for edge in links.values() for x in edge["ir_edge_ids"]}
+    hidden=set(manifest["collapsed_instance_edge_ids"])
+    assert visible.isdisjoint(hidden)
+    assert visible|hidden=={e["id"] for e in graph["edges"]}
+    import xml.etree.ElementTree as ET
+    attrs=ET.parse(folder/"architecture.svg").getroot().attrib
+    assert int(attrs["height"])>int(attrs["width"])
+
+def test_efficientnet_stage_focus_preserves_omitted_ids(tmp_path,snapshot):
+    graph,bundle=run(tmp_path,snapshot)
+    folder=tmp_path/"focus"
+    r=present(bundle,folder,level="operation",view="instance",focus="features.4")
+    assert r["render_allowed"] and r["status"]=="partial"
+    m=json.loads((folder/"presentation-manifest.json").read_text())
+    assert (set(m["visual_elements"])|set(m["omitted_instance_node_ids"]))=={
+        x["id"] for x in graph["nodes"]}
+    assert (set(m["visual_links"])|set(m["omitted_instance_edge_ids"]))=={
+        x["id"] for x in graph["edges"]}
