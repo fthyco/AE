@@ -28,6 +28,8 @@ jobs:
           OMP_NUM_THREADS: '1'
           MKL_NUM_THREADS: '1'
         run: python scripts/verify_full_vit_tiny_v020.py --output benchmark-output/vit-tiny-v020
+      - name: Verify and render original v0.21 hierarchy artifacts
+        run: python scripts/render_vit_hierarchy_v021.py --output benchmark-output/vit-tiny-v020
       - name: Full local regression tests
         run: python -m pytest -q
       - name: Assert no timm or torch import during AE source-only extraction

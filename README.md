@@ -50,3 +50,5 @@ DenseNet121 (TorchVision 0.25.0 default factory): bounded, source-verified insta
 SMP 0.6.0 U-Net/ResNet34 bounded, source-proven instance graph and external FX/hooks validation: [v0.19](docs/instance-forward-v0.19.md). Non-Tensor shape metadata is labeled separately; its nodes do not have Tensor shapes.
 
 timm ViT-Tiny (1.0.22): bounded 12-block source-only instance-forward expansion with explicit `--attention-mode fused|unfused` and independent FX/hooks validation. See [v0.20](docs/instance-forward-v0.20.md). Other ViTs and modified sources remain unsupported.
+
+Presenter v0.21: source-backed hierarchical instance views for the exact pinned ViT-Tiny reference. `ae present ae-bundle --view instance --level overview|block|operation` and `--level operation --focus blocks.0`. Overview/block group operation and edge provenance without modifying the underlying instance graph; the detail view remains 1:1. [Scope and evidence policy](docs/instance-hierarchy-v0.21.md).

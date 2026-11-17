@@ -126,3 +126,71 @@ def test_batch_two(tmp_path, originals):
     graph, _ = prepare(tmp_path, originals, shape=(2, 3, 224, 224))
     assert graph["status"] == "expanded_static"
     assert graph["output_shape"] == [2, 1000]
+
+# v0.21 — Hierarchy is a provenance-preserving projection, not new execution.
+
+@pytest.mark.parametrize("level, expected_visual_nodes", [
+    ("overview", 5),
+    ("block", 16),
+])
+def test_vit_hierarchy_preserves_all_instance_evidence(
+        tmp_path, originals, level, expected_visual_nodes):
+    full, bundle = prepare(tmp_path, originals)
+    output = tmp_path / ("hierarchy-" + level)
+    result = present(bundle, output, view="instance", level=level, format="all")
+    assert result["status"] == "partial" and result["render_allowed"]
+    manifest = json.loads((output / "presentation-manifest.json").read_text())
+    elements = manifest["visual_elements"]
+    links = manifest["visual_links"]
+    assert len(elements) == expected_visual_nodes
+    assert all(v["ir_node_ids"] and v["source_refs"] for v in elements.values())
+    underlying_ids = {n["id"] for n in full["nodes"]}
+    represented = {oid for v in elements.values() for oid in v["ir_node_ids"]}
+    assert underlying_ids.issubset(represented)
+    original_edges = {e["id"] for e in full["edges"]}
+    visible_edges = {eid for v in links.values() for eid in v["ir_edge_ids"]}
+    hidden_edges = set(manifest["collapsed_instance_edge_ids"])
+    assert visible_edges.isdisjoint(hidden_edges)
+    assert visible_edges | hidden_edges == original_edges
+    assert any(link["relation_kind"] == "STATIC_INSTANCE_SHAPE_METADATA_DEPENDENCY"
+               for link in links.values()), "ViT mask/shape evidence must remain explicit"
+    assert 'stroke-dasharray=' in (output / "architecture.svg").read_text(), (
+        "Metadata paths must be visibly distinguished from tensor paths"
+    )
+    assert not manifest["omitted_instance_node_ids"]
+    assert not manifest["omitted_instance_edge_ids"]
+    assert all((output / f"architecture.{ext}").stat().st_size > 0
+               for ext in ("svg", "pdf", "tex"))
+    import xml.etree.ElementTree as ET
+    root = ET.parse(output / "architecture.svg").getroot()
+    assert int(root.attrib["height"]) > int(root.attrib["width"]), (
+        "Grouped ViT pages must use a vertical page layout"
+    )
+
+
+def test_vit_block_focus_is_explicit_partial_subgraph(tmp_path, originals):
+    full, bundle = prepare(tmp_path, originals)
+    dest = tmp_path / "focus"
+    result = present(bundle, dest, view="instance", level="operation",
+                     focus="blocks.0", format="svg")
+    assert result["status"] == "partial" and result["render_allowed"]
+    manifest = json.loads((dest / "presentation-manifest.json").read_text())
+    nodes = set(manifest["visual_elements"])
+    edges = set(manifest["visual_links"])
+    assert nodes and len(nodes) < len(full["nodes"])
+    assert edges and len(edges) < len(full["edges"])
+    assert nodes | set(manifest["omitted_instance_node_ids"]) == {
+        node["id"] for node in full["nodes"]}
+    assert edges | set(manifest["omitted_instance_edge_ids"]) == {
+        edge["id"] for edge in full["edges"]}
+    assert any("blocks.0" in node["target"]
+               for node in full["nodes"] if node["id"] in nodes)
+
+
+def test_vit_unknown_focus_fails_closed(tmp_path, originals):
+    _, bundle = prepare(tmp_path, originals)
+    dest = tmp_path / "bad-focus"
+    response = present(bundle, dest, view="instance", level="operation",
+                       focus="blocks.99")
+    assert response["status"] == "blocked"
+    assert not (dest / "architecture.svg").exists()

@@ -31,7 +31,7 @@ def build_parser() -> argparse.ArgumentParser:
     presenter.add_argument("--level", choices=["overview", "block", "operation"], default="block")
     presenter.add_argument("--mode", choices=["exploration", "publication"], default="exploration")
     presenter.add_argument("--format", choices=["svg", "pdf", "tikz", "all"], default="svg")
-    presenter.add_argument("--focus", help="Show a single selected module in the flow view")
+    presenter.add_argument("--focus", help="Focus a module in flow/nested or a proven instance stage such as blocks.0")
     presenter.add_argument("--theme", choices=["scientific-latex", "legacy"], default="scientific-latex")
     presenter.add_argument("--allow-partial", action="store_true", help="Allow clearly labeled partial publication export")
     return parser
