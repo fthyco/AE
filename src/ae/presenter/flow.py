@@ -29,7 +29,7 @@ def project_flow(bundle: Bundle, level: str = 'block', focus: str | None = None)
     if level not in ('overview', 'block', 'operation'):
         raise ValueError(f'Unsupported flow level: {level}')
     index = bundle.model_index
-    graph: dict[str, Any] = {'nodes': [], 'links': [], 'issues': [], 'level': level, 'view': 'flow'}
+    graph: dict[str, Any] = {'nodes': [], 'links': [], 'issues': [], 'level': level, 'view': 'flow', 'focus': focus}
     if index.get('status') != 'indexed':
         return graph
     modules = index.get('modules', [])

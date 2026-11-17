@@ -25,6 +25,31 @@ def evaluate(bundle: Any | None, graph: dict | None, *, mode: str,
         issues.append(issue('ENTRYPOINT_UNRESOLVED', 'No indexed model root', severity='error'))
     elif graph is not None:
         issues.extend(graph.get('issues', []))
+        if graph.get('view') == 'flow' and bundle is not None and not graph.get('focus'):
+            index = bundle.model_index
+            unresolved = index.get('unresolved', [])
+            if unresolved:
+                issues.append(issue(
+                    'MODEL_COMPOSITION_INCOMPLETE',
+                    f'{len(unresolved)} unresolved model construction or forward references',
+                    refs=[r for item in unresolved for r in item.get('source_refs', [])][:20],
+                ))
+            containers = [c for m in index.get('modules', []) for c in m.get('components', [])
+                          if (c.get('declared_type') or '').split('.')[-1] in
+                          {'Sequential', 'ModuleList', 'ModuleDict'}
+                          and not c.get('target_definition_id')]
+            if containers:
+                issues.append(issue('OPAQUE_COMPOSITE_MODULES',
+                                    f'{len(containers)} constructed containers without indexed child execution',
+                                    ids=[c['construction_site_id'] for c in containers],
+                                    refs=[r for c in containers for r in c.get('source_refs', [])]))
+            calls = [c for m in index.get('modules', []) for c in m.get('forward_calls', [])
+                     if c.get('local_definition_ids') and not c.get('module_construction_site_ids')]
+            if calls:
+                issues.append(issue('FORWARD_HELPER_NOT_EXPANDED',
+                                    f'{len(calls)} local forward helper calls without an expanded execution graph',
+                                    ids=[c['call_site_id'] for c in calls],
+                                    refs=[r for c in calls for r in c.get('source_refs', [])]))
         if len(graph.get('nodes', [])) <= 1:
             issues.append(issue('NO_SUPPORTED_VIEW', 'Selected view has no usable model components or operations', severity='error'))
     issues.sort(key=lambda x: (x['code'], x['message'], x['related_ir_ids']))
