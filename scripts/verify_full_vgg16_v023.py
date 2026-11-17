@@ -41,6 +41,7 @@ def verify(base: Path):
     assert sum(p.numel() for p in model.parameters())==138357544
     traced=symbolic_trace(model)
     entries=[]
+    gallery=[]
     for shape in SHAPES:
         value=torch.zeros(*shape)
         ShapeProp(traced).propagate(value)
@@ -95,11 +96,39 @@ def verify(base: Path):
         manifest=json.loads((folder/"figures/presentation-manifest.json").read_text())
         assert set(manifest["visual_elements"])=={n["id"] for n in nodes}
         assert set(manifest["visual_links"])=={e["id"] for e in found["edges"]}
+        for level,count in (("overview",4),("block",8)):
+            out=folder / ("figures-"+level)
+            view=present(bundle,out,view="instance",level=level,format="all")
+            assert view["status"]=="partial" and view["render_allowed"]
+            item=json.loads((out/"presentation-manifest.json").read_text())
+            assert len(item["visual_elements"])==count
+            assert {n["id"] for n in found["nodes"]}<={
+                ident for element in item["visual_elements"].values()
+                for ident in element["ir_node_ids"]
+            }
+            visible={eid for edge in item["visual_links"].values()
+                     for eid in edge["ir_edge_ids"]}
+            hidden=set(item["collapsed_instance_edge_ids"])
+            assert visible.isdisjoint(hidden)
+            assert visible|hidden=={edge["id"] for edge in found["edges"]}
+            gallery.append((label,level,f"{label}/figures-{level}/architecture.svg"))
         entries.append({"shape":list(shape),"fx_operations":42,"ordered_edges":41,
                         "runtime_hooks":39,"matching":True,"rendered":True})
     result={"model":"torchvision.models.vgg16","status":"source_and_fx_verified",
             "sources":hashes,"cases":entries}
     (base/"summary.json").write_text(json.dumps(result,indent=2))
+    cards=["<section><h2>"+label+" — "+level+"</h2>"
+           '<object type="image/svg+xml" data="'+path+'"></object>'
+           '<p><a href="'+path+'">Original SVG</a></p></section>'
+           for label,level,path in gallery]
+    (base/"hierarchy-gallery.html").write_text(
+        '<!doctype html><html lang="en"><head><meta charset="utf-8">'
+        '<title>Architecture Extractor — VGG16 original diagrams</title>'
+        '<style>body{font:14px Arial,sans-serif;max-width:950px;margin:20px auto}'
+        'section{border:1px solid #ccc;margin:20px;padding:15px}'
+        'object{width:100%;height:680px}</style></head><body>'
+        '<h1>VGG16 — source-backed Architecture and Operation</h1>'
+        +''.join(cards)+'</body></html>')
     print(json.dumps(result,indent=2),flush=True)
     return result
 
