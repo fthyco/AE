@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="763" viewBox="0 0 1000 763" role="img">
+<title>torchvision.models.vgg:vgg16 / stage.2</title>
+<defs><marker id="arch-arrow" viewBox="0 0 8 8" refX="7.5" refY="4" markerWidth="5.50" markerHeight="5.50" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#181818"/></marker></defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect id="v-bc9416551013d9645e8a21d4" data-ir-ids="bc9416551013d9645e8a21d4,1853ba1b782cc5fd7e46bbd9,cf5314283aa10b0d67db1465,eb8f9052afe9db8c0e084338" x="180.00" y="125.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="127.00" width="3" height="42.00" fill="#898D93" data-operation-category="pool_or_reshape"/>
+<rect id="v-57de929b0543c6975b968b1c" data-ir-ids="57de929b0543c6975b968b1c,4c158154bfd355f7e4d1fb41,6c97a02e4309f8aa86355baf,a7f3a4c159c9992b9d5c63a4" x="180.00" y="187.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="189.00" width="3" height="42.00" fill="#527996" data-operation-category="linear"/>
+<rect id="v-c1683aa575cc718ccd0a9eb3" data-ir-ids="c1683aa575cc718ccd0a9eb3,0436c547d1cf8375d5b80885,21f4418fc2f694315347163a,6da83c5c11aa821476a8bcdc" x="180.00" y="249.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="251.00" width="3" height="42.00" fill="#BC8A4B" data-operation-category="activation"/>
+<rect id="v-cab1ce8ac35f35e52e460dd0" data-ir-ids="cab1ce8ac35f35e52e460dd0,4c158154bfd355f7e4d1fb41,6c97a02e4309f8aa86355baf,a7f3a4c159c9992b9d5c63a4" x="180.00" y="311.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="313.00" width="3" height="42.00" fill="#527996" data-operation-category="linear"/>
+<rect id="v-b8084d163ab3fe3ca6a98edd" data-ir-ids="b8084d163ab3fe3ca6a98edd,0436c547d1cf8375d5b80885,21f4418fc2f694315347163a,6da83c5c11aa821476a8bcdc" x="180.00" y="373.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="375.00" width="3" height="42.00" fill="#BC8A4B" data-operation-category="activation"/>
+<rect id="v-0ce91451cbaee1346b02b602" data-ir-ids="0ce91451cbaee1346b02b602,4c158154bfd355f7e4d1fb41,6c97a02e4309f8aa86355baf,a7f3a4c159c9992b9d5c63a4" x="180.00" y="435.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="437.00" width="3" height="42.00" fill="#527996" data-operation-category="linear"/>
+<rect id="v-4b80918a7c636dd804324b92" data-ir-ids="4b80918a7c636dd804324b92,0436c547d1cf8375d5b80885,21f4418fc2f694315347163a,6da83c5c11aa821476a8bcdc" x="180.00" y="497.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="499.00" width="3" height="42.00" fill="#BC8A4B" data-operation-category="activation"/>
+<rect id="v-a5265a4f31168df93ffd31d5" data-ir-ids="a5265a4f31168df93ffd31d5,1853ba1b782cc5fd7e46bbd9,cf5314283aa10b0d67db1465,eb8f9052afe9db8c0e084338" x="180.00" y="559.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="561.00" width="3" height="42.00" fill="#898D93" data-operation-category="pool_or_reshape"/>
+<rect id="v-9200d7cfa457b3b5a9098b20" data-ir-ids="9200d7cfa457b3b5a9098b20,4c158154bfd355f7e4d1fb41,6c97a02e4309f8aa86355baf,a7f3a4c159c9992b9d5c63a4" x="180.00" y="621.00" width="237.00" height="46.00" rx="1.00" fill="#f4f4f4" stroke="#181818" stroke-width="0.60"/>
+<rect x="181.50" y="623.00" width="3" height="42.00" fill="#527996" data-operation-category="linear"/>
+<path id="l-b63c3b8f05a942311e9b18d6" data-ir-edge-ids="b63c3b8f05a942311e9b18d6" d="M 298.50 171.00 L 298.50 187.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<path id="l-b406a0d3f5096e599cb6c455" data-ir-edge-ids="b406a0d3f5096e599cb6c455" d="M 298.50 233.00 L 298.50 249.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<path id="l-6ab9073d8364655b299a1637" data-ir-edge-ids="6ab9073d8364655b299a1637" d="M 298.50 295.00 L 298.50 311.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<path id="l-17b7f51111db5e7ecfb9a8e6" data-ir-edge-ids="17b7f51111db5e7ecfb9a8e6" d="M 298.50 357.00 L 298.50 373.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<path id="l-25fb9adf6e6e7bc3a30b8ff0" data-ir-edge-ids="25fb9adf6e6e7bc3a30b8ff0" d="M 298.50 419.00 L 298.50 435.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<path id="l-8876931db6849db943980faa" data-ir-edge-ids="8876931db6849db943980faa" d="M 298.50 481.00 L 298.50 497.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<path id="l-f27beb279f2d43cc5d8bf33e" data-ir-edge-ids="f27beb279f2d43cc5d8bf33e" d="M 298.50 543.00 L 298.50 559.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<path id="l-9eab81ff4696a66dc07a5fb0" data-ir-edge-ids="9eab81ff4696a66dc07a5fb0" d="M 298.50 605.00 L 298.50 621.00" fill="none" stroke="#181818" stroke-width="0.85" stroke-linejoin="miter" marker-end="url(#arch-arrow)"/>
+<text x="55.00" y="32.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="18.00" font-weight="bold">torchvision.models.vgg:vgg16 / stage.2</text>
+<text x="55.00" y="54.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">SOURCE-EXPANDED INSTANCE TENSOR GRAPH</text>
+<text x="55.00" y="73.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">Input shape: [1, 3, 224, 224]</text>
+<text x="55.00" y="114.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="11.00" font-weight="bold">STEM</text>
+<text x="189.00" y="144.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">features.9</text>
+<text x="189.00" y="162.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×128×56×56</text>
+<text x="189.00" y="206.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">features.10</text>
+<text x="189.00" y="224.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×256×56×56</text>
+<text x="189.00" y="268.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">features.11</text>
+<text x="189.00" y="286.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×256×56×56</text>
+<text x="189.00" y="330.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">features.12</text>
+<text x="189.00" y="348.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×256×56×56</text>
+<text x="189.00" y="392.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">features.13</text>
+<text x="189.00" y="410.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×256×56×56</text>
+<text x="189.00" y="454.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">features.14</text>
+<text x="189.00" y="472.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×256×56×56</text>
+<text x="189.00" y="516.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">features.15</text>
+<text x="189.00" y="534.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×256×56×56</text>
+<text x="189.00" y="578.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">features.16</text>
+<text x="189.00" y="596.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×256×28×28</text>
+<text x="189.00" y="640.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="10.00" font-weight="normal">features.17</text>
+<text x="189.00" y="658.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="8.40" font-weight="normal">1×512×28×28</text>
+<text x="55.00" y="720.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="9.00" font-weight="normal">Shapes apply to the selected concrete input; runtime verification is separate.</text>
+<text x="55.00" y="739.00" fill="#181818" font-family="Latin Modern Roman, CMU Serif, Computer Modern, serif" font-size="9.00" font-weight="normal">Source-derived graph; health status: partial</text>
+</svg>

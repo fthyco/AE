@@ -1,0 +1,20 @@
+{
+  "model": "torchvision.models.vgg:vgg16",
+  "torchvision": "0.25.0",
+  "input_shape": [
+    1,
+    3,
+    224,
+    224
+  ],
+  "fx_operations": 42,
+  "ordered_dependencies": 41,
+  "reference_status": "source_and_fx_verified",
+  "gallery": [
+    "vgg16-architecture.svg",
+    "vgg16-block.svg",
+    "vgg16-operation-focus.svg",
+    "vgg16-operation-full.svg",
+    "vgg16-viewer.png"
+  ]
+}

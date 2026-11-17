@@ -1,66 +1,86 @@
 # Architecture Extractor (AE)
 
-Static Python/PyTorch architecture extraction and vector diagrams. Models are not imported or executed.
+**Source-backed architecture extraction and visualization for Python/PyTorch models.**
+
+AE analyzes Python source without importing or executing the target model. It extracts a traceable intermediate representation, generates Architecture / Block / Operation diagrams, and provides a self-contained offline viewer.
+
+## Example output
+
+Original AE diagrams from **TorchVision 0.25.0 VGG16**, default configuration, input **1 × 3 × 224 × 224**. The audited operations, dependencies, and tensor shapes were independently compared against PyTorch FX, ShapeProp, and runtime hooks.
+
+| Architecture | Block |
+| :---: | :---: |
+| ![VGG16 Architecture](docs/assets/readme/vgg16-architecture.svg) | ![VGG16 Block](docs/assets/readme/vgg16-block.svg) |
+| **Operation — stage focus** | **Offline viewer** |
+| ![VGG16 Operation focused stage](docs/assets/readme/vgg16-operation-focus.svg) | ![VGG16 interactive viewer](docs/assets/readme/vgg16-viewer.png) |
+
+[Full VGG16 Operation diagram](docs/assets/readme/vgg16-operation-full.svg) · [Independent VGG16 gate](docs/instance-forward-v0.23.md) · [Rebuild these images](scripts/generate_readme_gallery.py)
+
+The complete operation graph contains **42 FX operations and 41 ordered dependencies**. The focused view is a source-backed subset of that graph.
 
 ## Install
 
-```bash
-pip install -e '.[dev,render]'
-```
+Requires Python 3.11+. **PyTorch is not required** for static extraction or the viewer.
 
-## Commands
+Published GitHub release:
 
-```bash
-ae extract examples/cnn_residual_mvp --entrypoint model:CNN --output ae-bundle
-ae validate ae-bundle
-ae inspect ae-bundle
-ae present ae-bundle --view structure --level operation --format all --output figures
-```
+~~~bash
+python -m pip install https://github.com/fthyco/Architecture-Extractor-AE/releases/download/v0.27.0/architecture_extractor-0.27.0-py3-none-any.whl
+~~~
 
-## Output
+From source, with vector export dependencies:
 
-SAE: source-backed IR, model index, source snapshots, hashes and unresolved records. Presenter: SVG, PDF, TikZ and health/provenance manifests.
+~~~bash
+git clone https://github.com/fthyco/Architecture-Extractor-AE.git
+cd Architecture-Extractor-AE
+python -m pip install -e '.[render]'
+~~~
 
-Static factory specialization: ResNet block configuration; supported fixed-count nested containers (including DenseNet factory stages). Counts are conditional construction blueprints, not runtime tensor paths.
+## Quickstart
 
-Nested shape propagation, FX source-site audit, and [instance-aware FX verification](docs/instance-fx-v0.15.md).
+~~~bash
+ae extract ./model-source --entrypoint model:Model --output bundle
+ae validate bundle
+ae inspect bundle
+ae viewer bundle --output viewer
+~~~
 
-Bounded full forward expansion for the verified default ResNet18 and ResNet50 factories:
+Open `viewer/index.html` in a browser. It works offline and provides three hierarchy levels, zoom/pan, search, source inspection, and drill-down.
 
-```bash
-ae extract path/to/torchvision/models --entrypoint resnet:resnet18 --input-shape 1,3,64,64 --output ae-bundle
-ae present ae-bundle --view instance --level operation --format all --output figures
-```
+For SVG/PDF/TikZ output, install the `render` extra or `reportlab` and run:
 
-The static instance graph is conditional on the input and source proof. [Scope and independent gate](docs/instance-forward-v0.16.md).
+~~~bash
+ae present bundle --view structure --level operation --format all --output figures
+~~~
 
-## Tests
+Bundles preserve original source references, dependency evidence, node identities, hashes, unresolved facts, and manifests.
 
-```bash
+## Verified models
+
+| Model | Original reference | Verified scope |
+| --- | --- | --- |
+| ResNet18 / ResNet50 | TorchVision | Pinned default factory and audited inputs |
+| DenseNet121 | TorchVision 0.25.0 | Pinned default factory and audited inputs |
+| U-Net / ResNet34 | SMP 0.6.0 | Pinned source, config, and inputs |
+| ViT-Tiny | timm 1.0.22 | Pinned 12-block model and explicit attention mode |
+| MobileNetV3 Small | TorchVision 0.25.0 | Default factory and audited inputs |
+| VGG16 | TorchVision 0.25.0 | Default factory and audited inputs |
+| EfficientNet-B0 | TorchVision 0.25.0 | Default factory and audited inputs |
+
+**Validation:** independent FX graphs, ordered operand edges, ShapeProp shapes, real forward hooks, source fingerprints, figure-to-IR provenance, deterministic extractions, regression tests, Chromium viewer tests, and clean wheel installation. Claims are limited to the exact configurations documented in [docs/](docs/).
+
+## Boundaries
+
+- The default extractor never runs analyzed model code. A source relationship is **not** automatically an executed tensor dependency.
+- Exact instance-forward fidelity is verified only for the pinned references and inputs above. Unsupported or dynamic paths remain explicitly unresolved.
+- AWN and Chessformer CF-ACT/CF-CAH have source-backed structural audits, **not verified full runtime equivalence**. [Research scope](docs/phase2-research-benchmark.md).
+- `ae runtime-audit` is a separate opt-in FX/hooks reference for **trusted** code; it executes that code and does not itself prove AE-to-runtime equivalence. [v0.27 scope](docs/v027-generalization.md).
+
+## Development
+
+~~~bash
+python -m pip install -e '.[dev,render]'
 python -m pytest -q
-python scripts/verify_container_specialization.py
-```
+~~~
 
-See docs/limitations.md and docs/container-specialization-v0.12.md.
-
-ResNet50 Bottleneck support: [independent stage gate](docs/instance-forward-v0.17.md).
-
-DenseNet121 (TorchVision 0.25.0 default factory): bounded, source-verified instance forward graph with complete feature-list concatenation dependencies for the audited input shapes. See [v0.18 scope and independent verification](docs/instance-forward-v0.18.md). Other variants and modified source remain unsupported.
-
-SMP 0.6.0 U-Net/ResNet34 bounded, source-proven instance graph and external FX/hooks validation: [v0.19](docs/instance-forward-v0.19.md). Non-Tensor shape metadata is labeled separately; its nodes do not have Tensor shapes.
-
-timm ViT-Tiny (1.0.22): bounded 12-block source-only instance-forward expansion with explicit `--attention-mode fused|unfused` and independent FX/hooks validation. See [v0.20](docs/instance-forward-v0.20.md). Other ViTs and modified sources remain unsupported.
-
-Presenter v0.21: source-backed hierarchical instance views for the exact pinned ViT-Tiny reference. `ae present ae-bundle --view instance --level overview|block|operation` and `--level operation --focus blocks.0`. Overview/block group operation and edge provenance without modifying the underlying instance graph; the detail view remains 1:1. [Scope and evidence policy](docs/instance-hierarchy-v0.21.md).
-
-MobileNetV3 Small: audited TorchVision 0.25.0 default `mobilenet_v3_small(weights=None)` source-only full forward extraction for 64/128/224 square RGB inputs. Independent FX, ShapeProp, runtime hooks, ordered edges and manifest checks; 159 operations / 173 dependencies. Original-source-only `overview`, `block` and `operation` views, with `--focus features.4`. [Scope and limitations](docs/instance-forward-v0.22.md). Arbitrary variants are unsupported.
-
-VGG16 source-only (v0.23) default torchvision 0.25.0: verified 42 operations / 41 ordered dependencies / 39 leaf calls. Two-level source-evidenced overview/block/operation visualizations and stage focus. See docs/instance-forward-v0.23.md.
-
-EfficientNet-B0 source-only (v0.24): audited TorchVision 0.25.0 default model, 251 FX operations / 275 ordered dependencies, 214 leaf modules, 16 SE gates and 9 residual additions. Supports source-proven overview/block/operation/focus views for four audited input shapes. See [scope and independent verification](docs/instance-forward-v0.24.md).
-
-Research generalization v0.25: source-only audits on exact pinned AWN and Chessformer CF-ACT/CF-CAH repositories (no claimed runtime equivalence), plus independent FX/torchview/torchviz/VisualTorch comparison. [Scope, scripts and evidence policy](docs/phase2-research-benchmark.md).
-
-Offline interactive viewer v0.26 (Architecture / Block / Operation, zoom/pan, source-proven drill-down, no browser networking): `ae viewer BUNDLE --view instance --output viewer`, then open `viewer/index.html`. For general sources use `--view structure` or `--view nested`; unsupported full instance paths remain blocked. [Clean installation and release gate](docs/public-release-v026.md).
-
-AE v0.27 adds generic source-category colors and default auto-selecting offline hierarchies with source-identity search/drill-down. **The default extractor still does not import or execute the target.** For deliberately trusted projects, `ae runtime-audit SOURCE --factory module:build --input-shape 1,3,64,64 --allow-execute --output audit` generates an independent PyTorch FX/hooks reference; this executes user code and does not establish AE-to-runtime equivalence. [v0.27 scope](docs/v027-generalization.md).
+[Limitations](docs/limitations.md) · [Validation details](docs/v027-generalization.md) · [v0.27.0 release](https://github.com/fthyco/Architecture-Extractor-AE/releases/tag/v0.27.0)
