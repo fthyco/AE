@@ -58,3 +58,36 @@ def test_unsupported_geometry_fails_closed(tmp_path,snapshot,shape):
 def test_unsupported_mutation_fails_closed(tmp_path,snapshot,mutation):
     graph,_=run(tmp_path,snapshot,modify=mutation)
     assert graph["status"]=="unsupported" and not graph["nodes"]
+
+
+@pytest.mark.parametrize("level,expected", [("overview",4),("block",8)])
+def test_vgg_lossless_hierarchy(tmp_path,snapshot,level,expected):
+    graph,bundle=run(tmp_path,snapshot)
+    out=tmp_path/"hierarchy"
+    r=present(bundle,out,view="instance",level=level,format="all")
+    assert r["status"]=="partial" and r["render_allowed"]
+    manifest=json.loads((out/"presentation-manifest.json").read_text())
+    nodes=manifest["visual_elements"]
+    edges=manifest["visual_links"]
+    assert len(nodes)==expected
+    assert {n["id"] for n in graph["nodes"]}<={
+        uid for info in nodes.values() for uid in info["ir_node_ids"]}
+    present_edges={uid for info in edges.values() for uid in info["ir_edge_ids"]}
+    internal=set(manifest["collapsed_instance_edge_ids"])
+    assert present_edges.isdisjoint(internal)
+    assert present_edges|internal=={e["id"] for e in graph["edges"]}
+    assert all((out/f"architecture.{ext}").stat().st_size>0
+               for ext in ("svg","pdf","tex"))
+
+def test_vgg_focus_preserves_all_omitted_ids(tmp_path,snapshot):
+    graph,bundle=run(tmp_path,snapshot)
+    out=tmp_path/"focus"
+    r=present(bundle,out,view="instance",level="operation",focus="stage.2")
+    assert r["status"]=="partial" and r["render_allowed"]
+    manifest=json.loads((out/"presentation-manifest.json").read_text())
+    assert (set(manifest["visual_elements"])|
+            set(manifest["omitted_instance_node_ids"]))=={
+             n["id"] for n in graph["nodes"]}
+    assert (set(manifest["visual_links"])|
+            set(manifest["omitted_instance_edge_ids"]))=={
+             e["id"] for e in graph["edges"]}
