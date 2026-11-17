@@ -71,3 +71,5 @@ Bounded static instance-forward expansion is currently verified only for the def
 Full DenseNet121 `instance` forward expansion is available only for an audited original TorchVision 0.25.0 source fingerprint, default factory arguments and explicit concrete input shapes. Modified or unsupported sources remain unresolved. Independent FX/hooks runtime verification is separate from AE extraction.
 
 U-Net ResNet34 instance-forward expansion is limited to audited, unmodified SMP 0.6.0 and TorchVision 0.25.0 source files, the default topology, and explicit concrete input sizes with H/W divisible by 32. Other configurations remain unsupported and fail closed. Full FX/hooks evidence is produced only by a separate verifier.
+
+ViT-Tiny expansion: only original SHA-256-pinned timm 1.0.22 `vit_tiny_patch16_224`, explicit fused/unfused attention branch and concrete RGB 224×224 inputs. Dynamic/nondefault/modified implementations are unsupported.

@@ -20,6 +20,7 @@ from .analysis.factory_specialization import specialize_factory
 from .analysis.instance_forward import expand_factory_forward
 from .analysis.dense_instance_forward import expand_dense_forward
 from .analysis.unet_instance_forward import expand_unet_forward
+from .analysis.vit_instance_forward import expand_vit_forward
 from .analysis.container_specialization import specialize_containers
 from .indexing.model_index import build_model_index, validate_model_index
 from .linking.project import Unit, link_project, syntax_ids, unresolved
@@ -40,7 +41,8 @@ def _source_span(path: str, size: int) -> dict:
 
 def extract(source_root: str | Path, output: str | Path, *, entrypoint: str | None = None,
             max_files: int = 2000, max_file_bytes: int = 2_000_000,
-            input_shape: tuple[int, ...] | None = None) -> dict[str, Any]:
+            input_shape: tuple[int, ...] | None = None,
+            attention_mode: str | None = None) -> dict[str, Any]:
     """Extract reproducible source-grounded facts into a self-contained IR bundle.
 
     Source directories are never imported or executed. Only local files are read.
@@ -137,7 +139,9 @@ def extract(source_root: str | Path, output: str | Path, *, entrypoint: str | No
         if not propagate_nested_shapes(graph):
             break
         analyze_composite_shapes(graph, parsed_units, model_index)
-    expanded = expand_unet_forward(parsed_units, entrypoint, input_shape, graph.nodes)
+    expanded = expand_vit_forward(parsed_units, entrypoint, input_shape, graph.nodes, attention_mode)
+    if expanded is None:
+        expanded = expand_unet_forward(parsed_units, entrypoint, input_shape, graph.nodes)
     if expanded is None:
         expanded = (expand_dense_forward(parsed_units, container_info, input_shape, graph.nodes)
                     if container_info is not None and factory_info is None
