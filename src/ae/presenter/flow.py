@@ -1,4 +1,7 @@
-"""Source-backed static flow projection."""
+"""Project SAE's *static value-dependency* evidence into a scientific flow view.
+
+No source parsing, execution, or inferred runtime tensor-flow is performed here.
+"""
 from __future__ import annotations
 
 from collections import defaultdict
@@ -90,12 +93,13 @@ def project_flow(bundle: Bundle, level: str = 'block', focus: str | None = None)
             if op['operation_site_id'] in flow_members:
                 steps.append(('flow-operation', op['operator'], op['operation_site_id'], 'resolved'))
 
-        # Retain source IR identities.
+        # A source-backed visual step always corresponds to an existing SAE IR node.
         mapped: dict[str, str] = {}
         for kind, label, source_id, state in sorted(steps, key=lambda x: (
                 bundle.nodes[x[2]]['source_refs'][0]['start_byte'], x[2])):
             if kind == 'forward_unpack' and level == 'block':
-                # Keep unpacking and fan-out links.
+                # Unpacking is kept in the flow diagram even in block mode: it
+                # carries the outgoing edges needed to show fan-out accurately.
                 pass
             vid = stable_id('flow-node/v1', definition, source_id)
             if source_id in mapped:
@@ -142,7 +146,8 @@ def project_flow(bundle: Bundle, level: str = 'block', focus: str | None = None)
                                          f"No source-backed value dependency in {module['qualname']}",
                                          ids=[fid], refs=bundle.nodes[fid]['source_refs']))
 
-    # Draw links between visible module lanes.
+    # Only show actual SAE links between displayed module lanes. This does
+    # not imply runtime tensor flow, and Focus deliberately omits other lanes.
     for edge in flow_edges:
         if (edge['relation'] != 'STATIC_COLLECTION_ELEMENT_BINDING'
                 or edge['source'] not in global_mapped
@@ -161,4 +166,47 @@ def project_flow(bundle: Bundle, level: str = 'block', focus: str | None = None)
                                        n['source_refs'][0]['start_byte'], n['id']))
     graph['links'].sort(key=lambda e: e['id'])
     graph['issues'].sort(key=lambda x: (x['code'], x['message']))
+    return graph
+
+
+def project_nested_flow(bundle: Bundle, level: str = 'block', focus: str | None = None
+                        ) -> dict[str, Any]:
+    """Add source-backed nested call references to a static flow diagram."""
+    graph = project_flow(bundle, level, focus)
+    graph['view'] = 'nested'
+    mapped: dict[str, str] = {}
+    lane: dict[str, str] = {}
+    for node in graph['nodes']:
+        if node.get('parent_id') is None:
+            continue
+        for ident in node['ir_node_ids']:
+            mapped[ident] = node['id']
+            lane[ident] = node['parent_id']
+    inputs = {}
+    for n in bundle.ir['nodes']:
+        if n['kind'] == 'forward_input':
+            inputs.setdefault(n['attributes']['forward_id'], []).append(n['id'])
+    invocations = {(e['source'], e['target']): e for e in bundle.ir['edges']
+                   if e['relation'] == 'STATIC_NESTED_FORWARD_INVOCATION'}
+    for module in bundle.model_index.get('modules', []):
+        if focus is not None and not any(n.get('ir_node_ids') == [module['definition_id']]
+                                        for n in graph['nodes']):
+            continue
+        for record in module.get('nested_forward_calls', []):
+            call_id = record['call_site_id']
+            forward_id = record['target_forward_method_id']
+            members = inputs.get(forward_id, [])
+            if call_id not in mapped or len(members) != 1 or members[0] not in mapped:
+                continue
+            if lane[call_id] == lane[members[0]]:
+                continue
+            edge = invocations.get((call_id, forward_id))
+            if edge is None:
+                continue
+            graph['links'].append({
+                'id': stable_id('nested-forward-visual/v1', edge['id']),
+                'source': mapped[call_id], 'target': mapped[members[0]],
+                'relation_kind': edge['relation'], 'ir_edge_ids': [edge['id']],
+                'source_refs': edge['source_refs'], 'style': 'interprocedural'})
+    graph['links'].sort(key=lambda e: e['id'])
     return graph

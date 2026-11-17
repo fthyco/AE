@@ -64,7 +64,8 @@ def project(bundle: Bundle, level: str = 'block') -> dict[str, Any]:
                                'source_refs': [s for eid in backing_edges for s in bundle.edges[eid]['source_refs']],
                                'style': style})
 
-    # A definition has one visual identity per statically indexed construction path.
+    # A definition has one visual identity per statically indexed *construction path*.
+    # This avoids collapsing distinct instances of the same custom module definition.
     def render_module(definition: str, parent: str | None, path: tuple, active: frozenset[str],
                       via_comp: str | None = None, via_site: str | None = None) -> str:
         m = modules[definition]
@@ -114,6 +115,7 @@ def project(bundle: Bundle, level: str = 'block') -> dict[str, Any]:
                          f'Recursive module expansion was stopped at {label_}', ids=[cid],refs=comp.get('source_refs',[])))
                 else:
                     render_module(child, cc, (*path,'module-instance',cid), active | {child}, cc, cid)
+            # Optional nested constructor facts for nn.Sequential and similar containers.
             if level == 'operation':
                 for layer_spec_id in comp.get('layer_spec_ids', []):
                     nested = sorted((e for e in ir['edges']
@@ -125,6 +127,18 @@ def project(bundle: Bundle, level: str = 'block') -> dict[str, Any]:
                         nn = add('nested-constructor', sublabel, (*path,'nested',cid,e['target']),
                                  [e['target']], parent=cc, edge_ids=[e['id']])
                         connect(cc, nn, 'CONTAINS_NESTED_CONSTRUCTOR', [e['id']])
+        if level != 'overview':
+            for template in m.get('nested_module_templates', []):
+                target = template['target_definition_id']
+                tid = add('nested-constructor',
+                          f"{template['container_expression']} -> {modules[target]['qualname'].split('.')[-1]} [template]",
+                          (*path, 'template', template['append_call_site_id']),
+                          [target], parent=mod_id, state='conditional',
+                          details='; '.join(template['repeat_expressions']) or 'single lexical site')
+                connect(mod_id, tid, 'HAS_NESTED_MODULE_TEMPLATE',
+                        edges_between(definition, target, 'HAS_NESTED_MODULE_TEMPLATE'))
+                if target not in active and target in modules:
+                    render_module(target, tid, (*path, 'module-template', target), active | {target})
         if level != 'overview':
             forward_id = m.get('forward_method_id')
             if not forward_id:
@@ -162,6 +176,7 @@ def project(bundle: Bundle, level: str = 'block') -> dict[str, Any]:
                     if e['relation']=='EXPRESSION_DEPENDS_ON' and e['source'] in active_views and e['target'] in active_views:
                         connect(active_views[e['source']],active_views[e['target']],
                                 'EXPRESSION_DEPENDS_ON',[rid],style='syntax-dependency')
+        # Model-index unresolved assignments are not silently interpreted as components.
         for u in index.get('unresolved',[]):
             if u.get('owner_definition_id') != definition:
                 continue

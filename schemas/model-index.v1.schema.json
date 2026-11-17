@@ -1,6 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "SAE Model Index v1",
+  "$id": "https://github.com/fthyco/AE/blob/main/schemas/model-index.v1.schema.json",
+  "title": "AE SAE Entrypoint Model Index v1.0",
   "type": "object",
   "required": [
     "schema_version",
@@ -11,6 +12,7 @@
     "unresolved",
     "limitations"
   ],
+  "additionalProperties": false,
   "properties": {
     "schema_version": {
       "const": "1.0"
@@ -29,10 +31,10 @@
     },
     "status": {
       "enum": [
-        "indexed",
         "no_entrypoint",
         "unresolved",
-        "unsupported_entrypoint"
+        "unsupported_entrypoint",
+        "indexed"
       ]
     },
     "modules": {
@@ -48,7 +50,10 @@
       }
     },
     "limitations": {
-      "type": "array"
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     },
     "factory_specialization": {
       "type": "object",
@@ -107,8 +112,6 @@
       "additionalProperties": false
     }
   },
-  "$id": "https://github.com/fthyco/MAGG/blob/main/schemas/model-index.v1.schema.json",
-  "additionalProperties": false,
   "$defs": {
     "span": {
       "type": "object",
@@ -117,23 +120,7 @@
         "start_byte",
         "end_byte",
         "precision"
-      ],
-      "properties": {
-        "path": {
-          "type": "string"
-        },
-        "start_byte": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "end_byte": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "precision": {
-          "type": "string"
-        }
-      }
+      ]
     },
     "component": {
       "type": "object",
@@ -289,6 +276,127 @@
           "type": "array",
           "items": {
             "type": "string"
+          }
+        },
+        "forward_owner_definition_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "forward_origin": {
+          "type": "string",
+          "enum": [
+            "declared",
+            "inherited",
+            "recursive-base-class",
+            "ambiguous-forward-override",
+            "no-forward-declaration-or-base",
+            "unsupported-or-multiple-bases",
+            "unresolved-or-ambiguous-base"
+          ]
+        },
+        "inherited_base_definition_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "nested_forward_calls": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "call_site_id",
+              "component_site_id",
+              "target_definition_id",
+              "target_forward_method_id",
+              "resolution",
+              "source_refs"
+            ],
+            "properties": {
+              "call_site_id": {
+                "type": "string"
+              },
+              "component_site_id": {
+                "type": "string"
+              },
+              "target_definition_id": {
+                "type": "string"
+              },
+              "target_forward_method_id": {
+                "type": "string"
+              },
+              "resolution": {
+                "const": "conditional"
+              },
+              "source_refs": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/span"
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "nested_module_templates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "target_definition_id",
+              "append_call_site_id",
+              "constructor_call_site_id",
+              "container_expression",
+              "repeat_expressions",
+              "guard_expressions",
+              "count",
+              "resolution",
+              "source_refs"
+            ],
+            "properties": {
+              "target_definition_id": {
+                "type": "string"
+              },
+              "append_call_site_id": {
+                "type": "string"
+              },
+              "constructor_call_site_id": {
+                "type": "string"
+              },
+              "container_expression": {
+                "type": "string"
+              },
+              "repeat_expressions": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "guard_expressions": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "count": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "resolution": {
+                "const": "conditional"
+              },
+              "source_refs": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/span"
+                }
+              }
+            },
+            "additionalProperties": false
           }
         }
       },

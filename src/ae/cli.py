@@ -10,7 +10,7 @@ from .presenter import present
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="ae", description="Architecture Extractor (AE): static model architecture analysis")
+    parser = argparse.ArgumentParser(prog="ae", description="AE: static source-grounded model architecture extraction")
     commands = parser.add_subparsers(dest="command", required=True)
     extraction = commands.add_parser("extract", help="Extract from source without importing or executing it")
     extraction.add_argument("source", help="Source repository directory")
@@ -24,7 +24,7 @@ def build_parser() -> argparse.ArgumentParser:
     presenter = commands.add_parser("present", help="Draw a static architecture from a validated SAE bundle")
     presenter.add_argument("bundle", help="Existing SAE extraction bundle directory")
     presenter.add_argument("--output", "-o", required=True, help="Target diagram directory")
-    presenter.add_argument("--view", choices=["structure", "flow"], default="structure")
+    presenter.add_argument("--view", choices=["structure", "flow", "nested"], default="structure")
     presenter.add_argument("--level", choices=["overview", "block", "operation"], default="block")
     presenter.add_argument("--mode", choices=["exploration", "publication"], default="exploration")
     presenter.add_argument("--format", choices=["svg", "pdf", "tikz", "all"], default="svg")

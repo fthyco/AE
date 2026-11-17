@@ -1,10 +1,17 @@
-"""Static forward values, branches, and collections."""
+"""Conservative non-executing, source-grounded forward value dependencies.
+
+This records syntactic data dependencies. Alternatives from supported if/else
+branches are represented by conditional joins, never a selected runtime path.
+Augmented assignment records result dependencies but does not claim alias or
+mutation side-effect completeness. Unhandled syntax stays explicitly unresolved.
+"""
 from __future__ import annotations
 
 import ast
 
 from ..ir.canonical import stable_id
 from ..ir.models import Graph
+from ..indexing.inherited_forward import select_forward_method
 from ..linking.project import Unit, derived_edge, span, syntax_ids
 
 RULE = 'straight-line-forward-value/v1'
@@ -55,7 +62,7 @@ class ForwardValues:
         kind = type(node).__name__.lower()
         if any(isinstance(elt, ast.Starred) for elt in node.elts):
             self.problem(node, 'Starred collection length/element positions unknown')
-            # Fixed-arity evidence unavailable.
+            # No artificial fixed-arity collection may be produced.
             for elt in node.elts:
                 self.expression(elt.value if isinstance(elt, ast.Starred) else elt)
             result = self.node('forward_collection', node, f'{kind}[unknown]', conditional=True)
@@ -175,7 +182,8 @@ class ForwardValues:
         for side, body in (('true', stmt.body), ('false', stmt.orelse)):
             self.env = dict(before)
             for item in body:
-                # Branch calls are conditional.
+                # Calls in either body are conditional execution sites, even
+                # when a downstream merge can statically represent both paths.
                 for call in (n for n in ast.walk(item) if isinstance(n, ast.Call)):
                     call_id = stable_id(self.unit.path, 'semantic', 'call_site', self.ids[call], '')
                     self.link(guard, call_id, call, 'STATIC_GUARDED_CALL', label=side)
@@ -243,7 +251,8 @@ class ForwardValues:
 
 
 def analyze_forward_values(graph: Graph, units: list[Unit]) -> None:
-    # Summarize uniquely linked calls.
+    # Functions/methods referenced by an unambiguous local call are eligible
+    # for a conservative summary. Unreachable arbitrary source is not executed.
     local_targets = {e['target'] for e in graph.edges
                      if e['relation'] == 'CALLS_LOCAL_DEFINITION'}
     for unit in sorted(units, key=lambda u: u.path):
@@ -254,8 +263,11 @@ def analyze_forward_values(graph: Graph, units: list[Unit]) -> None:
                 if ident in local_targets:
                     ForwardValues(graph, unit, statement, definition_kind='function_definition').run()
             if isinstance(statement, ast.ClassDef):
+                selected = select_forward_method(statement)
                 for method in statement.body:
                     if not isinstance(method, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                        continue
+                    if method.name == 'forward' and method is not selected:
                         continue
                     ident = stable_id(unit.path, 'semantic', 'method_definition', ids[method], '')
                     if method.name == 'forward' or ident in local_targets:
