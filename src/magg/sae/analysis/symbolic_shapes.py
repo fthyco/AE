@@ -14,7 +14,8 @@ from ..ir.models import Graph
 from .pytorch_static import SHAPE_PRESERVING
 
 RULE = 'conditional-symbolic-shape-propagation/v1'
-PROPAGATES = {'STATIC_FORWARD_RETURN', 'STATIC_CALL_RETURN', 'STATIC_CALL_ARGUMENT_BINDING'}
+PROPAGATES = {'STATIC_FORWARD_RETURN', 'STATIC_CALL_RETURN', 'STATIC_CALL_ARGUMENT_BINDING',
+              'STATIC_COLLECTION_ELEMENT', 'STATIC_COLLECTION_ELEMENT_BINDING'}
 
 
 def analyze_symbolic_shapes(graph: Graph, model_index: dict) -> None:
@@ -126,8 +127,9 @@ def analyze_symbolic_shapes(graph: Graph, model_index: dict) -> None:
                 if len(operands) == 1 and operands[0] in shapes:
                     add(dst, shapes[operands[0]], 'shape-preserving-layer')
             else:
-                # Generic shape propagation is ONLY along the three proven
-                # identity/binding/return relationships, never arbitrary calls.
+                # Shape propagates through supported identity/argument/return
+                # and *indexed element* bindings, never into the collection
+                # aggregate (tuple/list itself is not a tensor).
                 if any(e['source'] == src and e['relation'] in PROPAGATES
                        for e in incoming.get(dst, [])):
                     add(dst, shapes[src], 'supported-parameter-or-return-binding')

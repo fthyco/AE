@@ -13,6 +13,7 @@ from ..ir.models import Graph
 from ..linking.project import Unit, derived_edge, span, syntax_ids
 
 RULE = 'unique-static-call-summary/v1'
+COLLECTION_RULE = 'unique-static-return-collection-elements/v1'
 
 
 def _function_id(unit: Unit, node: ast.AST, kind: str, ids: dict) -> str:
@@ -159,3 +160,41 @@ def analyze_interprocedural(graph: Graph, units: list[Unit], model_index: dict) 
         for value, formal_id, at, name in binding:
             derived_edge(graph, unit, at, value, formal_id, 'STATIC_CALL_ARGUMENT_BINDING', RULE, label=name)
         derived_edge(graph, unit, call, outputs[0], site, 'STATIC_CALL_RETURN', RULE)
+
+        # A concrete literal tuple/list return has source-backed positional
+        # elements. Only bind caller unpack slots after checking a unique
+        # callee, exact static arity, and a unique return collection.
+        return_sources = [e['source'] for e in graph.edges if e['target'] == outputs[0]
+                          and e['relation'] == 'STATIC_FORWARD_RETURN']
+        if len(return_sources) != 1:
+            continue
+        collection = nodes.get(return_sources[0])
+        if not collection or collection['kind'] != 'forward_collection':
+            continue
+        arity = collection['attributes'].get('element_count')
+        if not isinstance(arity, int):
+            continue
+        members = [n for n in graph.nodes if n['kind'] == 'forward_collection_element'
+                   and n['attributes'].get('collection_id') == collection['id']]
+        slots = [n for n in graph.nodes if n['kind'] == 'forward_unpack'
+                 and n['attributes'].get('forward_id') == caller
+                 and n['attributes'].get('source_collection_id') == site]
+        member_ids = {n['attributes'].get('element_index'): n['id'] for n in members}
+        slot_ids = {n['attributes'].get('element_index'): n['id'] for n in slots}
+        if (not slots or len(members) != arity or len(slots) != arity or
+                set(member_ids) != set(range(arity)) or set(slot_ids) != set(range(arity))):
+            if slots:
+                record(unit, call, caller, site, 'Returned collection arity does not match caller unpack')
+            continue
+        for position in range(arity):
+            derived_edge(graph, unit, call, member_ids[position], slot_ids[position],
+                         'STATIC_COLLECTION_ELEMENT_BINDING', COLLECTION_RULE,
+                         label=f'index:{position}')
+        # Suppress the *specific* previous uncertainty, now resolved through
+        # a uniquely supported return/argument/position chain. Other warnings
+        # in this function remain intact.
+        graph.unresolved[:] = [u for u in graph.unresolved
+                               if not (u.get('kind') == 'forward_flow_incomplete'
+                                       and u.get('reason') == 'Unpacking arity/element identity unverified'
+                                       and u.get('site_id') == site
+                                       and u.get('function_id') == caller)]

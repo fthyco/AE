@@ -15,6 +15,7 @@ from ..linking.project import Unit, derived_edge, span, syntax_ids
 
 RULE = 'straight-line-forward-value/v1'
 EXTENDED_RULE = 'conditional-forward-values/v2'
+COLLECTION_RULE = 'static-collection-position/v1'
 
 
 class ForwardValues:
@@ -24,6 +25,8 @@ class ForwardValues:
         self.ids = syntax_ids(unit)
         self.forward_id = stable_id(unit.path, 'semantic', definition_kind, self.ids[fn], '')
         self.env: dict[str, str] = {}
+        self.collections: dict[str, tuple[str, ...]] = {}
+        self.collection_ast_ids: dict[ast.AST, str] = {}
         self.terminated = False
 
     def node(self, kind: str, astnode: ast.AST, label: str, *, conditional: bool = False) -> str:
@@ -43,10 +46,40 @@ class ForwardValues:
             derived_edge(self.graph, self.unit, at, source, target, relation,
                          EXTENDED_RULE if relation in ('STATIC_CONDITIONAL_DEPENDENCY','STATIC_GUARD_DEPENDENCY','STATIC_GUARDED_CALL') else RULE, label=label)
 
-    def problem(self, astnode: ast.AST, reason: str) -> None:
-        self.graph.unresolved.append({'kind': 'forward_flow_incomplete', 'path': self.unit.path,
-                                      'function_id': self.forward_id, 'reason': reason,
-                                      'source_refs': [span(self.unit, astnode)]})
+    def problem(self, astnode: ast.AST, reason: str, *, site_id: str | None = None) -> None:
+        entry = {'kind': 'forward_flow_incomplete', 'path': self.unit.path,
+                 'function_id': self.forward_id, 'reason': reason,
+                 'source_refs': [span(self.unit, astnode)]}
+        if site_id:
+            entry['site_id'] = site_id
+        self.graph.unresolved.append(entry)
+
+    def collection(self, node: ast.Tuple | ast.List) -> str:
+        """Materialize explicit, fixed-position syntax without evaluating elements."""
+        if node in self.collection_ast_ids:
+            return self.collection_ast_ids[node]
+        kind = type(node).__name__.lower()
+        if any(isinstance(elt, ast.Starred) for elt in node.elts):
+            self.problem(node, 'Starred collection length/element positions unknown')
+            # No artificial fixed-arity collection may be produced.
+            for elt in node.elts:
+                self.expression(elt.value if isinstance(elt, ast.Starred) else elt)
+            result = self.node('forward_collection', node, f'{kind}[unknown]', conditional=True)
+            self.collection_ast_ids[node] = result
+            return result
+        aggregate = self.node('forward_collection', node, f'{kind}[{len(node.elts)}]')
+        self.graph.nodes[-1]['attributes'].update({'collection_kind':kind, 'element_count':len(node.elts)})
+        members = []
+        for index, elem in enumerate(node.elts):
+            source = self.expression(elem)
+            member = self.node('forward_collection_element', elem, f'{kind}[{index}]')
+            self.graph.nodes[-1]['attributes'].update({'collection_id':aggregate, 'element_index':index})
+            members.append(member)
+            self.link(source, member, elem, 'STATIC_COLLECTION_ELEMENT')
+            self.link(member, aggregate, elem, 'STATIC_COLLECTION_MEMBER')
+        self.collections[aggregate] = tuple(members)
+        self.collection_ast_ids[node] = aggregate
+        return aggregate
 
     def expression(self, node: ast.AST | None) -> str | None:
         if node is None or isinstance(node, ast.Constant):
@@ -77,10 +110,7 @@ class ForwardValues:
                 self.link(self.expression(arg), value, arg)
             return value
         if isinstance(node, (ast.Tuple, ast.List)):
-            if all(isinstance(e, ast.Constant) or (isinstance(e, ast.UnaryOp) and isinstance(e.operand, ast.Constant)) for e in node.elts):
-                return None
-            self.problem(node, 'Tuple/list expression requires element-wise handling')
-            return None
+            return self.collection(node)
         if isinstance(node, ast.Attribute):
             if isinstance(node.value, ast.Name) and node.value.id == 'self':
                 self.problem(node, f'Parameter or attribute reference not resolved: {ast.unparse(node)}')
@@ -103,15 +133,23 @@ class ForwardValues:
                     self.bind(left, right)
                 return
             origin = self.expression(expr)
+            known = self.collections.get(origin, ()) if origin else ()
+            exact = bool(known) and len(known) == len(target.elts) and all(
+                isinstance(item, ast.Name) for item in target.elts)
             for index, item in enumerate(target.elts):
                 if isinstance(item, ast.Name):
-                    binding = self.node('forward_unpack', item, item.id, conditional=True)
-                    self.graph.nodes[-1]['attributes']['element_index'] = index
-                    self.link(origin, binding, item)
+                    binding = self.node('forward_unpack', item, item.id, conditional=not exact)
+                    self.graph.nodes[-1]['attributes'].update({
+                        'element_index':index, 'source_collection_id': origin})
+                    if exact:
+                        self.link(known[index], binding, item, 'STATIC_COLLECTION_ELEMENT_BINDING')
+                    else:
+                        self.link(origin, binding, item)  # aggregate provenance; not an element proof
                     self.env[item.id] = binding
                 else:
                     self.problem(item, 'Nested/dynamic destructuring not resolved')
-            self.problem(target, 'Unpacking arity/element identity unverified')
+            if not exact:
+                self.problem(target, 'Unpacking arity/element identity unverified', site_id=origin)
             return
         self.problem(target, f'Mutating or computed assignment target: {ast.unparse(target)}')
         self.expression(expr)
