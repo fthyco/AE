@@ -62,7 +62,7 @@ jobs:
           python scripts/benchmark_external_research.py --case awn --source ../original/awn --output benchmark-output/v027/awn
           python scripts/benchmark_external_research.py --case chessformer-act --source ../original/maia-act --output benchmark-output/v027/chessformer-act
           python scripts/benchmark_external_research.py --case chessformer-cah --source ../original/maia-cah --output benchmark-output/v027/chessformer-cah
-      - name: Upload summaries only: upstream AWN source is not redistributed
+      - name: Upload summaries only - upstream AWN source is not redistributed
         if: always()
         uses: actions/upload-artifact@v4
         with:
