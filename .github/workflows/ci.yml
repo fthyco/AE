@@ -1,4 +1,4 @@
-name: SAE tests
+name: AE tests
 
 on:
   push:

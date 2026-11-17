@@ -51,7 +51,7 @@
       "type": "array"
     }
   },
-  "$id": "https://github.com/fthyco/AE/blob/main/schemas/model-index.v1.schema.json",
+  "$id": "https://github.com/fthyco/MAGG/blob/main/schemas/model-index.v1.schema.json",
   "additionalProperties": false,
   "$defs": {
     "span": {

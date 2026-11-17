@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/fthyco/AE/blob/main/schemas/architecture-ir.v1.schema.json",
-  "title": "MAGG SAE Architecture IR v1.0",
+  "$id": "https://github.com/fthyco/MAGG/blob/main/schemas/architecture-ir.v1.schema.json",
+  "title": "AE SAE Architecture IR v1.0",
   "type": "object",
   "required": [
     "schema_version",

@@ -3,12 +3,12 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "magg-sae"
+name = "architecture-executer"
 version = "0.9.0"
-description = "Deterministic, non-executing static architecture extractor for Python/PyTorch source"
+description = "Static source-grounded neural architecture extraction and visualization"
 readme = "README.md"
 requires-python = ">=3.11"
-authors = [{name = "MAGG contributors"}]
+authors = [{name = "AE contributors"}]
 license = {text = "MIT"}
 keywords = ["pytorch", "static-analysis", "architecture", "intermediate-representation"]
 dependencies = ["PyYAML>=6.0,<7"]
@@ -18,7 +18,7 @@ dev = ["pytest>=8", "jsonschema>=4", "reportlab>=4"]
 render = ["reportlab>=4"]
 
 [project.scripts]
-magg = "magg.cli:main"
+ae = "ae.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

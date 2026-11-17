@@ -1,16 +1,16 @@
-# MAGG scientific-latex theme — v0.7
+# AE scientific-latex theme — v0.7
 
 ## Purpose
 
-Render **the same source-backed MAGG architecture information** using the visual conventions of the supplied Chessformer architecture report (a ten-page LaTeX/PDF reference): Latin Modern serif typography, grayscale blocks, thin outlines, small dark arrowheads, and right-angle connector routing.
+Render **the same source-backed AE architecture information** using the visual conventions of the supplied Chessformer architecture report (a ten-page LaTeX/PDF reference): Latin Modern serif typography, grayscale blocks, thin outlines, small dark arrowheads, and right-angle connector routing.
 
 This is a **Presenter-only** change. SAE source analysis, `architecture.ir.json`, `model-index.json`, diagnostic health status, and source evidence are not altered.
 
 ## Usage
 
 ```bash
-magg extract examples/cnn_residual_mvp --entrypoint model:CNN --output sae-output
-magg present sae-output --view flow --focus ResidualBlock \
+ae extract examples/cnn_residual_mvp --entrypoint model:CNN --output sae-output
+ae present sae-output --view flow --focus ResidualBlock \
   --theme scientific-latex --format all --output paper-figure
 ```
 
@@ -30,7 +30,7 @@ magg present sae-output --view flow --focus ResidualBlock \
 | Arrow stroke | 0.85 pt |
 | Corner radius | 1 pt |
 
-All fonts are read **only from the user's local installed environment** and are never embedded in the MAGG source release. SVG requests Latin Modern by family name, with serif fallbacks. TikZ selects `lmodern`. The deterministic PDF exporter embeds genuine local Latin Modern Type 1 fonts when installed at the conventional TeX location; otherwise it uses the standard PDF Times fonts. Exact glyph shaping can differ between exporter/backends on machines without Latin Modern.
+All fonts are read **only from the user's local installed environment** and are never embedded in the AE source release. SVG requests Latin Modern by family name, with serif fallbacks. TikZ selects `lmodern`. The deterministic PDF exporter embeds genuine local Latin Modern Type 1 fonts when installed at the conventional TeX location; otherwise it uses the standard PDF Times fonts. Exact glyph shaping can differ between exporter/backends on machines without Latin Modern.
 
 ## Routing and truthfulness
 
@@ -56,7 +56,7 @@ The exact same geometric scene feeds SVG, PDF, and TikZ. No separate layout comp
 ## Minimal code location
 
 ```text
-src/magg/presenter/
+src/ae/presenter/
 ├── themes/
 │   ├── __init__.py
 │   └── scientific_latex.py
