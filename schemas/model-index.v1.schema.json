@@ -110,6 +110,66 @@
         }
       },
       "additionalProperties": false
+    },
+    "container_specialization": {
+      "type": "object",
+      "required": [
+        "factory_definition_id",
+        "configuration_id",
+        "model_definition_id",
+        "block_definition_id",
+        "member_definition_id",
+        "transition_definition_id",
+        "stage_counts",
+        "stages",
+        "total_members",
+        "scope",
+        "resolution"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "factory_definition_id": {
+          "type": "string"
+        },
+        "configuration_id": {
+          "type": "string"
+        },
+        "model_definition_id": {
+          "type": "string"
+        },
+        "block_definition_id": {
+          "type": "string"
+        },
+        "member_definition_id": {
+          "type": "string"
+        },
+        "transition_definition_id": {
+          "type": "string"
+        },
+        "stage_counts": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "total_members": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "stages": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "scope": {
+          "const": "static_constructor_blueprint"
+        },
+        "resolution": {
+          "const": "conditional"
+        }
+      }
     }
   },
   "$defs": {
