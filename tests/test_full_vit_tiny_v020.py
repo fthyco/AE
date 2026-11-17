@@ -2,6 +2,11 @@
 from __future__ import annotations
 
 import json
+import hashlib
+import importlib
+import importlib.metadata
+import os
+from pathlib import Path
 
 import pytest
 
@@ -11,8 +16,27 @@ from ae.presenter.api import present
 
 @pytest.fixture(scope="module")
 def originals():
+    # Other model gates install SMP, which can resolve a newer timm.
+    # Never claim a regression failure for a *different* upstream source:
+    # the audited specialization is pinned to exact bytes, not just an API.
     pytest.importorskip("timm")
-    from scripts.preflight_vit_tiny_v020 import snapshot_sources
+    from scripts.preflight_vit_tiny_v020 import (
+        EXPECTED_SOURCE_SHA256, SOURCE_MODULES, TIMM_VERSION, snapshot_sources,
+    )
+    version = importlib.metadata.version("timm")
+    mismatches = []
+    for rel, name in SOURCE_MODULES.items():
+        original = Path(importlib.import_module(name).__file__).read_bytes()
+        if hashlib.sha256(original).hexdigest() != EXPECTED_SOURCE_SHA256[rel]:
+            mismatches.append(rel)
+    if version != TIMM_VERSION or mismatches:
+        reason = (
+            f"ViT v0.20 requires timm=={TIMM_VERSION} with original source bytes; "
+            f"installed timm=={version}; changed files: {', '.join(mismatches)}"
+        )
+        if os.environ.get("AE_REQUIRE_VIT_PIN") == "1":
+            pytest.fail(reason)
+        pytest.skip(reason)
     return snapshot_sources
 
 
