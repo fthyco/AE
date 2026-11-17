@@ -9,7 +9,7 @@ import sys
 from magg.sae.api import extract
 from magg.presenter.api import present
 from magg.presenter.reader import load_bundle
-from magg.presenter.flow import project_flow
+from magg.presenter.flow import project_flow, FLOW_EDGES
 
 ROOT = Path(__file__).parents[1]
 
@@ -29,7 +29,10 @@ def test_residual_paths_have_actual_ir_evidence(tmp_path):
     assert any(e['source']==inputs[0]['id'] and e['target']==add and e['relation']=='STATIC_VALUE_DEPENDENCY' for e in b.ir['edges'])
     assert any(e['source']==conv2 and e['target']==add and e['relation']=='STATIC_VALUE_DEPENDENCY' for e in b.ir['edges'])
     g=project_flow(b)
-    assert all(e['relation_kind'] in ('STATIC_VALUE_DEPENDENCY','STATIC_FORWARD_RETURN') for e in g['links'])
+    assert all(e['relation_kind'] in FLOW_EDGES for e in g['links'])
+    edges = {edge['id']: edge for edge in b.ir['edges']}
+    assert all(edges[eid]['relation'] == link['relation_kind']
+               for link in g['links'] for eid in link['ir_edge_ids'])
     assert all(e['ir_edge_ids'] and e['source_refs'] for e in g['links'])
 
 def test_incomplete_attention_unpacked_values_are_conditional(tmp_path):
