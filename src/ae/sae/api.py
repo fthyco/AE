@@ -23,6 +23,7 @@ from .analysis.unet_instance_forward import expand_unet_forward
 from .analysis.vit_instance_forward import expand_vit_forward
 from .analysis.mobilenetv3_instance_forward import expand_mobilenetv3_forward
 from .analysis.vgg16_instance_forward import expand_vgg16_forward
+from .analysis.efficientnet_b0_instance_forward import expand_efficientnet_b0_forward
 from .analysis.container_specialization import specialize_containers
 from .indexing.model_index import build_model_index, validate_model_index
 from .linking.project import Unit, link_project, syntax_ids, unresolved
@@ -141,7 +142,9 @@ def extract(source_root: str | Path, output: str | Path, *, entrypoint: str | No
         if not propagate_nested_shapes(graph):
             break
         analyze_composite_shapes(graph, parsed_units, model_index)
-    expanded = expand_vgg16_forward(parsed_units, entrypoint, input_shape, graph.nodes)
+    expanded = expand_efficientnet_b0_forward(parsed_units, entrypoint, input_shape, graph.nodes)
+    if expanded is None:
+        expanded = expand_vgg16_forward(parsed_units, entrypoint, input_shape, graph.nodes)
     if expanded is None:
         expanded = expand_mobilenetv3_forward(parsed_units, entrypoint, input_shape, graph.nodes)
     if expanded is None:
