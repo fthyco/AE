@@ -58,7 +58,7 @@ class _VGG:
         factory=self._fn("vgg16")
         calls=[n for n in ast.walk(factory) if isinstance(n,ast.Call)
                and isinstance(n.func,ast.Name) and n.func.id=="_vgg"]
-        _check(len(calls)==1 and len(calls[0].args)==5 and
+        _check(len(calls)==1 and len(calls[0].args)==4 and
                ast.literal_eval(calls[0].args[0])=="D" and
                ast.literal_eval(calls[0].args[1]) is False,
                "Unproven VGG16 default factory")
