@@ -62,8 +62,12 @@ class _VGG:
                ast.literal_eval(calls[0].args[0])=="D" and
                ast.literal_eval(calls[0].args[1]) is False,
                "Unproven VGG16 default factory")
-        cfg=[n.value for n in self.unit.tree.body if isinstance(n,ast.Assign)
-             and any(isinstance(t,ast.Name) and t.id=="cfgs" for t in n.targets)]
+        cfg=[n.value for n in self.unit.tree.body
+             if ((isinstance(n,ast.AnnAssign)
+                  and isinstance(n.target,ast.Name) and n.target.id=="cfgs")
+                 or (isinstance(n,ast.Assign) and any(
+                     isinstance(t,ast.Name) and t.id=="cfgs"
+                     for t in n.targets)))]
         _check(len(cfg)==1 and isinstance(cfg[0],ast.Dict),
                "Original VGG configuration map missing")
         conf=ast.literal_eval(cfg[0])
