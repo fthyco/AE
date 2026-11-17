@@ -6,8 +6,8 @@ import json
 from pathlib import Path
 from typing import Any
 
-from magg.sae.api import validate_bundle
-from magg.sae.indexing.model_index import validate_model_index
+from ae.sae.api import validate_bundle
+from ae.sae.indexing.model_index import validate_model_index
 
 
 @dataclass(frozen=True)

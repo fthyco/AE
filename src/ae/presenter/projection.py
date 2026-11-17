@@ -4,7 +4,7 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import Any
 
-from magg.sae.ir.canonical import stable_id
+from ae.sae.ir.canonical import stable_id
 from .health import issue
 from .reader import Bundle
 

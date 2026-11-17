@@ -71,7 +71,7 @@ def _pdf_font_pair() -> tuple[str,str]:
         from reportlab.pdfbase import pdfmetrics
         from reportlab.pdfbase.pdfmetrics import EmbeddedType1Face, Font
         common = Path('/usr/share/texmf/fonts')
-        for logical, stem in (('MAGGLatinModern','lmr10'),('MAGGLatinModernBold','lmbx10')):
+        for logical, stem in (('AELatinModern','lmr10'),('AELatinModernBold','lmbx10')):
             afm = common/'afm/public/lm'/f'{stem}.afm'
             pfb = common/'type1/public/lm'/f'{stem}.pfb'
             if not (afm.is_file() and pfb.is_file()):
@@ -80,7 +80,7 @@ def _pdf_font_pair() -> tuple[str,str]:
                 face=EmbeddedType1Face(str(afm),str(pfb))
                 pdfmetrics.registerTypeFace(face)
                 pdfmetrics.registerFont(Font(logical,face.name,'WinAnsiEncoding'))
-        return ('MAGGLatinModern','MAGGLatinModernBold')
+        return ('AELatinModern','AELatinModernBold')
     except (OSError,ValueError):
         return ('Times-Roman','Times-Bold')
 
@@ -92,7 +92,7 @@ def pdf(scene: dict) -> bytes:
         from reportlab.pdfgen import canvas
         from reportlab.lib.colors import HexColor
     except ImportError as exc:
-        raise ValueError('PDF export requires ReportLab; install magg-sae[render]') from exc
+        raise ValueError('PDF export requires ReportLab; install architecture-executer[render]') from exc
     s = _style(scene)
     font, font_bold = _pdf_font_pair() if s['name']=='scientific-latex/v1' else ('Helvetica','Helvetica-Bold')
     memory = BytesIO()

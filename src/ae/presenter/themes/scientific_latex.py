@@ -1,7 +1,7 @@
 """A small immutable visual style modeled on Latin Modern research figures.
 
 Font files are resolved by the PDF renderer from the *local* TeX installation
-and are never packaged or redistributed by MAGG.
+and are never packaged or redistributed by AE.
 """
 from __future__ import annotations
 
