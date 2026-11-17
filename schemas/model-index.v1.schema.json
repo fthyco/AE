@@ -1,0 +1,242 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SAE Model Index v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "entrypoint",
+    "root_definition_id",
+    "status",
+    "modules",
+    "unresolved",
+    "limitations"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "entrypoint": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "root_definition_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "status": {
+      "enum": [
+        "indexed",
+        "no_entrypoint",
+        "unresolved",
+        "unsupported_entrypoint"
+      ]
+    },
+    "modules": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/module"
+      }
+    },
+    "unresolved": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "limitations": {
+      "type": "array"
+    }
+  },
+  "$id": "https://github.com/fthyco/MAGG/blob/main/schemas/model-index.v1.schema.json",
+  "additionalProperties": false,
+  "$defs": {
+    "span": {
+      "type": "object",
+      "required": [
+        "path",
+        "start_byte",
+        "end_byte",
+        "precision"
+      ],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "start_byte": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "end_byte": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "precision": {
+          "type": "string"
+        }
+      }
+    },
+    "component": {
+      "type": "object",
+      "required": [
+        "construction_site_id",
+        "layer_spec_ids",
+        "owner_expression",
+        "declared_type",
+        "target_definition_id",
+        "source_refs"
+      ],
+      "properties": {
+        "construction_site_id": {
+          "type": "string"
+        },
+        "layer_spec_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "owner_expression": {
+          "type": "string"
+        },
+        "declared_type": {
+          "type": "string"
+        },
+        "target_definition_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/span"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "call": {
+      "type": "object",
+      "required": [
+        "call_site_id",
+        "callee_expression",
+        "module_construction_site_ids",
+        "local_definition_ids",
+        "source_refs"
+      ],
+      "properties": {
+        "call_site_id": {
+          "type": "string"
+        },
+        "callee_expression": {
+          "type": "string"
+        },
+        "module_construction_site_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "local_definition_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "source_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/span"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "operation": {
+      "type": "object",
+      "required": [
+        "operation_site_id",
+        "operator",
+        "source_refs"
+      ],
+      "properties": {
+        "operation_site_id": {
+          "type": "string"
+        },
+        "operator": {
+          "type": "string"
+        },
+        "source_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/span"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "module": {
+      "type": "object",
+      "required": [
+        "definition_id",
+        "qualname",
+        "source_refs",
+        "forward_method_id",
+        "components",
+        "forward_calls",
+        "forward_operations",
+        "forward_relation_ids"
+      ],
+      "properties": {
+        "definition_id": {
+          "type": "string"
+        },
+        "qualname": {
+          "type": "string"
+        },
+        "source_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/span"
+          }
+        },
+        "forward_method_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "components": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/component"
+          }
+        },
+        "forward_calls": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/call"
+          }
+        },
+        "forward_operations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/operation"
+          }
+        },
+        "forward_relation_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
