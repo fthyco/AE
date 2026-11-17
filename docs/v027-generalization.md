@@ -93,3 +93,19 @@ Dynamic paths which cannot be traced must be marked unsupported.
   selection and drill-down without any external network requests.
 - Existing eight original model acceptance gates must remain green.
 - A GitHub Release and PyPI publication are different distribution actions.
+
+## PyPI Trusted Publisher (separate authorization)
+
+A dispatch-only workflow is included at .github/workflows/pypi-publish.yml.
+It can publish ONLY a version matching an existing, non-draft GitHub Release
+tag, with a clean build and metadata check. It uses PyPI OIDC instead of
+storing API tokens in GitHub.
+
+First register the project name architecture-extractor in an authorized
+PyPI account (or choose another available distribution name). Configure
+the PyPI project's Trusted Publisher as GitHub owner fthyco, repository AE,
+workflow pypi-publish.yml, environment pypi. Configure GitHub environment
+approval as appropriate. Then manually dispatch this workflow from main
+for the already-released tag. Without this external PyPI ownership and
+publisher authorization, the workflow cannot publish: passing GitHub CI
+alone must never be described as a PyPI upload.

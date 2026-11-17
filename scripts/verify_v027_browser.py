@@ -21,7 +21,16 @@ def verify(output: Path) -> dict:
     manifest = json.loads((destination / "overview/presentation-manifest.json").read_text())
     model_id = next(vid for vid, n in manifest["visual_elements"].items()
                     if n["kind"] == "model")
-    assert len(manifest["visual_elements"][model_id]["member_ir_node_ids"]) > 1
+    members = set(manifest["visual_elements"][model_id]["member_ir_node_ids"])
+    assert len(members) > 1
+    operation_manifest = json.loads(
+        (destination / "operation/presentation-manifest.json").read_text()
+    )["visual_elements"]
+    backed_operations = {
+        vid for vid, n in operation_manifest.items()
+        if n["kind"] == "operation" and members.intersection(n["ir_node_ids"])
+    }
+    assert backed_operations, "Architecture grouping must retain real operation-site identity"
 
     errors = []
     external = []
@@ -44,9 +53,12 @@ def verify(output: Path) -> dict:
         page.locator(f'#graph-overview rect[data-parent-id="{model_id}"]').click(position={"x":6,"y":6})
         assert page.locator("#drill").is_enabled()
         page.locator("#drill").click()
-        assert page.get_by_role("button", name="Operation").get_attribute("aria-pressed") == "true"
+        assert page.locator('button[data-level="operation"]').get_attribute("aria-pressed") == "true"
         highlights = page.locator("#graph-operation svg rect.ae-selected").count()
-        assert highlights >= 1, "Source hierarchy drill-down matched zero original operations"
+        selected_op_ids = set(page.locator("#graph-operation svg rect.ae-selected")
+                              .evaluate_all("(els)=>els.map(e=>e.id.slice(2))"))
+        assert backed_operations.issubset(selected_op_ids), "Source-backed operation identity lost in drill-down"
+        assert highlights >= len(backed_operations)
         zoom_old = page.locator("#evidence-status").inner_text()
         page.locator("#zoom-in").click()
         zoom_new = page.locator("#evidence-status").inner_text()

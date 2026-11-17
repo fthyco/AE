@@ -45,6 +45,13 @@ def test_auto_fallback_is_evidence_backed_and_three_levels_differ(tmp_path):
     category = [n.get("semantic_category")
                 for n in data["visual_elements"].values()]
     assert "linear" in category
+    overview = json.loads((tmp_path / "viewer" / "overview" /
+                           "presentation-manifest.json").read_text())
+    root = next(n for n in overview["visual_elements"].values()
+                if n["kind"] == "model")
+    members = set(root["member_ir_node_ids"])
+    assert any(n["kind"] == "operation" and members.intersection(n["ir_node_ids"])
+               for n in data["visual_elements"].values())
     html = (tmp_path / "viewer" / "index.html").read_text()
     assert 'id="search"' in html
     assert "function searchGraph()" in html
