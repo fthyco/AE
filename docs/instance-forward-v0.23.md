@@ -18,3 +18,15 @@ CLI:
     ae present BUNDLE --view instance --level operation --focus stage.2 --format all --output DETAIL
 
 Unsupported source changes, weights/configuration variants, and untested geometries fail closed. This is a bounded audited specialization, not universal VGG tracing.
+
+## Unified semantic visual cues
+
+Only source-proven operation classes receive colored 3-point accent rules,
+shared by SVG, PDF and TikZ. Labels and original IR IDs remain authoritative.
+The scientific white/black baseline is preserved; each function category
+uses a muted blue/teal/amber/violet/slate/graphite accent, and unresolved
+or unclassified types remain neutral. Grouped Architecture blocks use
+neutral accents because they aggregate multiple operation categories.
+
+Color is never evidence of execution; exact original node/edge provenance
+and tensor shapes remain in the canonical graph and figure manifest.
