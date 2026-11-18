@@ -22,10 +22,10 @@ The complete operation graph contains **42 FX operations and 41 ordered dependen
 
 Requires Python 3.11+. **PyTorch is not required** for static extraction or the viewer.
 
-Published GitHub release:
+Published on [PyPI](https://pypi.org/project/architecture-extractor/):
 
 ~~~bash
-python -m pip install https://github.com/fthyco/Architecture-Extractor-AE/releases/download/v0.27.0/architecture_extractor-0.27.0-py3-none-any.whl
+python -m pip install architecture-extractor
 ~~~
 
 From source, with vector export dependencies:
@@ -47,9 +47,10 @@ ae viewer bundle --output viewer
 
 Open `viewer/index.html` in a browser. It works offline and provides three hierarchy levels, zoom/pan, search, source inspection, and drill-down.
 
-For SVG/PDF/TikZ output, install the `render` extra or `reportlab` and run:
+For SVG/PDF/TikZ export, install the optional renderer:
 
 ~~~bash
+python -m pip install 'architecture-extractor[render]'
 ae present bundle --view structure --level operation --format all --output figures
 ~~~
 
