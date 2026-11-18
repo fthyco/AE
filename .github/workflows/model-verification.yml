@@ -1,0 +1,459 @@
+name: AE independent model verification
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  # efficientnet-b0-v024.yml
+  original-efficientnet-b0:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    env:
+      AE_REQUIRE_EFFICIENTNET_PIN: '1'
+      OMP_NUM_THREADS: '1'
+      MKL_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install original TorchVision and AE
+        run: |
+          python -m pip install torch==2.10.0 torchvision==0.25.0 --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install -e '.[dev,render]'
+      - name: Independent original FX and runtime vs AE
+        run: python scripts/verify_full_efficientnet_b0_v024.py --output benchmark-output/efficientnet-b0-v024
+      - name: Full regression tests
+        run: python -m pytest -q
+      - name: Reject target package import inside AE
+        run: |
+          python - <<'PYCODE'
+          import builtins, json
+          from pathlib import Path
+          original=builtins.__import__
+          def forbidden(name,*args,**kwargs):
+              if name.split(".")[0] in ("torch","torchvision","timm"):
+                  raise RuntimeError("Target model imported: "+name)
+              return original(name,*args,**kwargs)
+          builtins.__import__=forbidden
+          from ae.sae.api import extract
+          root=Path("benchmark-output/efficientnet-b0-v024")
+          extract(root/"source",root/"no-import",
+                  entrypoint="torchvision.models.efficientnet:efficientnet_b0",
+                  input_shape=(1,3,224,224))
+          assert json.loads((root/"no-import/instance-forward.json").read_text())["status"]=="expanded_static"
+          PYCODE
+      - name: Deterministic graph across Python hash seeds
+        env:
+          PYTHONHASHSEED: '991'
+        run: |
+          ae extract benchmark-output/efficientnet-b0-v024/source \
+            --entrypoint torchvision.models.efficientnet:efficientnet_b0 \
+            --input-shape 1,3,224,224 --output benchmark-output/efficientnet-b0-v024/hash991
+          cmp benchmark-output/efficientnet-b0-v024/1x3x224x224/bundle/instance-forward.json \
+              benchmark-output/efficientnet-b0-v024/hash991/instance-forward.json
+      - name: Upload verified original FX and AE output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ae-v024-efficientnet-b0
+          path: benchmark-output/efficientnet-b0-v024/
+          if-no-files-found: warn
+
+  # full-densenet121.yml
+  densenet121-full-forward:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install pinned PyTorch runtime and AE
+        run: |
+          python -m pip install torch==2.10.0 torchvision==0.25.0 --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install -e '.[dev,render]'
+      - name: Full regression
+        run: python -m pytest -q
+      - name: Independent source, FX, runtime and SVG/PDF/TikZ gate
+        env:
+          OMP_NUM_THREADS: '1'
+          MKL_NUM_THREADS: '1'
+          PYTHONHASHSEED: '19'
+        run: python scripts/verify_full_densenet121.py --output benchmark-output/full-densenet121
+      - name: Deterministic IR across hash seeds
+        env:
+          PYTHONHASHSEED: '991'
+        run: |
+          ae extract benchmark-output/full-densenet121/input_64/source \
+            --entrypoint densenet:densenet121 --input-shape 1,3,64,64 \
+            --output benchmark-output/full-densenet121/seed991
+          cmp benchmark-output/full-densenet121/input_64/sae/instance-forward.json \
+              benchmark-output/full-densenet121/seed991/instance-forward.json
+          cmp benchmark-output/full-densenet121/input_64/sae/architecture.ir.json \
+              benchmark-output/full-densenet121/seed991/architecture.ir.json
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ae-v018-densenet121-forward
+          path: benchmark-output/full-densenet121/
+          if-no-files-found: warn
+
+  # full-mobilenetv3-small-v022.yml
+  original-mobilenetv3-small:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      AE_REQUIRE_MNV3_PIN: '1'
+      OMP_NUM_THREADS: '1'
+      MKL_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install exact original CPU model and AE
+        run: |
+          python -m pip install torch==2.10.0 torchvision==0.25.0 --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install -e '.[dev,render]'
+      - name: Original FX and actual hooks vs AE source-only full acceptance
+        run: python scripts/verify_full_mobilenetv3_small_v022.py --output benchmark-output/mobilenetv3-small-v022
+      - name: All unit and regression tests (source pins mandatory)
+        run: python -m pytest -q
+      - name: Assert SAE does not import or run target package
+        run: |
+          python - <<'PYCODE'
+          import builtins
+          from pathlib import Path
+          original=builtins.__import__
+          def reject_import(name,*args,**kwargs):
+              if name.split('.')[0] in ('torch','torchvision','timm'):
+                  raise AssertionError('Model package imported by SAE: '+name)
+              return original(name,*args,**kwargs)
+          builtins.__import__=reject_import
+          from ae.sae.api import extract
+          root=Path('benchmark-output/mobilenetv3-small-v022')
+          extract(root/'source',root/'without-target-import',
+                  entrypoint='torchvision.models.mobilenetv3:mobilenet_v3_small',
+                  input_shape=(1,3,224,224))
+          PYCODE
+      - name: Compare canonical static IR across hash seeds
+        env:
+          PYTHONHASHSEED: '991'
+        run: |
+          ae extract benchmark-output/mobilenetv3-small-v022/source \
+            --entrypoint torchvision.models.mobilenetv3:mobilenet_v3_small \
+            --input-shape 1,3,224,224 --output benchmark-output/mobilenetv3-small-v022/hash991
+          cmp benchmark-output/mobilenetv3-small-v022/1x3x224x224/ae-bundle/instance-forward.json \
+              benchmark-output/mobilenetv3-small-v022/hash991/instance-forward.json
+          cmp benchmark-output/mobilenetv3-small-v022/1x3x224x224/ae-bundle/architecture.ir.json \
+              benchmark-output/mobilenetv3-small-v022/hash991/architecture.ir.json
+      - name: Extraction wall time and peak memory
+        run: |
+          /usr/bin/time -f 'wall_seconds=%e\npeak_rss_kib=%M' \
+            -o benchmark-output/mobilenetv3-small-v022/performance.txt \
+            ae extract benchmark-output/mobilenetv3-small-v022/source \
+              --entrypoint torchvision.models.mobilenetv3:mobilenet_v3_small \
+              --input-shape 1,3,224,224 --output benchmark-output/mobilenetv3-small-v022/profiled
+      - name: Upload original FX and model-independent AE proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ae-v022-full-mobilenetv3-small
+          path: benchmark-output/mobilenetv3-small-v022/
+          if-no-files-found: warn
+
+  # full-resnet18.yml
+  resnet18-full-forward:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install pinned TorchVision and AE
+        run: |
+          python -m pip install torch==2.10.0 torchvision==0.25.0 --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install -e '.[dev,render]'
+      - name: Full local regression
+        run: python -m pytest -q
+      - name: Full source/FX/hooks gate
+        env:
+          OMP_NUM_THREADS: '1'
+          MKL_NUM_THREADS: '1'
+          PYTHONHASHSEED: '7'
+        run: |
+          python scripts/verify_full_resnet18.py --output benchmark-output/full-resnet18
+          ae present benchmark-output/full-resnet18/input_64/sae --view instance --level operation --format all --output benchmark-output/full-resnet18/figures
+      - name: Verify deterministic graph across hash seeds
+        env:
+          OMP_NUM_THREADS: '1'
+          MKL_NUM_THREADS: '1'
+        run: |
+          export PYTHONHASHSEED=991
+          ae extract benchmark-output/full-resnet18/input_64/source --entrypoint resnet:resnet18 --input-shape 1,3,64,64 --output benchmark-output/full-resnet18/seed991
+          cmp benchmark-output/full-resnet18/input_64/sae/instance-forward.json benchmark-output/full-resnet18/seed991/instance-forward.json
+          cmp benchmark-output/full-resnet18/input_64/sae/architecture.ir.json benchmark-output/full-resnet18/seed991/architecture.ir.json
+      - name: Upload source and verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ae-v016-resnet18-full-forward
+          path: benchmark-output/full-resnet18/
+          if-no-files-found: warn
+
+  # full-resnet50.yml
+  resnet50-full-forward:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install pinned TorchVision and AE
+        run: |
+          python -m pip install torch==2.10.0 torchvision==0.25.0 --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install -e '.[dev,render]'
+      - name: Regression
+        run: python -m pytest -q
+      - name: Full independent source/FX/hooks graph matching
+        env:
+          OMP_NUM_THREADS: '1'
+          MKL_NUM_THREADS: '1'
+          PYTHONHASHSEED: '23'
+        run: |
+          python scripts/verify_full_resnet18.py --model resnet50 --output benchmark-output/full-resnet50
+          ae present benchmark-output/full-resnet50/input_64/sae --view instance --level operation --format all --output benchmark-output/full-resnet50/figures
+      - name: Cross-hash-seed determinism
+        env:
+          PYTHONHASHSEED: '991'
+        run: |
+          ae extract benchmark-output/full-resnet50/input_64/source --entrypoint resnet:resnet50 --input-shape 1,3,64,64 --output benchmark-output/full-resnet50/seed991
+          cmp benchmark-output/full-resnet50/input_64/sae/instance-forward.json benchmark-output/full-resnet50/seed991/instance-forward.json
+          cmp benchmark-output/full-resnet50/input_64/sae/architecture.ir.json benchmark-output/full-resnet50/seed991/architecture.ir.json
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ae-v017-resnet50-full-forward
+          path: benchmark-output/full-resnet50/
+          if-no-files-found: warn
+
+  # full-unet-resnet34.yml
+  unet-resnet34-full-forward:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install pinned upstream model and AE
+        run: |
+          python -m pip install torch==2.10.0 torchvision==0.25.0 --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install segmentation-models-pytorch==0.6.0
+          python -m pip install -e '.[dev,render]'
+      - name: Unit and fail-closed regression tests
+        run: python -m pytest -q
+      - name: Independent FX, runtime hooks, shapes and rendered IR verification
+        env:
+          PYTHONHASHSEED: '19'
+          OMP_NUM_THREADS: '1'
+          MKL_NUM_THREADS: '1'
+        run: python scripts/verify_full_unet_resnet34.py --output benchmark-output/full-unet-resnet34
+      - name: Deterministic static IR across independent Python hash seeds
+        env:
+          PYTHONHASHSEED: '991'
+        run: |
+          ae extract benchmark-output/full-unet-resnet34/1x3x64x64/source \
+            --entrypoint decoders.unet.model:Unet --input-shape 1,3,64,64 \
+            --output benchmark-output/full-unet-resnet34/hashseed991
+          cmp benchmark-output/full-unet-resnet34/1x3x64x64/sae/instance-forward.json \
+              benchmark-output/full-unet-resnet34/hashseed991/instance-forward.json
+          cmp benchmark-output/full-unet-resnet34/1x3x64x64/sae/architecture.ir.json \
+              benchmark-output/full-unet-resnet34/hashseed991/architecture.ir.json
+      - name: Assert source-only extraction never imports target packages
+        run: |
+          python - <<'PYCODE'
+          import builtins
+          from pathlib import Path
+          original=builtins.__import__
+          def reject_target_import(name, *args, **kwargs):
+              if name.split('.')[0] in ('torch','torchvision','segmentation_models_pytorch'):
+                  raise RuntimeError('AE extraction attempted to import target package: '+name)
+              return original(name,*args,**kwargs)
+          builtins.__import__=reject_target_import
+          from ae.sae.api import extract
+          extract(Path('benchmark-output/full-unet-resnet34/1x3x64x64/source'),
+                  Path('benchmark-output/full-unet-resnet34/no_target_import'),
+                  entrypoint='decoders.unet.model:Unet',input_shape=(1,3,64,64))
+          PYCODE
+      - name: Measure isolated extraction time and peak RSS
+        run: |
+          /usr/bin/time -f 'wall_seconds=%e\npeak_rss_kib=%M' \
+            -o benchmark-output/full-unet-resnet34/extraction-performance.txt \
+            ae extract benchmark-output/full-unet-resnet34/1x3x64x64/source \
+            --entrypoint decoders.unet.model:Unet --input-shape 1,3,64,64 \
+            --output benchmark-output/full-unet-resnet34/profiled-extraction
+      - name: Upload source hashes, graphs and independent results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ae-v019-full-unet-resnet34
+          path: benchmark-output/full-unet-resnet34/
+          if-no-files-found: warn
+
+  # full-vgg16-v023.yml
+  original-vgg16:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    env:
+      AE_REQUIRE_VGG_PIN: '1'
+      OMP_NUM_THREADS: '1'
+      MKL_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install exact original CPU model and AE
+        run: |
+          python -m pip install torch==2.10.0 torchvision==0.25.0 --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install -e '.[dev,render]'
+      - name: Independently verify VGG16 original FX and AE source proof
+        run: python scripts/verify_full_vgg16_v023.py --output benchmark-output/vgg16-v023
+      - name: Regression tests
+        run: python -m pytest -q
+      - name: Enforce non-importing model analysis
+        run: |
+          python - <<'PYCODE'
+          import builtins,json
+          from pathlib import Path
+          original=builtins.__import__
+          def reject(name,*args,**kwargs):
+              if name.split(".")[0] in ("torch","torchvision","timm"):
+                  raise AssertionError("Target package import forbidden: "+name)
+              return original(name,*args,**kwargs)
+          builtins.__import__=reject
+          from ae.sae.api import extract
+          root=Path('benchmark-output/vgg16-v023')
+          extract(root/'source',root/'source-only',
+                  entrypoint='torchvision.models.vgg:vgg16',
+                  input_shape=(1,3,224,224))
+          bundle=json.loads((root/'source-only/instance-forward.json').read_text())
+          assert bundle['status']=='expanded_static'
+          PYCODE
+      - name: Verify deterministic canonical graph IDs
+        env:
+          PYTHONHASHSEED: '991'
+        run: |
+          ae extract benchmark-output/vgg16-v023/source \
+            --entrypoint torchvision.models.vgg:vgg16 \
+            --input-shape 1,3,224,224 --output benchmark-output/vgg16-v023/hash991
+          cmp benchmark-output/vgg16-v023/1x3x224x224/bundle/instance-forward.json \
+              benchmark-output/vgg16-v023/hash991/instance-forward.json
+      - name: Upload independent VGG source, original graph and AE artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ae-v023-full-vgg16
+          path: benchmark-output/vgg16-v023/
+          if-no-files-found: warn
+
+  # full-vit-tiny-v020.yml
+  full-vit-tiny:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      AE_REQUIRE_VIT_PIN: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install original model, fixed runtime and AE
+        run: |
+          python -m pip install torch==2.10.0 torchvision==0.25.0 --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install timm==1.0.22
+          python -m pip install -e '.[dev,render]'
+      - name: Independent FX, hooks, shapes, and vector figure gate
+        env:
+          PYTHONHASHSEED: '19'
+          OMP_NUM_THREADS: '1'
+          MKL_NUM_THREADS: '1'
+        run: python scripts/verify_full_vit_tiny_v020.py --output benchmark-output/vit-tiny-v020
+      - name: Verify and render original v0.21 hierarchy artifacts
+        run: python scripts/render_vit_hierarchy_v021.py --output benchmark-output/vit-tiny-v020
+      - name: Full local regression tests
+        run: python -m pytest -q
+      - name: Assert no timm or torch import during AE source-only extraction
+        run: |
+          python - <<'PYCODE'
+          import builtins
+          from pathlib import Path
+          original=builtins.__import__
+          def safe_import(name,*a,**kw):
+              if name.split('.')[0] in ('torch','torchvision','timm'):
+                  raise RuntimeError('AE imported prohibited target package: '+name)
+              return original(name,*a,**kw)
+          builtins.__import__=safe_import
+          from ae.sae.api import extract
+          extract(Path('benchmark-output/vit-tiny-v020/source'),
+                  Path('benchmark-output/vit-tiny-v020/no-target-import'),
+                  entrypoint='timm.models.vision_transformer:vit_tiny_patch16_224',
+                  input_shape=(1,3,224,224), attention_mode='fused')
+          PYCODE
+      - name: Static IR deterministic across hash seeds
+        env:
+          PYTHONHASHSEED: '991'
+        run: |
+          ae extract benchmark-output/vit-tiny-v020/source --entrypoint timm.models.vision_transformer:vit_tiny_patch16_224 --attention-mode fused --input-shape 1,3,224,224 --output benchmark-output/vit-tiny-v020/seed991
+          cmp benchmark-output/vit-tiny-v020/fused-1x3x224x224/ae-bundle/instance-forward.json benchmark-output/vit-tiny-v020/seed991/instance-forward.json
+          cmp benchmark-output/vit-tiny-v020/fused-1x3x224x224/ae-bundle/architecture.ir.json benchmark-output/vit-tiny-v020/seed991/architecture.ir.json
+      - name: Measure isolated extraction time and RSS
+        run: |
+          /usr/bin/time -f 'wall_seconds=%e\npeak_rss_kib=%M' -o benchmark-output/vit-tiny-v020/extractor-performance.txt \
+            ae extract benchmark-output/vit-tiny-v020/source --entrypoint timm.models.vision_transformer:vit_tiny_patch16_224 --attention-mode fused --input-shape 1,3,224,224 --output benchmark-output/vit-tiny-v020/profiled
+      - name: Upload audit and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ae-v020-full-vit-tiny
+          path: benchmark-output/vit-tiny-v020/
+          if-no-files-found: warn
+
+  # vit-tiny-preflight-v020.yml
+  reference-v20:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install original pinned reference
+        run: |
+          python -m pip install torch==2.10.0 torchvision==0.25.0 --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install timm==1.0.22
+      - name: Independent timm FX and runtime hook inventory (not an AE acceptance gate)
+        env:
+          PYTHONHASHSEED: '19'
+          OMP_NUM_THREADS: '1'
+          MKL_NUM_THREADS: '1'
+        run: python scripts/preflight_vit_tiny_v020.py --output benchmark-output/vit-tiny-v020
+      - name: Upload reference source fingerprints and execution evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ae-v020-vit-tiny-reference-only
+          path: benchmark-output/vit-tiny-v020/
+          if-no-files-found: warn

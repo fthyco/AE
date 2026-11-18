@@ -51,7 +51,7 @@ trees outside that scope (AWN, Chessformer, custom projects), start with
 
 ## Release acceptance
 
-The `public-release-v026.yml` workflow independently builds a wheel and
+The `clean-wheel-and-sdist` job in `.github/workflows/research-verification.yml` independently builds a wheel and
 source distribution, performs metadata checks, installs the **wheel into an
 isolated environment without dev extras or torch**, and exercises the shipped
 `ae extract`, `ae validate`, and `ae viewer` commands. It also tests

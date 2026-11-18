@@ -1,0 +1,275 @@
+name: AE research, viewer, and distribution evidence
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  # generalization-v027.yml
+  generic-research-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: ae
+      - uses: actions/checkout@v4
+        with:
+          repository: fthyco/Adaptive-Width-Neural-Networks-WITH-ORDERING-GUIDENCE
+          ref: e75ff0959a3b21ff997c393a26711e23745e96c7
+          path: original/awn
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: fthyco/maia3
+          ref: 853785c4a8a512b6b2181520bfef21ff1a74566f
+          path: original/maia-act
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: fthyco/maia3
+          ref: f9f66ed3feb7ab5a4498472d708c426ca8914436
+          path: original/maia-cah
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install source-only AE (no torch / target dependencies)
+        working-directory: ae
+        run: |
+          python -m pip install -e '.[dev,render]'
+          python - <<'PY'
+          import importlib.util as u
+          assert u.find_spec('torch') is None
+          PY
+      - name: Unit tests for generic hierarchies and no-execution default
+        working-directory: ae
+        run: python -m pytest -q tests/test_v027_generalization_runtime.py
+      - name: Original AWN and Chessformer three-level structure audits
+        working-directory: ae
+        env:
+          PYTHONHASHSEED: '101'
+        run: |
+          python scripts/benchmark_external_research.py --case awn --source ../original/awn --output benchmark-output/v027/awn
+          python scripts/benchmark_external_research.py --case chessformer-act --source ../original/maia-act --output benchmark-output/v027/chessformer-act
+          python scripts/benchmark_external_research.py --case chessformer-cah --source ../original/maia-cah --output benchmark-output/v027/chessformer-cah
+      - name: Upload summaries only - upstream AWN source is not redistributed
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ae-v027-three-level-original-research-summaries
+          path: ae/benchmark-output/v027/**/summary.json
+          if-no-files-found: warn
+
+  optional-fx-runtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install pinned CPU torch for isolated OPT-IN execution reference
+        run: |
+          python -m pip install torch==2.10.0 torchvision==0.25.0 --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install -e '.[dev,render]'
+      - name: Validate safe-by-default and traced/unsupported reference paths
+        run: python -m pytest -q tests/test_v027_generalization_runtime.py
+      - name: Reference original local residual CNN, without claiming AE runtime parity
+        run: |
+          ae runtime-audit examples/cnn_residual_mvp --factory model:CNN --input-shape 1,3,64,64 --allow-execute --output benchmark-output/v027/fx-residual
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          root=Path('benchmark-output/v027/fx-residual')
+          summary=json.loads((root/'runtime-audit-summary.json').read_text())
+          assert summary['status']=='traced'
+          assert summary['fx_nodes']>=8
+          assert summary['fx_operand_edges']>=7
+          assert summary['ae_static_equivalence']=='not_verified'
+          assert summary['runtime_output']['shape']==[1,2]
+          PY
+      - name: Upload synthetic-input runtime reference
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ae-v027-optin-fx-reference
+          path: benchmark-output/v027/fx-residual/
+          if-no-files-found: warn
+
+  interactive-chromium:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install AE and Playwright
+        run: |
+          python -m pip install -e '.[dev,render]'
+          python -m pip install playwright==1.56.0
+          python -m playwright install --with-deps chromium
+      - name: Validate offline DOM interactions and source-identity drill-down
+        run: python scripts/verify_v027_browser.py
+      - name: Upload viewer browser screenshot and audit (no private model)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ae-v027-chromium-audit
+          path: |
+            benchmark-output/v027-browser/browser-report.json
+            benchmark-output/v027-browser/offline-viewer-v027.png
+          if-no-files-found: warn
+
+  # research-generalization-v025.yml
+  pinned-source-research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: ae
+      - uses: actions/checkout@v4
+        with:
+          repository: fthyco/Adaptive-Width-Neural-Networks-WITH-ORDERING-GUIDENCE
+          ref: e75ff0959a3b21ff997c393a26711e23745e96c7
+          path: external/awn
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: fthyco/maia3
+          ref: 853785c4a8a512b6b2181520bfef21ff1a74566f
+          path: external/maia-act
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: fthyco/maia3
+          ref: f9f66ed3feb7ab5a4498472d708c426ca8914436
+          path: external/maia-cah
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install Architecture Extractor without ML runtimes
+        working-directory: ae
+        run: python -m pip install -e '.[dev,render]'
+      - name: Audited original AWN and Chessformer source-only extraction
+        working-directory: ae
+        env:
+          PYTHONHASHSEED: '17'
+          OMP_NUM_THREADS: '1'
+        run: |
+          python scripts/benchmark_external_research.py --case awn --source ../external/awn --output benchmark-output/phase2/awn
+          python scripts/benchmark_external_research.py --case chessformer-act --source ../external/maia-act --output benchmark-output/phase2/chessformer-act
+          python scripts/benchmark_external_research.py --case chessformer-cah --source ../external/maia-cah --output benchmark-output/phase2/chessformer-cah
+      - name: Upload sanitized summaries ONLY (no upstream source or AE bundles)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ae-v025-research-source-only-summary
+          path: ae/benchmark-output/phase2/**/summary.json
+          if-no-files-found: warn
+
+  comparative-visualizers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install audited model, AE and comparison tools
+        run: |
+          python -m pip install torch==2.10.0 torchvision==0.25.0 --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install -e '.[dev,render]' torchview==0.2.7 torchviz==0.0.3 visualtorch==1.4.1 graphviz
+      - name: Run independent FX gate then record other tool outputs
+        env:
+          OMP_NUM_THREADS: '1'
+          MKL_NUM_THREADS: '1'
+        run: |
+          python scripts/verify_full_resnet18.py
+          python scripts/compare_visualizers_v025.py --output benchmark-output/phase2/visualizers
+      - name: Upload original independently generated comparison artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ae-v025-comparative-tools
+          path: benchmark-output/phase2/visualizers/
+          if-no-files-found: warn
+
+  # public-release-v026.yml
+  offline-viewer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install public runtime + test extras
+        run: python -m pip install -e '.[dev,render]'
+      - name: Verify complete, partial, blocked, deterministic and CLI viewer paths
+        run: python -m pytest -q tests/test_phase3_viewer_v026.py tests/test_presenter.py
+      - name: Build an original example offline viewer
+        run: |
+          ae extract examples/cnn_residual_mvp --entrypoint model:CNN --output benchmark-output/release/bundle
+          ae viewer benchmark-output/release/bundle --view structure --output benchmark-output/release/viewer
+      - name: Upload generated offline viewer (no external scripts)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ae-v026-offline-viewer
+          path: benchmark-output/release/viewer/
+          if-no-files-found: warn
+
+  clean-wheel-and-sdist:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Build checked public distributions
+        run: |
+          python -m pip install build twine
+          python -m build
+          python -m twine check dist/*
+      - name: Create isolated clean environment and install wheel (no dev extras)
+        run: |
+          python -m venv "$RUNNER_TEMP/ae-clean"
+          "$RUNNER_TEMP/ae-clean/bin/python" -m pip install dist/*.whl
+          cd "$RUNNER_TEMP"
+          "$RUNNER_TEMP/ae-clean/bin/ae" extract "$GITHUB_WORKSPACE/examples/cnn_residual_mvp" --entrypoint model:CNN --output "$RUNNER_TEMP/ae-bundle"
+          "$RUNNER_TEMP/ae-clean/bin/ae" validate "$RUNNER_TEMP/ae-bundle" > "$RUNNER_TEMP/validation.json"
+          "$RUNNER_TEMP/ae-clean/bin/ae" viewer "$RUNNER_TEMP/ae-bundle" --view structure --output "$RUNNER_TEMP/ae-viewer" > "$RUNNER_TEMP/viewer-result.json"
+          "$RUNNER_TEMP/ae-clean/bin/python" - <<'PY'
+          import importlib.metadata as m
+          import importlib.util as u
+          import json
+          from pathlib import Path
+          import os
+          root=Path(os.environ['RUNNER_TEMP'])
+          import tomllib
+          expected=tomllib.loads((Path(os.environ['GITHUB_WORKSPACE'])/'pyproject.toml').read_text())['project']['version']
+          assert m.version('architecture-extractor')==expected
+          assert u.find_spec('torch') is None, 'Public AE viewer must not require torch'
+          assert json.loads((root/'validation.json').read_text())['valid']
+          report=json.loads((root/'viewer-result.json').read_text())
+          assert report['rendered_levels']==['overview','block','operation']
+          html=(root/'ae-viewer/index.html').read_text()
+          assert html.count('<svg ') == 3
+          assert 'http://www.w3.org/2000/svg' in html
+          assert (root/'ae-viewer/viewer-manifest.json').is_file()
+          PY
+      - name: Upload distributable source/wheel archives
+        uses: actions/upload-artifact@v4
+        with:
+          name: ae-v026-python-distributions
+          path: dist/
